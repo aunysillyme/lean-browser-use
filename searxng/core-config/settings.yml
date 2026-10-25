@@ -1,0 +1,26 @@
+# Private instance; the limiter is off. deploy.sh supplies the signing secret.
+use_default_settings: true
+
+general:
+  instance_name: "lean-searxng"
+
+search:
+  safe_search: 0
+  formats:
+    - html
+    - json
+
+server:
+  secret_key: "ultrasecretkey"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+
+outgoing:
+  request_timeout: 4.0
+
+engines:
+  - name: bing
+    disabled: false
+  - name: yahoo
+    disabled: false
