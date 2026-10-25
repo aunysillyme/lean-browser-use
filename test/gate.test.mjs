@@ -50,7 +50,7 @@ test('history and tag gate in an isolated fixture repository', t => {
 });
 const classes = [
   ['home-path', '/home/' + 'someone/file'], ['home-path', '/Users/' + 'person/file'],
-  ['email', 'person' + '@' + 'example.com'], ['ipv4', [8, 8, 8, 8].join('.')], ['tailnet', [100, 64, 1, 2].join('.')],
+  ['email', 'person' + '@' + 'example.com'], ['ipv4', [8, 8, 8, 8].join('.')], ['cgnat', [100, 64, 1, 2].join('.')],
   ['ticket', 'AUN-' + '123'], ['tracker', 'linear' + '.app'], ['secret', 'sk-' + 'a'.repeat(20)],
   ['secret', 'gh' + 'p_' + 'test'], ['secret', 'github' + '_pat_' + 'test'], ['secret', 'AKIA' + 'A'.repeat(16)],
   ['secret', 'xox' + 'b-test'], ['secret', '-----BEGIN ' + 'PRIVATE KEY-----'], ['em-dash', String.fromCodePoint(0x2014)]

@@ -34,7 +34,7 @@ export function scanText(text, hashes = new Set()) {
     for (const m of line.matchAll(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)) {
       const ip = m[0], parts = ip.split('.').map(Number);
       if (parts.some(x => x > 255)) continue;
-      if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) add(n, 'tailnet');
+      if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) add(n, 'cgnat');
       else if (!['127.0.0.1', '0.0.0.0'].includes(ip) && !/^(192\.0\.2|198\.51\.100|203\.0\.113)\./.test(ip)) add(n, 'ipv4');
     }
     if (/\bAUN-\d+\b/.test(line)) add(n, 'ticket');
