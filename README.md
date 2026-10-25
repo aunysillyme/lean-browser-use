@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-supported-green)](package.json)
 
-**The process and working tools for token-lean browser use by an AI agent: delegate screen work, send it in bulk, and measure your own saving.**
+**The process and working tools for token-lean browser use by an AI agent in Claude Code: delegate screen work, send it in bulk, and measure your own saving.**
 
 Every agent step re-reads the conversation, so browser work in a long session carries a large context.
 A fresh subagent runner and batched reads keep that work compact, with evidence for the main session to verify.
@@ -48,7 +48,7 @@ See [installation and activation](docs/install.md) for target directories and op
 
 | Package | What it gives |
 | --- | --- |
-| **lean-browser-use** | Token-lean browser work through a runner, packet briefs, guards, reader, and meter. |
+| **lean-browser-use** | Token-lean browser use for AI agents: runner subagent, bulk-read briefs, three guards, a compile-once page reader and a token meter, installed with one command |
 | [lean-computer-use](https://github.com/aunysillyme/lean-computer-use) | Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command |
 
 ## Measure your own saving
