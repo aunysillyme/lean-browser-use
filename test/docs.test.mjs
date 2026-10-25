@@ -40,7 +40,7 @@ test('README opening identifies who, what and next step', () => {
 test('README first-screen order, bounded fences, receipt markers and sibling row', t => {
   if (!available(t, ['README.md'])) return;
   const text = read('README.md'); assert.match(text, /^# lean-browser-use\n/);
-  assert.ok(text.includes('**Cut browser use cost by up to 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**'));
+  assert.ok(text.includes('**Cut browser use cost by about 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**'));
   assert.ok(text.trimEnd().split('\n').length < 350);
   const positions = ['**Cut browser use cost', 'npx lean-browser-use', '## What it does', '## What it saves', '## After you install', '## Part of a set', '## Measure your own saving', '## Common questions', '## Uninstall', '## Read next', 'For agents', '## Contributing', '## Credits', '## License'].map(s => {
     const i = text.indexOf(s); assert.ok(i >= 0, `Missing ${s}`); return i;
@@ -71,8 +71,8 @@ test('README quantities are backed by proof or captured program output', t => {
   assert.match(prose, /about 3x/);
   assert.doesNotMatch(read('README.md'), /about half/i);
   const best = Math.round(value('paired_cost_best_saving_percent'));
-  for (const m of prose.matchAll(/up to (\d+)%/g)) assert.equal(Number(m[1]), best, 'README headline must follow best dollar saving proof');
-  assert.ok(prose.includes(`up to ${best}%`));
+  for (const m of prose.matchAll(/cost by about (\d+)%/g)) assert.equal(Number(m[1]), best, 'README headline must follow best dollar saving proof');
+  assert.ok(prose.includes(`about ${best}%`));
   supported.add(best);
   const changes = [
     (value('paired_cost_usd_runner_arm') / value('paired_cost_usd_plain') - 1) * 100,
@@ -98,7 +98,7 @@ test('README quantities are backed by proof or captured program output', t => {
   assert.ok(llms.includes(`about ${Math.round(value('paired_step_ratio'))}x fewer tokens per browser step`));
   assert.ok(llms.includes(`${formatted('paired_run_tokens_plain')} tokens in the plain arm and ${formatted('paired_run_tokens_runner_arm')} in the runner arm`));
   assert.ok(llms.includes(`about ${Math.round(benchmark.derived.delta_percent)}% higher overall`));
-  assert.ok(llms.includes(`Up to ${best}% cheaper`));
+  assert.ok(llms.includes(`About ${best}% cheaper`));
   assert.ok(llms.includes(`about ${Math.round(value('paired_break_even_steps'))} browser steps is an estimate`));
   for (const m of prose.matchAll(/(?:^|[\s|(>])([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)(?=[\s.,)|%<]|$)/gm)) assert.ok(supported.has(Number(m[1].replaceAll(',', ''))), `Unproved README quantity: ${m[1]}`);
 });

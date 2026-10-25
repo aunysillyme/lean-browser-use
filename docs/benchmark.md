@@ -1,6 +1,6 @@
 # Paired browser cost and token benchmark
 
-Two paired runs measured dollar cost and context in Claude Code on 2026-10-25. The best measured dollar saving was 25.26%, rounded to the public headline "up to 25% cheaper browser use". The token sections below retain the browser-step and whole-run breakdowns.
+Two paired runs measured dollar cost and context in Claude Code on 2026-10-25. The best measured dollar saving was 25.26%, rounded to the public headline "about 25% cheaper browser use". The token sections below retain the browser-step and whole-run breakdowns.
 
 ## What it cost in dollars
 

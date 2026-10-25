@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-supported-green)](package.json)
 
-**Cut browser use cost by up to 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**
+**Cut browser use cost by about 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**
 
 For Claude Code users who run browser work in their sessions.
 You get a skill, a runner agent (a fresh subagent that does the browser work), three hooks and a token meter (the `measure` command that counts tokens per step).
@@ -23,7 +23,7 @@ npx lean-browser-use
 
 `npx` runs the package without a permanent install.
 
-![lean-browser-use: up to 25 percent cheaper browser use, two measured runs, why the bill falls and the measure command](docs/trailer.gif)
+![lean-browser-use: about 25 percent cheaper browser use, two measured runs, why the bill falls and the measure command](docs/trailer.gif)
 
 Undo it with `npx lean-browser-use --uninstall`. Preview the install with `npx lean-browser-use --dry`.
 
@@ -72,7 +72,7 @@ See [installation and activation](docs/install.md) for target directories and op
 
 | Package | What it gives |
 | --- | --- |
-| **lean-browser-use** | Cut browser use cost by up to 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command |
+| **lean-browser-use** | Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command |
 | [lean-computer-use](https://github.com/aunysillyme/lean-computer-use) | Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command |
 
 ## Measure your own saving
