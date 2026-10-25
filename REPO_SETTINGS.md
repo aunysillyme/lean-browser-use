@@ -129,7 +129,7 @@ required reviewer and tag policy from both read-backs before pushing a tag.
 
 If the environment does not exist when the tag job starts, GitHub creates an
 unprotected one and the publish does not wait for approval. The order is environment
-first, then npm Trusted Publisher, then tag.
+first, then the first-publish sequence below.
 
 UNVERIFIED: GitHub may offer environment protection on a private repository only on
 paid plans. Read [GitHub's environment protection documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
@@ -137,7 +137,7 @@ on the day, and run this setup right after the public flip.
 
 ## npm Trusted Publisher
 
-On npmjs.com, open the package settings, then Trusted publisher, then GitHub Actions.
+On npmjs.com, open the package settings, then Trusted publishing, then GitHub Actions.
 Use these fields for [release.yml](.github/workflows/release.yml):
 
 | Field | Value |
@@ -147,20 +147,28 @@ Use these fields for [release.yml](.github/workflows/release.yml):
 | Workflow filename | release.yml |
 | Environment | release |
 
-The [npm trusted publishing documentation](https://docs.npmjs.com/trusted-publishers),
-read 2026-10-25, says: "a newly created trusted publisher configuration must complete
-its first successful publish within 2 days". It requires npm 11.5.1 or later and
-Node 22.14.0 or later. The workflow installs npm 12.1.0 with Node 24.
+The [npm trust command documentation](https://docs.npmjs.com/cli/v11/commands/npm-trust),
+read 2026-10-25, confirms that the package must already exist on the npm registry
+before configuring a Trusted Publisher. The
+[npm trusted publishing documentation](https://docs.npmjs.com/trusted-publishers),
+read 2026-10-25, requires the first successful publish within 2 days of creating the
+trust configuration to validate it and bind it to the repository identity. It
+requires npm 11.5.1 or later and Node 22.14.0 or later. The workflow installs
+npm 12.1.0 with Node 24.
 
-UNVERIFIED: the document does not say whether a package that has never been published
-can be configured. Choose the first-publish path with the owner:
+After creating and protecting the `release` environment, follow this order:
 
-- Path A: try adding the Trusted Publisher in npmjs.com package settings or the
-  new-package flow, then push the version tag within 2 days. Approve the environment
-  job in time for the first publish to succeed within that window.
-- Path B: the owner runs `npm login` and one manual `npm publish --access public`,
-  then adds the Trusted Publisher for later versions. Bump package.json for the next
-  release and complete that first trusted publish within 2 days of configuration.
+1. The owner runs `npm login` and publishes 0.1.0 by hand with
+   `npm publish --access public` (no provenance).
+2. Push the `v0.1.0` tag with the owner's release authorization. The tag run waits
+   for the owner's approval in the `release` environment, checks the tag against
+   package.json, runs tests and check, and skips publishing because 0.1.0 is already
+   on the registry.
+3. The owner adds the Trusted Publisher on npmjs.com using the package settings,
+   Trusted publishing, GitHub Actions and the fields above.
+4. Release 0.1.1 as the first workflow publish. It must publish successfully within
+   2 days of creating the trust configuration. Update package.json, push `v0.1.1`
+   and approve the `release` environment job in time to meet that window.
 
 For later trusted releases, push a tag whose version without `v` equals package.json
 and approve the job in `release`. See [Releasing](RELEASING.md) for artifact review.

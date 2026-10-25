@@ -1,4 +1,6 @@
 # Publishes version tags to npm with provenance through trusted publishing (OIDC).
+# The first publish is manual because a Trusted Publisher needs an existing package.
+# Later versions publish here; versions already on the registry are skipped.
 # Configure once on npmjs.com: package settings -> Trusted publisher -> GitHub Actions,
 # owner aunysillyme, repository lean-browser-use, workflow release.yml, environment release.
 # Create the release environment with owner approval and a v* tag policy before tagging.
@@ -39,4 +41,13 @@ jobs:
           test "$tag" = "$pkg" || { echo "tag v$tag but package.json is $pkg"; exit 1; }
       - run: npm test
       - run: npm run check
-      - run: npm publish --provenance --access public
+      - name: Publish unless this version is already on the registry
+        run: |
+          set -eu
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if npm view "$name@$version" version --prefer-online > /dev/null 2>&1; then
+            echo "$name@$version is already on the registry; nothing to publish."
+            exit 0
+          fi
+          npm publish --provenance --access public

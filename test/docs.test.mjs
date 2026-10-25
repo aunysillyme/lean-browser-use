@@ -190,7 +190,17 @@ test('release workflow requires approval, pinned actions and matching versions',
     const result = spawnSync('sh', ['-c', versionStep[1]], { cwd: root, env: { ...process.env, GITHUB_REF_NAME: tag }, encoding: 'utf8' });
     assert.equal(result.status, expected, result.stderr);
   }
-  assert.match(text, /      - run: npm test\n      - run: npm run check\n      - run: npm publish --provenance --access public\n$/);
+  assert.match(text, /      - run: npm test\n      - run: npm run check\n      - name: Publish unless this version is already on the registry\n/);
+});
+
+test('release workflow skips a version already on the registry before publishing', () => {
+  const text = read('.github/workflows/release.yml');
+  const step = text.match(/      - name: Publish unless this version is already on the registry\n        run: \|\n([\s\S]*?)$/);
+  assert.ok(step, 'Registry skip step must exist');
+  assert.match(step[1], /^          set -eu\n/);
+  assert.ok(step[1].includes('name="$(node -p "require(\'./package.json\').name")"'));
+  assert.ok(step[1].includes('version="$(node -p "require(\'./package.json\').version")"'));
+  assert.match(step[1], /          if npm view "\$name@\$version" version --prefer-online > \/dev\/null 2>&1; then\n            echo "\$name@\$version is already on the registry; nothing to publish\."\n            exit 0\n          fi\n          npm publish --provenance --access public\n$/);
 });
 
 test('repository settings prepare the public flip and release environment', () => {
@@ -207,7 +217,26 @@ test('repository settings prepare the public flip and release environment', () =
   const rows = text.slice(text.indexOf('| Setting |'), text.indexOf('Set the repository')).trim().split('\n').slice(2);
   assert.ok(rows.length >= 8);
   for (const row of rows) assert.ok(row.endsWith('| to be read back after the flip |'), row);
+  const npm = text.slice(text.indexOf('## npm Trusted Publisher'), text.indexOf('## Registry parity'));
+  assert.ok(npm.includes('https://docs.npmjs.com/cli/v11/commands/npm-trust'));
+  assert.ok(npm.includes('https://docs.npmjs.com/trusted-publishers'));
+  assert.equal([...npm.matchAll(/read 2026-10-25/g)].length, 2);
+  assert.match(npm, /package must already exist on the npm registry\nbefore configuring a Trusted Publisher/);
+  assert.match(npm, /validate it and bind it to the repository identity/);
+  assert.doesNotMatch(npm, /UNVERIFIED|Path [AB]:/);
   assert.match(read('RELEASING.md'), /\[repository settings\]\(REPO_SETTINGS\.md\)/);
+});
+
+test('release guides document the manual first publish and trusted release order', () => {
+  for (const file of ['REPO_SETTINGS.md', 'RELEASING.md']) {
+    const text = read(file);
+    assert.match(text, /1\. The owner runs `npm login` and publishes 0\.1\.0 by hand with\n   `npm publish --access public` \(no provenance\)\./);
+    assert.match(text, /2\. Push the `v0\.1\.0` tag[\s\S]*?waits\n   for the owner's approval in the `release` environment, checks the tag against\n   package\.json, runs tests and check, and skips publishing because 0\.1\.0 is already\n   on the registry\./);
+    assert.match(text, /3\. The owner adds the Trusted Publisher on npmjs\.com/);
+    assert.match(text, /4\. Release 0\.1\.1 as the first workflow publish\. It must publish successfully within\n   2 days of creating the trust configuration/);
+    const steps = [...text.matchAll(/^[1-4]\. /gm)].map(match => match[0]);
+    assert.deepEqual(steps, ['1. ', '2. ', '3. ', '4. '], file);
+  }
 });
 
 test('historical saving figures stay outside the public tree', () => {
