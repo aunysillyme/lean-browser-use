@@ -13,7 +13,7 @@
     {
       "id": "tests_passing",
       "claim": "Passing Node tests, including Python suite checks",
-      "value": 86,
+      "value": 88,
       "unit": "tests",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -41,9 +41,9 @@
       "id": "guard_ms_median",
       "claim": "Median wall time per guard via its shim over 50 calls",
       "value": {
-        "pick-guard": 42.323,
-        "retry-guard": 42.626,
-        "batch-nudge": 43.948
+        "pick-guard": 67.44,
+        "retry-guard": 56.215,
+        "batch-nudge": 64.775
       },
       "unit": "ms",
       "measured": "2026-10-25",
@@ -53,7 +53,7 @@
     {
       "id": "install_ms",
       "claim": "Install wall time into a new temporary config directory",
-      "value": 60.111,
+      "value": 82.384,
       "unit": "ms",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -62,7 +62,7 @@
     {
       "id": "tarball_bytes",
       "claim": "Packed tarball size reported before this proof refresh",
-      "value": 82562,
+      "value": 82972,
       "unit": "bytes",
       "measured": "2026-10-25",
       "expires": "2027-01-25",

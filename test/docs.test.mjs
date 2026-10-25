@@ -87,7 +87,7 @@ test('README quantities are backed by proof or captured program output', t => {
 });
 test('README, docs and llms links resolve and headings name useful content', t => {
   if (!available(t, ['README.md', 'llms.txt', 'docs/install.md'])) return;
-  const files = ['README.md', 'llms.txt', ...walk(path.join(root, 'docs')).map(p => path.relative(root, p))];
+  const files = ['README.md', 'llms.txt', ...walk(path.join(root, 'docs')).filter(p => p.endsWith('.md')).map(p => path.relative(root, p))];
   for (const file of files) {
     const text = read(file);
     for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
