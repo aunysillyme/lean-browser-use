@@ -41,9 +41,9 @@
       "id": "guard_ms_median",
       "claim": "Median wall time per guard via its shim over 50 calls",
       "value": {
-        "pick-guard": 39.348,
-        "retry-guard": 39.524,
-        "batch-nudge": 40.117
+        "pick-guard": 42.323,
+        "retry-guard": 42.626,
+        "batch-nudge": 43.948
       },
       "unit": "ms",
       "measured": "2026-10-25",
@@ -53,7 +53,7 @@
     {
       "id": "install_ms",
       "claim": "Install wall time into a new temporary config directory",
-      "value": 56.687,
+      "value": 60.111,
       "unit": "ms",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -62,7 +62,7 @@
     {
       "id": "tarball_bytes",
       "claim": "Packed tarball size reported before this proof refresh",
-      "value": 81665,
+      "value": 82562,
       "unit": "bytes",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -186,6 +186,54 @@
       "claim": "Small task: plain median browser step to runner median browser step token ratio",
       "value": 3.26,
       "unit": "ratio",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_cost_usd_plain",
+      "claim": "Run 1 plain arm dollar cost at list API prices",
+      "value": 0.5975,
+      "unit": "usd",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_cost_usd_runner_arm",
+      "claim": "Run 1 runner arm dollar cost at list API prices",
+      "value": 0.5787,
+      "unit": "usd",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_small_cost_usd_plain",
+      "claim": "Run 2 plain arm dollar cost at list API prices",
+      "value": 0.5779,
+      "unit": "usd",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_small_cost_usd_runner_arm",
+      "claim": "Run 2 runner arm dollar cost at list API prices",
+      "value": 0.4319,
+      "unit": "usd",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_cost_best_saving_percent",
+      "claim": "Best dollar saving in two measured runs on one setup",
+      "value": 25.26,
+      "unit": "percent",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_cost_pooled_saving_percent",
+      "claim": "Pooled dollar saving across two measured runs on one setup",
+      "value": 14.02,
+      "unit": "percent",
       "measured": "2026-10-25",
       "how": "see docs/benchmark.md"
     }

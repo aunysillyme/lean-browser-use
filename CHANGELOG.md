@@ -6,6 +6,8 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ### Added
 
+- Dollar cost rows and an up-to-25% cheaper headline, the best of two measured runs on one setup.
+
 - Whole-run context totals of 2,657,290 plain and 2,846,792 runner, with the 15.54-step break-even flagged as an estimate.
 - One paired browser-token benchmark with static proof, exact counts, and reproduction guidance.
 

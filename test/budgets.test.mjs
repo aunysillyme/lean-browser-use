@@ -9,7 +9,7 @@ import { walk, captured } from '../src/util.mjs';
 test('package metadata and zero dependencies', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   assert.equal(pkg.name, 'lean-browser-use'); assert.equal(pkg.version, '0.1.0'); assert.equal(pkg.type, 'module'); assert.equal(pkg.license, 'MIT'); assert.equal(pkg.engines.node, '>=20');
-  assert.equal(pkg.description, 'Cut browser use token cost about 3x per step for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command');
+  assert.equal(pkg.description, 'Cut browser use cost by up to 25% for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command');
   assert.ok(pkg.description.length <= 160);
   assert.equal(pkg.dependencies, undefined); assert.equal(pkg.devDependencies, undefined);
 });

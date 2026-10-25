@@ -11,6 +11,7 @@ const record = (id, claim, value, unit, how) => rows.push({ id, claim, value, un
 function recordBenchmark() {
   const benchmark = readJSON(path.join(root, 'proof/benchmark.json'));
   const { plain, runner } = benchmark.arms;
+  const cost = benchmark.cost_usd;
   const values = [
     ['paired_step_tokens_plain', 'Plain session median input-context tokens per browser step', plain.step_tokens, 'tokens'],
     ['paired_step_tokens_runner', 'Runner median input-context tokens per browser step', runner.step_tokens, 'tokens'],
@@ -25,7 +26,13 @@ function recordBenchmark() {
     ['paired_small_run_tokens_plain', 'Small task (one page, 4 browser steps), native Claude in Chrome: whole-run input-context tokens', benchmark.small_task.test_a_native.context_total, 'tokens'],
     ['paired_small_run_tokens_runner_arm', 'Small task (one page), with the package, main session plus runner: whole-run input-context tokens', benchmark.small_task.test_b_package.context_total, 'tokens'],
     ['paired_small_run_ratio', 'Small task: plain-to-package whole-run input-context token ratio', benchmark.small_task.derived.whole_run_ratio, 'ratio'],
-    ['paired_small_step_ratio', 'Small task: plain median browser step to runner median browser step token ratio', benchmark.small_task.derived.per_step_ratio, 'ratio']
+    ['paired_small_step_ratio', 'Small task: plain median browser step to runner median browser step token ratio', benchmark.small_task.derived.per_step_ratio, 'ratio'],
+    ['paired_cost_usd_plain', 'Run 1 plain arm dollar cost at list API prices', cost.run1.plain.total, 'usd'],
+    ['paired_cost_usd_runner_arm', 'Run 1 runner arm dollar cost at list API prices', cost.run1.runner.total, 'usd'],
+    ['paired_small_cost_usd_plain', 'Run 2 plain arm dollar cost at list API prices', cost.run2.plain.total, 'usd'],
+    ['paired_small_cost_usd_runner_arm', 'Run 2 runner arm dollar cost at list API prices', cost.run2.runner.total, 'usd'],
+    ['paired_cost_best_saving_percent', 'Best dollar saving in two measured runs on one setup', cost.derived.best_percent, 'percent'],
+    ['paired_cost_pooled_saving_percent', 'Pooled dollar saving across two measured runs on one setup', -cost.derived.pooled_percent, 'percent']
   ];
   for (const [id, claim, value, unit] of values) rows.push({ id, claim, value, unit, measured: benchmark.measured, how: 'see docs/benchmark.md' });
 }

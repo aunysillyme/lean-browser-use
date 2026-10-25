@@ -104,5 +104,63 @@
       "whole_run_ratio": 0.91,
       "whole_run_delta_percent": 9.55
     }
+  },
+  "cost_usd": {
+    "pricing_source": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "pricing_read": "2026-10-25",
+    "price_unit": "usd_per_million_tokens",
+    "prices": {
+      "claude-sonnet-5-5": {
+        "input": 2,
+        "cache_write_5m": 2.5,
+        "cache_read": 0.1,
+        "output": 10
+      },
+      "claude-haiku-5-5": {
+        "input": 0.1,
+        "cache_write_5m": 0.125,
+        "cache_read": 0.01,
+        "output": 0.5,
+        "max_prompt_tokens": 100000
+      }
+    },
+    "cache_write_assumed": "5m",
+    "method": "List API prices applied per model call, then summed by arm. Recorded arm totals and model splits are quoted to four decimal places; split rounding may differ from the arm total.",
+    "run1": {
+      "plain": {
+        "total": 0.5975,
+        "model_split": {
+          "claude-sonnet-5-5": 0.5975
+        }
+      },
+      "runner": {
+        "total": 0.5787,
+        "model_split": {
+          "claude-sonnet-5-5": 0.5629,
+          "claude-haiku-5-5": 0.0157
+        }
+      }
+    },
+    "run2": {
+      "plain": {
+        "total": 0.5779,
+        "model_split": {
+          "claude-sonnet-5-5": 0.5779
+        }
+      },
+      "runner": {
+        "total": 0.4319,
+        "model_split": {
+          "claude-sonnet-5-5": 0.4215,
+          "claude-haiku-5-5": 0.0104
+        }
+      }
+    },
+    "derived": {
+      "run1_percent": -3.15,
+      "run2_percent": -25.26,
+      "pooled_percent": -14.02,
+      "best_percent": 25.26
+    }
   }
 }
