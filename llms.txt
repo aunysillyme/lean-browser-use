@@ -1,10 +1,12 @@
 # lean-browser-use
 
-> The process and tools for token-lean browser work: a fresh subagent runner, bulk packets, guards, reusable extraction, and a local transcript meter.
+> Cut browser use token cost about 3x per step for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command
 
 Install: `npx lean-browser-use`
 
 ## Docs
+
+- [Paired token benchmark, conditions, and reproduction](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/benchmark.md)
 
 - [Installation, flags, health checks, and removal](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/install.md)
 - [How routing, packets, verification, and cleanup work](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/how-it-works.md)
@@ -32,5 +34,5 @@ Install: `npx lean-browser-use`
 
 ## Part of a set
 
-- [lean-browser-use: Cut the token cost of browser use for AI agents: fresh runner subagent, bulk reads, three guards and a meter that shows your saving. One npx command](https://github.com/aunysillyme/lean-browser-use/blob/main/README.md)
+- [lean-browser-use: Cut browser use token cost about 3x per step for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command](https://github.com/aunysillyme/lean-browser-use/blob/main/README.md)
 - [lean-computer-use: Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command](https://github.com/aunysillyme/lean-computer-use)

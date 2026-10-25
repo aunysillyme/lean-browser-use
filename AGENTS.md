@@ -40,4 +40,6 @@ Add meaningful fixtures for changed behavior. New blocking rules need allow, blo
 
 Generate `proof/results.json` with `npm run proof`; avoid hand-editing measured values. Refresh README receipt values from that file after generation. Expiry is a warning, not a gate. Historical author token figures stay out of README, the skill, and proof.
 
+Benchmark rows are static records from `proof/benchmark.json`; `scripts/proof.mjs` never re-measures them.
+
 Follow [CONTRIBUTING.md](CONTRIBUTING.md) for contributions and [RELEASING.md](RELEASING.md) for maintainer publication. Report what changed, what passed, and what remains unverified. Publishing requires the user's release instruction.

@@ -8,6 +8,19 @@ import { captured, readJSON } from '../src/util.mjs';
 const measured = '2026-10-25', expires = '2027-01-25';
 const rows = [];
 const record = (id, claim, value, unit, how) => rows.push({ id, claim, value, unit, measured, expires, how });
+function recordBenchmark() {
+  const benchmark = readJSON(path.join(root, 'proof/benchmark.json'));
+  const { plain, runner } = benchmark.arms;
+  const values = [
+    ['paired_step_tokens_plain', 'Plain session median input-context tokens per browser step', plain.step_tokens, 'tokens'],
+    ['paired_step_tokens_runner', 'Runner median input-context tokens per browser step', runner.step_tokens, 'tokens'],
+    ['paired_step_ratio', 'Plain-to-runner median browser-step token ratio', Number((plain.step_tokens / runner.step_tokens).toFixed(2)), 'ratio'],
+    ['paired_task_tokens_plain', 'Plain arm total browser-step input-context tokens', plain.task_tokens, 'tokens'],
+    ['paired_task_tokens_runner_arm', 'Runner arm total browser-step input-context tokens', runner.task_tokens, 'tokens'],
+    ['paired_task_ratio', 'Plain-to-runner arm total browser-step token ratio', Number((plain.task_tokens / runner.task_tokens).toFixed(2)), 'ratio']
+  ];
+  for (const [id, claim, value, unit] of values) rows.push({ id, claim, value, unit, measured: benchmark.measured, how: 'see docs/benchmark.md' });
+}
 const proofPath = path.join(root, 'proof/results.json');
 const mode = process.argv[2];
 function command(program, args, options = {}) {
@@ -20,6 +33,7 @@ try {
   const pkg = readJSON(path.join(root, 'package.json'));
   record('runtime_dependencies', 'Runtime dependencies', Object.keys(pkg.dependencies || {}).length, 'dependencies', 'node scripts/proof.mjs');
   if (mode === '--bootstrap') {
+    recordBenchmark();
     fs.mkdirSync(path.dirname(proofPath), { recursive: true });
     fs.writeFileSync(proofPath, `${JSON.stringify({ version: 1, rows }, null, 2)}\n`);
     console.log('Wrote dependency proof; run node scripts/proof.mjs for all measurements.');
@@ -60,6 +74,7 @@ try {
     const parsed = JSON.parse(command('npm', ['pack', '--dry-run', '--json'], { env: { ...process.env, npm_config_cache: path.join(temp, 'npm-cache') } })); const pack = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0];
     record('tarball_bytes', 'Packed tarball size reported before this proof refresh', pack.size, 'bytes', 'npm pack --dry-run --json');
     record('tarball_files', 'Files in the packed tarball', pack.files.length, 'files', 'npm pack --dry-run --json');
+    recordBenchmark();
     fs.mkdirSync(path.dirname(proofPath), { recursive: true });
     fs.writeFileSync(proofPath, `${JSON.stringify({ version: 1, rows }, null, 2)}\n`);
     console.log(JSON.stringify({ version: 1, rows }, null, 2));
