@@ -1,7 +1,7 @@
 {
   "name": "lean-browser-use",
   "version": "0.1.0",
-  "description": "Cut the token cost of browser use for AI agents: fresh runner subagent, bulk reads, three guards and a meter that shows your saving. One npx command",
+  "description": "Cut browser use token cost about 3x per step for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command",
   "type": "module",
   "license": "MIT",
   "engines": {

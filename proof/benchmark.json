@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "measured": "2026-10-25",
+  "conditions": {
+    "task": "Open https://news.ycombinator.com, read the titles and comment counts of the top 5 stories, then open https://example.com and read its h1. Both arms found that example.com has no h1 and reported the page title.",
+    "arms": {
+      "plain": "Browser work in the main session.",
+      "runner": "Same task through the lean-browser-use skill and fresh runner, with the package installed project-scoped in a scratch project."
+    },
+    "models": "Main session claude-sonnet-5-5 in both arms; runner subagent claude-haiku-5-5.",
+    "tools": "In-app Browser pane tools (mcp__Claude_Browser__*); lean-browser-use measure 0.1.0 over each arm transcripts.",
+    "method": "One paired run. Per-step values are median input-context tokens; task values sum input-context tokens across browser steps, including main-session browser steps in the runner arm. Counts include input, cache creation and cache read tokens.",
+    "one_paired_run": true
+  },
+  "arms": {
+    "plain": {
+      "step_tokens": 188487,
+      "task_tokens": 1506374,
+      "browser_steps": {
+        "main": 8
+      }
+    },
+    "runner": {
+      "step_tokens": 59725,
+      "task_tokens": 725151,
+      "browser_steps": {
+        "main": 1,
+        "runner": 9
+      }
+    }
+  }
+}

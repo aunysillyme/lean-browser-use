@@ -6,6 +6,8 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ### Added
 
+- One paired browser-token benchmark with static proof, exact counts, and reproduction guidance.
+
 - Browser method skill, focused references, and a fresh-context runner.
 - Browser and cheap-helper packet templates with evidence and cleanup contracts.
 - Pick and retry guards plus a batching nudge.

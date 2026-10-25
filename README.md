@@ -5,10 +5,10 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-supported-green)](package.json)
 
-**Cut the token cost of browser use in Claude Code: run page work in a fresh runner, send it in bulk, and see the saving on your own transcripts.**
+**Cut browser use token cost about 3x per step in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**
 
-Every browser step re-reads your whole session, so one page action in a long session is expensive.
-A fresh runner starts small, and `lean-browser-use measure` shows what each step cost on your machine.
+A browser step in a plain session re-read a median 188,487 input-context tokens in one paired run.
+The fresh runner brought that to 59,725 per step, and the whole task took about half the browser-step tokens: [see the benchmark](docs/benchmark.md).
 
 ```sh
 npx lean-browser-use
@@ -34,6 +34,17 @@ Undo it with `npx lean-browser-use --uninstall`. Preview the install with `npx l
 The installer has 0 runtime dependencies. [Package measurements](proof/results.json) include the reproduction commands and measurement dates.
 It never installs third-party tools, runs a vendor login, or contacts the network.
 
+## What it saves
+
+| Measurement | Plain session | Skill and runner | Plain / runner |
+| --- | --- | --- | --- |
+| Per browser step (median tokens) | 188,487 | 59,725 | 3.16 |
+| Whole task (browser-step tokens) | 1,506,374 | 725,151 | 2.08 |
+| What moved | Main-session context | Fresh-runner context plus main-session browser work | Same public-page task |
+
+Cost varies with the model and session size; this single paired run gives a ballpark, and your saving will vary.
+Read [the benchmark and how to reproduce it](docs/benchmark.md), then measure your own transcripts.
+
 ## After you install
 
 1. Start a fresh Claude Code session and ask it to use the `lean-browser-use` skill.
@@ -48,7 +59,7 @@ See [installation and activation](docs/install.md) for target directories and op
 
 | Package | What it gives |
 | --- | --- |
-| **lean-browser-use** | Cut the token cost of browser use for AI agents: fresh runner subagent, bulk reads, three guards and a meter that shows your saving. One npx command |
+| **lean-browser-use** | Cut browser use token cost about 3x per step for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command |
 | [lean-computer-use](https://github.com/aunysillyme/lean-computer-use) | Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command |
 
 ## Measure your own saving
@@ -106,6 +117,7 @@ Use `--claude-dir` to target the same directory as the install; follow printed m
 - [Guards](docs/guards.md): selection, retry bounds, batching, and fail-open checks.
 - [Page reader](docs/reader.md): compile a public extraction and reuse it as code.
 - [Search](docs/search.md): find URLs with the optional SearXNG companion.
+- [Benchmark](docs/benchmark.md): the paired run, exact counts, and how far to trust the ballpark.
 - [Measure](docs/measure.md): count local browser context and read the comparison.
 - [Provenance](docs/PROVENANCE.md): public names, upstream ideas, and evidence boundaries.
 
