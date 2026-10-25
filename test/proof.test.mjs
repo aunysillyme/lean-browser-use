@@ -23,7 +23,7 @@ test('proof rows measure this package and carry dates and commands', t => {
   for (const name of ['pick-guard', 'retry-guard', 'batch-nudge']) assert.ok(Number.isFinite(times[name]) && times[name] >= 0);
 });
 
-test('paired benchmark rows match the saved run and derived ratios', () => {
+test('paired benchmark rows match the saved run, whole-run totals and derived estimates', () => {
   const benchmark = JSON.parse(fs.readFileSync(path.join(root, 'proof/benchmark.json'), 'utf8'));
   const proof = JSON.parse(fs.readFileSync(path.join(root, 'proof/results.json'), 'utf8'));
   assert.equal(benchmark.version, 1);
@@ -36,16 +36,30 @@ test('paired benchmark rows match the saved run and derived ratios', () => {
     paired_step_ratio: Number((plain.step_tokens / runner.step_tokens).toFixed(2)),
     paired_task_tokens_plain: plain.task_tokens,
     paired_task_tokens_runner_arm: runner.task_tokens,
-    paired_task_ratio: Number((plain.task_tokens / runner.task_tokens).toFixed(2))
+    paired_task_ratio: Number((plain.task_tokens / runner.task_tokens).toFixed(2)),
+    paired_run_tokens_plain: plain.whole_run.context_total,
+    paired_run_tokens_runner_arm: runner.whole_run.context_total,
+    paired_run_ratio: Number((plain.whole_run.context_total / runner.whole_run.context_total).toFixed(2)),
+    paired_break_even_steps: benchmark.derived.break_even_browser_steps
   };
+  assert.equal(benchmark.derived.whole_run_ratio, expected.paired_run_ratio);
+  assert.equal(benchmark.derived.delta_percent, Number(((runner.whole_run.context_total / plain.whole_run.context_total - 1) * 100).toFixed(2)));
+  assert.equal(benchmark.derived.break_even_browser_steps, 15.54);
+  assert.equal(benchmark.derived.estimate, true);
+  for (const arm of [plain, runner]) {
+    const run = arm.whole_run;
+    if ([run.fresh_input, run.cache_creation, run.cache_read].every(Number.isInteger)) assert.equal(run.context_total, run.fresh_input + run.cache_creation + run.cache_read);
+  }
   const rows = proof.rows.filter(r => r.id.startsWith('paired_'));
-  assert.equal(rows.length, 6);
+  assert.equal(rows.length, 10);
   for (const [id, value] of Object.entries(expected)) {
     const row = rows.find(r => r.id === id);
     assert.ok(row, id); assert.equal(row.value, value, id);
-    assert.equal(row.unit, id.endsWith('_ratio') ? 'ratio' : 'tokens', id);
+    assert.equal(row.unit, id.endsWith('_ratio') ? 'ratio' : id === 'paired_break_even_steps' ? 'steps' : 'tokens', id);
     assert.equal(row.measured, benchmark.measured, id);
     assert.equal(row.how, 'see docs/benchmark.md', id);
     assert.ok(!Object.hasOwn(row, 'expires'), id);
+    if (id === 'paired_break_even_steps') assert.match(row.claim, /estimat/i);
+    if (id.startsWith('paired_task_')) assert.match(row.claim, /browser-step tokens/);
   }
 });

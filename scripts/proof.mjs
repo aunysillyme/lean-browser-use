@@ -15,9 +15,13 @@ function recordBenchmark() {
     ['paired_step_tokens_plain', 'Plain session median input-context tokens per browser step', plain.step_tokens, 'tokens'],
     ['paired_step_tokens_runner', 'Runner median input-context tokens per browser step', runner.step_tokens, 'tokens'],
     ['paired_step_ratio', 'Plain-to-runner median browser-step token ratio', Number((plain.step_tokens / runner.step_tokens).toFixed(2)), 'ratio'],
-    ['paired_task_tokens_plain', 'Plain arm total browser-step input-context tokens', plain.task_tokens, 'tokens'],
-    ['paired_task_tokens_runner_arm', 'Runner arm total browser-step input-context tokens', runner.task_tokens, 'tokens'],
-    ['paired_task_ratio', 'Plain-to-runner arm total browser-step token ratio', Number((plain.task_tokens / runner.task_tokens).toFixed(2)), 'ratio']
+    ['paired_task_tokens_plain', 'Plain arm total browser-step tokens', plain.task_tokens, 'tokens'],
+    ['paired_task_tokens_runner_arm', 'Runner arm total browser-step tokens', runner.task_tokens, 'tokens'],
+    ['paired_task_ratio', 'Plain-to-runner arm total browser-step tokens ratio', Number((plain.task_tokens / runner.task_tokens).toFixed(2)), 'ratio'],
+    ['paired_run_tokens_plain', 'Plain arm whole-run input-context tokens', plain.whole_run.context_total, 'tokens'],
+    ['paired_run_tokens_runner_arm', 'Runner arm whole-run input-context tokens', runner.whole_run.context_total, 'tokens'],
+    ['paired_run_ratio', 'Plain-to-runner whole-run input-context token ratio', benchmark.derived.whole_run_ratio, 'ratio'],
+    ['paired_break_even_steps', 'Estimated break-even browser steps', benchmark.derived.break_even_browser_steps, 'steps']
   ];
   for (const [id, claim, value, unit] of values) rows.push({ id, claim, value, unit, measured: benchmark.measured, how: 'see docs/benchmark.md' });
 }

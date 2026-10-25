@@ -9,7 +9,7 @@
     },
     "models": "Main session claude-sonnet-5-5 in both arms; runner subagent claude-haiku-5-5.",
     "tools": "In-app Browser pane tools (mcp__Claude_Browser__*); lean-browser-use measure 0.1.0 over each arm transcripts.",
-    "method": "One paired run. Per-step values are median input-context tokens; task values sum input-context tokens across browser steps, including main-session browser steps in the runner arm. Counts include input, cache creation and cache read tokens.",
+    "method": "One paired run. Per-step values are median input-context tokens; task values sum input-context tokens across browser steps, including main-session browser steps in the runner arm. Whole-run context totals cover every call in each arm. Counts include fresh input, cache creation and cache read tokens; output is separate.",
     "one_paired_run": true
   },
   "arms": {
@@ -18,6 +18,14 @@
       "task_tokens": 1506374,
       "browser_steps": {
         "main": 8
+      },
+      "whole_run": {
+        "calls": 14,
+        "fresh_input": 28,
+        "cache_creation": 129118,
+        "cache_read": 2528144,
+        "context_total": 2657290,
+        "output": 2188
       }
     },
     "runner": {
@@ -26,7 +34,75 @@
       "browser_steps": {
         "main": 1,
         "runner": 9
+      },
+      "whole_run": {
+        "calls": 23,
+        "fresh_input": 46,
+        "cache_creation": 195388,
+        "cache_read": 2651358,
+        "context_total": 2846792,
+        "output": 5905,
+        "model_split": {
+          "main_claude_sonnet_5_5": {
+            "calls": 11,
+            "context_total": 2134331,
+            "output": 2968
+          },
+          "runner_claude_haiku_5_5": {
+            "calls": 12,
+            "context_total": 712461,
+            "output": 2937
+          }
+        }
       }
+    }
+  },
+  "derived": {
+    "whole_run_ratio": 0.93,
+    "delta_percent": 7.13,
+    "break_even_browser_steps": 15.54,
+    "estimate": true
+  },
+  "small_task": {
+    "measured": "2026-10-25",
+    "task": "Open https://example.com, read the page title and the first sentence of the body, close the tab. Claude in Chrome tools in both tests, same Chrome profile, scratch folders under the same user config.",
+    "test_a_native": {
+      "calls": 6,
+      "context_total": 1133195,
+      "output": 734,
+      "browser_steps": {
+        "main": 4,
+        "median": 189084,
+        "total": 757290
+      },
+      "model": "claude-sonnet-5-5"
+    },
+    "test_b_package": {
+      "calls": 10,
+      "context_total": 1241361,
+      "output": 2846,
+      "main": {
+        "calls": 5,
+        "context_total": 956151,
+        "model": "claude-sonnet-5-5"
+      },
+      "runner": {
+        "calls": 5,
+        "context_total": 285210,
+        "model": "claude-haiku-5-5"
+      },
+      "browser_steps": {
+        "main": 1,
+        "runner": 4,
+        "runner_median": 58057,
+        "runner_total": 226289,
+        "main_step": 190532
+      }
+    },
+    "derived": {
+      "per_step_ratio": 3.26,
+      "whole_run_ratio": 0.91,
+      "whole_run_delta_percent": 9.55
     }
   }
 }
