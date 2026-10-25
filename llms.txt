@@ -1,14 +1,14 @@
 # lean-browser-use
 
-> Cut browser use token cost about 3x per step for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command
+> Cut browser use cost by up to 25% for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command
 
 Install: `npx lean-browser-use`
 
-One paired run measured about 3x fewer tokens per browser step in the fresh runner. Everything the run read totalled 2,657,290 tokens in the plain arm and 2,846,792 in the runner arm: about 7% higher overall on this short 9-step task. Savings can grow with browser steps; model, caching and session size affect cost, with no guaranteed saving. The rough break-even of about 16 browser steps is an estimate.
+Two measured runs cost 3.15% and 25.26% less with the package at list API prices, about 14.02% less pooled. Up to 25% cheaper is the rounded best of those two runs on one setup, with no guaranteed saving. A browser step re-reads about 3x fewer tokens per browser step. Everything run 1 read totalled 2,657,290 tokens in the plain arm and 2,846,792 in the runner arm: about 7% higher overall. Model, task and session size affect cost. The rough token break-even of about 16 browser steps is an estimate.
 
 ## Docs
 
-- [Browser-step savings, whole-run totals, estimated break-even, and reproduction](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/benchmark.md)
+- [Dollar costs, browser-step savings, whole-run totals, estimated break-even, and reproduction](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/benchmark.md)
 
 - [Installation, flags, health checks, and removal](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/install.md)
 - [How routing, packets, verification, and cleanup work](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/how-it-works.md)
@@ -36,5 +36,5 @@ One paired run measured about 3x fewer tokens per browser step in the fresh runn
 
 ## Part of a set
 
-- [lean-browser-use: Cut browser use token cost about 3x per step for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command](https://github.com/aunysillyme/lean-browser-use/blob/main/README.md)
+- [lean-browser-use: Cut browser use cost by up to 25% for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command](https://github.com/aunysillyme/lean-browser-use/blob/main/README.md)
 - [lean-computer-use: Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command](https://github.com/aunysillyme/lean-computer-use)

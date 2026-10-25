@@ -40,6 +40,7 @@ Add meaningful fixtures for changed behavior. New blocking rules need allow, blo
 
 Generate `proof/results.json` with `npm run proof`; avoid hand-editing measured values. Refresh README receipt values from that file after generation. Expiry is a warning, not a gate. Historical author token figures stay out of README, the skill, and proof.
 
+Dollar cost rows support the up-to-25% cheaper headline: the best of two measured runs on one setup, with no guaranteed saving.
 Benchmark rows are static records from `proof/benchmark.json`; `scripts/proof.mjs` never re-measures them.
 Keep whole-run context totals (2,657,290 plain; 2,846,792 runner) distinct from browser-step savings and retain the break-even estimate flag.
 

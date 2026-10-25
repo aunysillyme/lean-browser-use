@@ -23,9 +23,9 @@ test('CLAUDE pointer is exact and agent instructions are bounded', t => {
 test('README first-screen order, bounded fences, receipt markers and sibling row', t => {
   if (!available(t, ['README.md'])) return;
   const text = read('README.md'); assert.match(text, /^# lean-browser-use\n/);
-  assert.ok(text.includes('**Cut browser use token cost about 3x per step in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**'));
+  assert.ok(text.includes('**Cut browser use cost by up to 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**'));
   assert.ok(text.trimEnd().split('\n').length < 350);
-  const positions = ['**Cut browser use token cost', 'npx lean-browser-use', '## What it does', '## What it saves', '## After you install', '## Part of a set', '## Measure your own saving', '## Common questions', '## Uninstall', '## Read next', 'For agents', '## Contributing', '## Credits', '## License'].map(s => {
+  const positions = ['**Cut browser use cost', 'npx lean-browser-use', '## What it does', '## What it saves', '## After you install', '## Part of a set', '## Measure your own saving', '## Common questions', '## Uninstall', '## Read next', 'For agents', '## Contributing', '## Credits', '## License'].map(s => {
     const i = text.indexOf(s); assert.ok(i >= 0, `Missing ${s}`); return i;
   });
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
@@ -53,20 +53,35 @@ test('README quantities are backed by proof or captured program output', t => {
   for (const m of prose.matchAll(/about (\d+)x/g)) assert.equal(Number(m[1]), Math.round(value('paired_step_ratio')), 'README per-step ballpark must follow proof');
   assert.match(prose, /about 3x/);
   assert.doesNotMatch(read('README.md'), /about half/i);
-  const delta = Math.round(benchmark.derived.delta_percent);
-  assert.ok(prose.includes(`about ${delta}% higher overall`));
-  assert.ok(prose.includes(`${benchmark.arms.runner.browser_steps.runner}-step task`));
-  supported.add(delta);
-  supported.add(benchmark.arms.runner.browser_steps.runner);
+  const best = Math.round(value('paired_cost_best_saving_percent'));
+  for (const m of prose.matchAll(/up to (\d+)%/g)) assert.equal(Number(m[1]), best, 'README headline must follow best dollar saving proof');
+  assert.ok(prose.includes(`up to ${best}%`));
+  supported.add(best);
+  const changes = [
+    (value('paired_cost_usd_runner_arm') / value('paired_cost_usd_plain') - 1) * 100,
+    (value('paired_small_cost_usd_runner_arm') / value('paired_small_cost_usd_plain') - 1) * 100
+  ].map(n => Number(n.toFixed(2)));
+  assert.deepEqual(changes, [benchmark.cost_usd.derived.run1_percent, benchmark.cost_usd.derived.run2_percent]);
+  const savings = changes.map(n => Math.round(-n));
+  const pooled = Math.round(value('paired_cost_pooled_saving_percent'));
+  assert.equal(pooled, Math.round(-benchmark.cost_usd.derived.pooled_percent));
+  assert.ok(prose.includes(`cost ${savings[0]}% and ${savings[1]}% less than in a plain session, about ${pooled}% less together (list API prices)`));
+  for (const n of [...savings, pooled]) supported.add(n);
   const formatted = id => value(id).toLocaleString('en-US');
   assert.ok(prose.includes(`| Per browser step (median tokens) | ${formatted('paired_step_tokens_plain')} | ${formatted('paired_step_tokens_runner')} | ${value('paired_step_ratio')} |`));
   assert.ok(prose.includes(`| All browser steps | ${formatted('paired_task_tokens_plain')} | ${formatted('paired_task_tokens_runner_arm')} | ${value('paired_task_ratio')} |`));
   assert.ok(prose.includes(`| Everything the run read | ${formatted('paired_run_tokens_plain')} | ${formatted('paired_run_tokens_runner_arm')} | ${value('paired_run_ratio')} |`));
+  for (const [i, ids] of [['paired_cost_usd_plain', 'paired_cost_usd_runner_arm'], ['paired_small_cost_usd_plain', 'paired_small_cost_usd_runner_arm']].entries()) {
+    assert.ok(prose.includes(`| Run ${i + 1} cost | $${value(ids[0]).toFixed(4)} | $${value(ids[1]).toFixed(4)} | ${changes[i].toFixed(2)}% |`));
+  }
+  assert.ok(prose.indexOf('| Run 1 cost |') < prose.indexOf('| Run 2 cost |'));
+  assert.ok(prose.indexOf('| Run 2 cost |') < prose.indexOf('| Per browser step (median tokens) |'));
   const llms = read('llms.txt');
   assert.doesNotMatch(llms, /about half/i);
   assert.ok(llms.includes(`about ${Math.round(value('paired_step_ratio'))}x fewer tokens per browser step`));
   assert.ok(llms.includes(`${formatted('paired_run_tokens_plain')} tokens in the plain arm and ${formatted('paired_run_tokens_runner_arm')} in the runner arm`));
-  assert.ok(llms.includes(`about ${delta}% higher overall`));
+  assert.ok(llms.includes(`about ${Math.round(benchmark.derived.delta_percent)}% higher overall`));
+  assert.ok(llms.includes(`Up to ${best}% cheaper`));
   assert.ok(llms.includes(`about ${Math.round(value('paired_break_even_steps'))} browser steps is an estimate`));
   for (const m of prose.matchAll(/(?:^|[\s|(>])([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)(?=[\s.,)|%<]|$)/gm)) assert.ok(supported.has(Number(m[1].replaceAll(',', ''))), `Unproved README quantity: ${m[1]}`);
 });

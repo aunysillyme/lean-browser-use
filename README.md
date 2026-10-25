@@ -5,10 +5,10 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-supported-green)](package.json)
 
-**Cut browser use token cost about 3x per step in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**
+**Cut browser use cost by up to 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**
 
-A browser step re-read a median 188,487 tokens in a plain session and 59,725 in the runner (about 3x fewer per step).
-The runner pays off as browser steps pile up, because the main session re-reads its whole context on every call; this short 9-step task came out about 7% higher overall: [see the benchmark](docs/benchmark.md).
+In two measured runs the same browser task cost 3% and 25% less than in a plain session, about 14% less together (list API prices).
+A browser step re-reads about 3x fewer tokens in the runner; the whole run reads a few percent more tokens, but the runner uses a cheaper model, so the bill falls: [see the benchmark](docs/benchmark.md).
 
 ```sh
 npx lean-browser-use
@@ -36,13 +36,15 @@ It never installs third-party tools, runs a vendor login, or contacts the networ
 
 ## What it saves
 
-| Measurement | Plain session | Skill and runner | Plain / runner |
+| Measurement | Plain session | Skill and runner | Change / token ratio |
 | --- | --- | --- | --- |
+| Run 1 cost | $0.5975 | $0.5787 | -3.15% |
+| Run 2 cost | $0.5779 | $0.4319 | -25.26% |
 | Per browser step (median tokens) | 188,487 | 59,725 | 3.16 |
 | All browser steps | 1,506,374 | 725,151 | 2.08 |
 | Everything the run read | 2,657,290 | 2,846,792 | 0.93 |
 
-Longer browser jobs can save more; cost varies with model, caching and session size, with no guaranteed saving.
+Cost varies with model, task and session size, with no guaranteed saving.
 Read [the benchmark and how to reproduce it](docs/benchmark.md), then measure your own transcripts.
 
 ## After you install
@@ -59,7 +61,7 @@ See [installation and activation](docs/install.md) for target directories and op
 
 | Package | What it gives |
 | --- | --- |
-| **lean-browser-use** | Cut browser use token cost about 3x per step for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command |
+| **lean-browser-use** | Cut browser use cost by up to 25% for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command |
 | [lean-computer-use](https://github.com/aunysillyme/lean-computer-use) | Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command |
 
 ## Measure your own saving
