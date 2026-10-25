@@ -29,4 +29,4 @@ See [CREDITS.md](../CREDITS.md) for links, licenses, and the contribution of eac
 
 ## Evidence boundaries
 
-[proof/results.json](../proof/results.json) holds reproducible package measurements, with a command, measurement date, and expiry per row. It contains no author-specific token-saving ratio. The local meter compares a user's own transcripts. Saved reader fixtures establish offline extraction behavior; live page values need a current fetch and independent verification.
+[proof/results.json](../proof/results.json) holds package measurements. Generated rows carry a command, measurement date, and expiry. The 20 paired benchmark rows (ids starting `paired_`) are static records copied or derived from [proof/benchmark.json](../proof/benchmark.json), carry the measurement date and no expiry by the owner's ruling, and are never re-measured by the proof script. The local meter compares a user's own transcripts. Saved reader fixtures establish offline extraction behavior; live page values need a current fetch and independent verification.

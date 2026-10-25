@@ -1,19 +1,42 @@
-name: Release
+# Publishes version tags to npm with provenance through trusted publishing (OIDC).
+# Configure once on npmjs.com: package settings -> Trusted publisher -> GitHub Actions,
+# owner aunysillyme, repository lean-browser-use, workflow release.yml, environment release.
+# Create the release environment with owner approval and a v* tag policy before tagging.
+# The publish job waits for that approval, then checks the tag, package version and tests.
+name: release
+
 on:
   push:
     tags: ['v*']
+
 permissions:
-  id-token: write
   contents: read
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1+ and Node 22.14.0+ (npm docs read 2026-10-25).
+      - name: npm 12.1.0 (reviewed trusted publishing version; needs Node 24.15.0+)
+        run: |
+          npm install -g npm@12.1.0
+          npm --version
+      - name: tag and package.json must name the same version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          test "$tag" = "$pkg" || { echo "tag v$tag but package.json is $pkg"; exit 1; }
       - run: npm test
       - run: npm run check
       - run: npm publish --provenance --access public

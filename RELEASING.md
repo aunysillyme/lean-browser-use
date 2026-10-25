@@ -19,7 +19,9 @@ Review the packed file list and measurement provenance. Expired proof rows warn;
 
 ## Publish the reviewed version
 
-A pushed tag `vX.Y.Z` triggers [release.yml](.github/workflows/release.yml). It runs tests and checks, then `npm publish --provenance --access public`. The workflow uses npm trusted publishing through GitHub's identity token. Configure that trust on npm for this repository and workflow before releasing; the workflow uses no GitHub environment and stores no npm token in the repository.
+A pushed tag `vX.Y.Z` triggers [release.yml](.github/workflows/release.yml). The publish job waits for the owner's approval in the GitHub `release` environment. After approval, it checks that the tag without `v` equals the `package.json` version, runs tests and checks, then runs `npm publish --provenance --access public`. The workflow uses npm trusted publishing through GitHub's identity token.
+
+Follow [repository settings](REPO_SETTINGS.md) in this order: create and protect the `release` environment, configure the npm Trusted Publisher, then push the matching version tag with the owner's release authorization. Create the environment before the first tag: GitHub creates an unprotected environment when a job names an environment that does not exist, so publishing would proceed without waiting for approval. The settings guide includes the first-publish paths and the Trusted Publisher's two-day first-publish window.
 
 Tagging and publishing are maintainer actions. This guide and the workflow do not publish by themselves.
 
