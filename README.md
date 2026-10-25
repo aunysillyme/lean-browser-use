@@ -5,10 +5,10 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-supported-green)](package.json)
 
-**The process and working tools for token-lean browser use by an AI agent in Claude Code: delegate screen work, send it in bulk, and measure your own saving.**
+**Cut the token cost of browser use in Claude Code: run page work in a fresh runner, send it in bulk, and see the saving on your own transcripts.**
 
-Every agent step re-reads the conversation, so browser work in a long session carries a large context.
-A fresh subagent runner and batched reads keep that work compact, with evidence for the main session to verify.
+Every browser step re-reads your whole session, so one page action in a long session is expensive.
+A fresh runner starts small, and `lean-browser-use measure` shows what each step cost on your machine.
 
 ```sh
 npx lean-browser-use
@@ -48,7 +48,7 @@ See [installation and activation](docs/install.md) for target directories and op
 
 | Package | What it gives |
 | --- | --- |
-| **lean-browser-use** | Token-lean browser use for AI agents: runner subagent, bulk-read briefs, three guards, a compile-once page reader and a token meter, installed with one command |
+| **lean-browser-use** | Cut the token cost of browser use for AI agents: fresh runner subagent, bulk reads, three guards and a meter that shows your saving. One npx command |
 | [lean-computer-use](https://github.com/aunysillyme/lean-computer-use) | Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command |
 
 ## Measure your own saving

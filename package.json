@@ -1,7 +1,7 @@
 {
   "name": "lean-browser-use",
   "version": "0.1.0",
-  "description": "Token-lean browser use for AI agents: runner subagent, bulk-read briefs, three guards, a compile-once page reader and a token meter, installed with one command",
+  "description": "Cut the token cost of browser use for AI agents: fresh runner subagent, bulk reads, three guards and a meter that shows your saving. One npx command",
   "type": "module",
   "license": "MIT",
   "engines": {
