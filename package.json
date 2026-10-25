@@ -1,7 +1,7 @@
 {
   "name": "lean-browser-use",
   "version": "0.1.0",
-  "description": "Cut browser use cost by up to 25% for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command",
+  "description": "Cut browser use cost by up to 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -35,6 +35,9 @@
   },
   "repository": "git+https://github.com/aunysillyme/lean-browser-use.git",
   "homepage": "https://github.com/aunysillyme/lean-browser-use#readme",
+  "bugs": {
+    "url": "https://github.com/aunysillyme/lean-browser-use/issues"
+  },
   "funding": "https://github.com/sponsors/aunysillyme",
   "keywords": [
     "browser-use",

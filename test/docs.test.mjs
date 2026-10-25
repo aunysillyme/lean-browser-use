@@ -20,6 +20,23 @@ test('CLAUDE pointer is exact and agent instructions are bounded', t => {
   assert.equal(read('CLAUDE.md'), '# CLAUDE.md\n\nAGENTS.md is the single source of agent instructions for this repo.\n\n' + '@' + 'AGENTS.md\n');
   assert.ok(read('AGENTS.md').trimEnd().split('\n').length <= 200);
 });
+test('README opening identifies who, what and next step', () => {
+  const text = read('README.md');
+  const lines = [
+    'For Claude Code users who run browser work in their sessions.',
+    'You get a skill, a runner agent (a fresh subagent that does the browser work), three hooks and a token meter (the `measure` command that counts tokens per step).',
+    'Next: start a fresh Claude Code session and ask it to use the `lean-browser-use` skill.'
+  ];
+  const check = text => {
+    const start = text.indexOf('**Cut browser use cost'); const end = text.indexOf('```sh');
+    const opening = text.slice(start, end);
+    for (const line of lines) assert.ok(opening.includes(`\n${line}\n`), `Missing opening line: ${line}`);
+    assert.ok(opening.indexOf(lines[0]) < opening.indexOf(lines[1]));
+    assert.ok(opening.indexOf(lines[1]) < opening.indexOf(lines[2]));
+  };
+  check(text);
+  for (const line of lines) assert.throws(() => check(text.replace(line, '')), /Missing opening line/);
+});
 test('README first-screen order, bounded fences, receipt markers and sibling row', t => {
   if (!available(t, ['README.md'])) return;
   const text = read('README.md'); assert.match(text, /^# lean-browser-use\n/);
@@ -106,7 +123,7 @@ test('llms shape and bounded skill/reference files', t => {
   const skill = 'skills/lean-browser-use/SKILL.md';
   if (!available(t, ['llms.txt', skill])) return;
   const llms = read('llms.txt'); assert.match(llms, /^# /); assert.match(llms, /^> /m); assert.match(llms, /npx lean-browser-use/);
-  for (const title of ['Docs', 'Reference', 'Optional']) assert.ok(llms.includes(`## ${title}`));
+  for (const title of ['Docs', 'Reference', 'Reader and search companions']) assert.ok(llms.includes(`## ${title}`));
   for (const section of llms.split(/^## /m).slice(1)) assert.match(section, /\[[^\]]+\]\(https:\/\//);
   const text = read(skill); assert.ok(Buffer.byteLength(text) < 6144); assert.ok(text.trimEnd().split('\n').length <= 120);
   assert.match(text, /^---\n/); assert.match(text.split('---')[1], /^name: lean-browser-use$/m); assert.match(text.split('---')[1], /^description: .+/m);

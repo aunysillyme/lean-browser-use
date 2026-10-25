@@ -7,12 +7,21 @@
 
 **Cut browser use cost by up to 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**
 
+For Claude Code users who run browser work in their sessions.
+You get a skill, a runner agent (a fresh subagent that does the browser work), three hooks and a token meter (the `measure` command that counts tokens per step).
+Next: start a fresh Claude Code session and ask it to use the `lean-browser-use` skill.
+
+Bulk means many steps and reads sent in one call; a packet is the brief that carries those steps.
+A guard is a small hook that blocks a wasteful or unsafe step.
+
 In two measured runs the same browser task cost 3% and 25% less than in a plain session, about 14% less together (list API prices).
 A browser step re-reads about 3x fewer tokens in the runner; the whole run reads a few percent more tokens, but the runner uses a cheaper model, so the bill falls: [see the benchmark](docs/benchmark.md).
 
 ```sh
 npx lean-browser-use
 ```
+
+`npx` runs the package without a permanent install.
 
 ![lean-browser-use: up to 25 percent cheaper browser use, two measured runs, why the bill falls and the measure command](docs/trailer.gif)
 
@@ -29,12 +38,12 @@ Undo it with `npx lean-browser-use --uninstall`. Preview the install with `npx l
 | Retry guard | A stop on repeated waits, reloads, and fruitless reads. |
 | Batch nudge | A reminder to combine predictable actions. |
 | Optional page reader | Compile extraction once, then run it as code. |
-| Optional search companion | Find links through your SearXNG instance, then read selected pages. |
+| Optional search companion | Find links through your SearXNG instance (a self-hosted search engine), then read selected pages. |
 | Token meter | Compare main and runner browser context in your local transcripts. |
 | Installer and doctor | Managed files, preserved settings, health checks, and hash-aware removal. |
 
 The installer has 0 runtime dependencies. [Package measurements](proof/results.json) include the reproduction commands and measurement dates.
-It never installs third-party tools, runs a vendor login, or contacts the network.
+The installer manages the package files and hooks in your Claude config, works offline, and leaves optional tool installation to you.
 
 ## What it saves
 
@@ -46,7 +55,7 @@ It never installs third-party tools, runs a vendor login, or contacts the networ
 | All browser steps | 1,506,374 | 725,151 | 2.08 |
 | Everything the run read | 2,657,290 | 2,846,792 | 0.93 |
 
-Cost varies with model, task and session size, with no guaranteed saving.
+Savings vary with model, task and session size; measure your own transcripts.
 Read [the benchmark and how to reproduce it](docs/benchmark.md), then measure your own transcripts.
 
 ## After you install
@@ -55,15 +64,15 @@ Read [the benchmark and how to reproduce it](docs/benchmark.md), then measure yo
 2. Run `npx lean-browser-use doctor` to check files, hooks, and available companion tools.
 3. Try: "Use lean-browser-use to read the title from https://example.com, save the evidence, verify it, and report cleanup."
 
-For logged-in work, choose your Chrome profile by name when asked. The runner receives that browser's deviceId and a named tab.
-A cheap helper is optional: the subagent runner can execute the same packets on its own.
+For logged-in work, choose your Chrome profile by name when asked. The runner receives that browser's deviceId (the id Claude in Chrome gives each connected browser) and a named tab.
+The subagent runner runs the same packets on its own; a cheap helper is another option.
 See [installation and activation](docs/install.md) for target directories and optional companions.
 
 ## Part of a set
 
 | Package | What it gives |
 | --- | --- |
-| **lean-browser-use** | Cut browser use cost by up to 25% for AI agents: fresh runner subagent, bulk reads, three guards and a token meter. One npx command |
+| **lean-browser-use** | Cut browser use cost by up to 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command |
 | [lean-computer-use](https://github.com/aunysillyme/lean-computer-use) | Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command |
 
 ## Measure your own saving
@@ -74,7 +83,7 @@ lean-browser-use measure
 
 The table compares main and runner groups: steps, median, p90, total input-context tokens, and reread share.
 The summary includes a main-to-runner median ratio when enough steps are present and a count of skipped lines.
-It measures context volume, not a currency bill, and prints no message text or tool inputs.
+It measures context volume and reports counts without exposing message text or tool inputs.
 See [how the meter counts](docs/measure.md) to choose a transcript directory, filter dates, or request JSON.
 
 ## Common questions
@@ -84,7 +93,7 @@ See [how the meter counts](docs/measure.md) to choose a transcript directory, fi
 Run `npx lean-browser-use`, then start a fresh Claude Code session and invoke the skill.
 The installer copies the method, runner, briefs, and guards into your selected Claude config directory.
 
-### Can I use a subagent without a cheap helper?
+### Can a subagent run browser work on its own?
 
 Yes: the subagent runner handles the full browser route with the same packets.
 Run `npx lean-browser-use doctor` to inspect the tools your machine provides, then follow the [route table](skills/lean-browser-use/references/route-by-job.md).
@@ -97,7 +106,7 @@ Check it with `npx lean-browser-use doctor --claude-dir ./.claude`.
 ### How do I add the page reader and search?
 
 Run `npx lean-browser-use --with-reader` to copy both companions.
-You provide their optional tools; [reader setup](docs/reader.md) and [search setup](docs/search.md) explain the commands.
+The reader and search companions use tools you install separately; see their setup guides: [reader](docs/reader.md) and [search](docs/search.md).
 
 ### How do I check browser hooks after installing?
 
@@ -144,7 +153,7 @@ Bring a reproducible browser failure, a tool-family fixture, a reader spec, or a
 - [Anthropic's Claude in Chrome](https://claude.com/chrome): the logged-in browser integration, under Anthropic's service terms.
 - [Keep a Changelog](https://keepachangelog.com), MIT, and [Contributor Covenant](https://www.contributor-covenant.org), CC-BY-4.0: repository conventions.
 
-[CREDITS.md](CREDITS.md) explains each contribution. Credits do not imply endorsement.
+Credits describe each upstream contribution; see [CREDITS.md](CREDITS.md).
 
 ## License
 
