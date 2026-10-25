@@ -119,9 +119,9 @@ REVIEWER_ID=$(gh api users/aunysillyme --jq .id)
 gh api --method PUT "repos/$REPO/environments/release" --input - <<JSON
 {"reviewers":[{"type":"User","id":$REVIEWER_ID}],"prevent_self_review":false,"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}}
 JSON
-gh api --method POST "repos/$REPO/environments/release/deployment-branches-policies" -f name='v*' -f type=tag
+gh api --method POST "repos/$REPO/environments/release/deployment-branch-policies" -f name='v*' -f type=tag
 gh api "repos/$REPO/environments/release"
-gh api "repos/$REPO/environments/release/deployment-branches-policies"
+gh api "repos/$REPO/environments/release/deployment-branch-policies"
 ```
 
 Self-review is allowed so the owner can approve a release she triggers. Verify the

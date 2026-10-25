@@ -203,7 +203,7 @@ test('repository settings prepare the public flip and release environment', () =
   assert.deepEqual(text.match(/^Topics: (.+)$/m)[1].split(', '), topics);
   assert.deepEqual(pkg.keywords.filter(keyword => topics.includes(keyword)).sort(), topics);
   assert.deepEqual(JSON.parse(text.match(/^\{"names":\[.+\]\}$/m)[0]).names, topics);
-  for (const value of ['REPO=aunysillyme/lean-browser-use', 'gh api users/aunysillyme --jq .id', 'gh api --method PUT "repos/$REPO/environments/release"', 'gh api --method POST "repos/$REPO/environments/release/deployment-branches-policies"', "-f name='v*' -f type=tag", '"reviewers":[{"type":"User","id":$REVIEWER_ID}]', '"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}', 'Workflow filename | release.yml', 'Environment | release', 'npm view lean-browser-use dist.integrity']) assert.ok(text.includes(value), value);
+  for (const value of ['REPO=aunysillyme/lean-browser-use', 'gh api users/aunysillyme --jq .id', 'gh api --method PUT "repos/$REPO/environments/release"', 'gh api --method POST "repos/$REPO/environments/release/deployment-branch-policies"', "-f name='v*' -f type=tag", '"reviewers":[{"type":"User","id":$REVIEWER_ID}]', '"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}', 'Workflow filename | release.yml', 'Environment | release', 'npm view lean-browser-use dist.integrity']) assert.ok(text.includes(value), value);
   const rows = text.slice(text.indexOf('| Setting |'), text.indexOf('Set the repository')).trim().split('\n').slice(2);
   assert.ok(rows.length >= 8);
   for (const row of rows) assert.ok(row.endsWith('| to be read back after the flip |'), row);
