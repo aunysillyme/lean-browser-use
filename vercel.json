@@ -1,0 +1,5 @@
+{
+  "buildCommand": "if [ \"$SITE_LIVE\" = \"1\" ]; then node website/build.mjs --live && node website/check.mjs --live; else node website/build.mjs && node website/check.mjs; fi",
+  "installCommand": "npm --prefix website ci",
+  "outputDirectory": "website/dist"
+}
