@@ -91,3 +91,14 @@ test('expired proof warns without failing check', t => {
   const result = run('scripts/check.mjs', [], { cwd: dir });
   assert.equal(result.status, 0); assert.match(result.stderr, /Warning: proof row sample expired/);
 });
+
+test('gate reads no text from binary files but still checks their names', t => {
+  const dir = temp(t); fs.mkdirSync(path.join(dir, 'test'));
+  fs.writeFileSync(path.join(dir, 'test/terms.private.sha256'), [...hashes].join('\n'));
+  fs.writeFileSync(path.join(dir, 'image.gif'), Buffer.concat([Buffer.from([0, 1, 2, 0]), Buffer.from(phrase), Buffer.from([0])]));
+  assert.equal(gate(dir, { output: () => {} }), 0);
+  fs.writeFileSync(path.join(dir, `${single}.gif`), Buffer.from([0, 1, 0]));
+  const lines = [];
+  assert.equal(gate(dir, { output: line => lines.push(line) }), 1);
+  assert.match(lines.join('\n'), /:name:private-term:/);
+});

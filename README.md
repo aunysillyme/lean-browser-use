@@ -14,6 +14,8 @@ A browser step re-reads about 3x fewer tokens in the runner; the whole run reads
 npx lean-browser-use
 ```
 
+![lean-browser-use: up to 25 percent cheaper browser use, two measured runs, why the bill falls and the measure command](docs/trailer.gif)
+
 Undo it with `npx lean-browser-use --uninstall`. Preview the install with `npx lean-browser-use --dry`.
 
 ## What it does

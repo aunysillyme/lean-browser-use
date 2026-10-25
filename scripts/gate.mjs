@@ -73,7 +73,9 @@ export function gate(root = process.cwd(), { extraList, output = console.log } =
     try {
       if (!exists(full)) continue;
       const stat = fs.lstatSync(full);
-      const text = stat.isSymbolicLink() ? fs.readlinkSync(full) : stat.isFile() ? fs.readFileSync(full, 'utf8') : '';
+      const bytes = stat.isFile() ? fs.readFileSync(full) : null;
+      // Binary files (images) carry no readable text: the gate reads their name only.
+      const text = stat.isSymbolicLink() ? fs.readlinkSync(full) : bytes && !bytes.includes(0) ? bytes.toString('utf8') : '';
       for (const hit of scanText(text, hashes)) { output(`${label}:${hit.line}:${hit.class}`); count++; }
     } catch { output(`${label}:0:unreadable`); count++; }
   }
