@@ -41,9 +41,9 @@
       "id": "guard_ms_median",
       "claim": "Median wall time per guard via its shim over 50 calls",
       "value": {
-        "pick-guard": 39.185,
-        "retry-guard": 38.773,
-        "batch-nudge": 40.564
+        "pick-guard": 39.348,
+        "retry-guard": 39.524,
+        "batch-nudge": 40.117
       },
       "unit": "ms",
       "measured": "2026-10-25",
@@ -53,7 +53,7 @@
     {
       "id": "install_ms",
       "claim": "Install wall time into a new temporary config directory",
-      "value": 69.322,
+      "value": 56.687,
       "unit": "ms",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -62,7 +62,7 @@
     {
       "id": "tarball_bytes",
       "claim": "Packed tarball size reported before this proof refresh",
-      "value": 81372,
+      "value": 81665,
       "unit": "bytes",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -151,9 +151,41 @@
     },
     {
       "id": "paired_break_even_steps",
-      "claim": "Estimated break-even browser steps",
+      "claim": "Estimated break-even browser steps (an estimate from two data points; no run longer than 9 browser steps was measured)",
       "value": 15.54,
       "unit": "steps",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_small_run_tokens_plain",
+      "claim": "Small task (one page, 4 browser steps), native Claude in Chrome: whole-run input-context tokens",
+      "value": 1133195,
+      "unit": "tokens",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_small_run_tokens_runner_arm",
+      "claim": "Small task (one page), with the package, main session plus runner: whole-run input-context tokens",
+      "value": 1241361,
+      "unit": "tokens",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_small_run_ratio",
+      "claim": "Small task: plain-to-package whole-run input-context token ratio",
+      "value": 0.91,
+      "unit": "ratio",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_small_step_ratio",
+      "claim": "Small task: plain median browser step to runner median browser step token ratio",
+      "value": 3.26,
+      "unit": "ratio",
       "measured": "2026-10-25",
       "how": "see docs/benchmark.md"
     }

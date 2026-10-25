@@ -21,7 +21,11 @@ function recordBenchmark() {
     ['paired_run_tokens_plain', 'Plain arm whole-run input-context tokens', plain.whole_run.context_total, 'tokens'],
     ['paired_run_tokens_runner_arm', 'Runner arm whole-run input-context tokens', runner.whole_run.context_total, 'tokens'],
     ['paired_run_ratio', 'Plain-to-runner whole-run input-context token ratio', benchmark.derived.whole_run_ratio, 'ratio'],
-    ['paired_break_even_steps', 'Estimated break-even browser steps', benchmark.derived.break_even_browser_steps, 'steps']
+    ['paired_break_even_steps', 'Estimated break-even browser steps (an estimate from two data points; no run longer than 9 browser steps was measured)', benchmark.derived.break_even_browser_steps, 'steps'],
+    ['paired_small_run_tokens_plain', 'Small task (one page, 4 browser steps), native Claude in Chrome: whole-run input-context tokens', benchmark.small_task.test_a_native.context_total, 'tokens'],
+    ['paired_small_run_tokens_runner_arm', 'Small task (one page), with the package, main session plus runner: whole-run input-context tokens', benchmark.small_task.test_b_package.context_total, 'tokens'],
+    ['paired_small_run_ratio', 'Small task: plain-to-package whole-run input-context token ratio', benchmark.small_task.derived.whole_run_ratio, 'ratio'],
+    ['paired_small_step_ratio', 'Small task: plain median browser step to runner median browser step token ratio', benchmark.small_task.derived.per_step_ratio, 'ratio']
   ];
   for (const [id, claim, value, unit] of values) rows.push({ id, claim, value, unit, measured: benchmark.measured, how: 'see docs/benchmark.md' });
 }
