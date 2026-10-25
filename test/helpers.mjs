@@ -36,3 +36,6 @@ export function blockingCases() {
     { id: 'third-native-error', guard: 'retry-guard', setup: [native, native], target: { ...native, hook_event_name: 'PreToolUse' } }
   ];
 }
+
+// npm 12 prints pack JSON keyed by package name; older npm prints an array.
+export function firstPack(parsed) { return Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0]; }

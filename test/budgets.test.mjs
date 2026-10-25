@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
-import { root, cli, temp } from './helpers.mjs';
+import { root, cli, temp, firstPack } from './helpers.mjs';
 import { walk, captured } from '../src/util.mjs';
 
 test('package metadata and zero dependencies', () => {
@@ -17,7 +17,7 @@ test('packed tarball is within its size budget', t => {
   const dir = temp(t);
   const result = captured('npm', ['pack', '--dry-run', '--json'], { cwd: root, timeout: 15000, env: { ...process.env, npm_config_cache: path.join(dir, 'npm-cache') } });
   assert.equal(result.status, 0, result.stderr);
-  const pack = JSON.parse(result.stdout)[0]; assert.ok(pack.size < 400000, String(pack.size));
+  const pack = firstPack(JSON.parse(result.stdout)); assert.ok(pack.size < 400000, String(pack.size));
   assert.ok(pack.files.some(f => f.path === 'bin/lean-browser-use.mjs'));
   assert.ok(!pack.files.some(f => f.path.startsWith('test/') || f.path.startsWith('.repo-build/') || f.path.includes('__pycache__') || f.path.endsWith('.pyc')));
 });

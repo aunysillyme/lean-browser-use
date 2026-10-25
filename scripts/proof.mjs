@@ -57,7 +57,7 @@ try {
     const start = performance.now();
     command(process.execPath, ['bin/lean-browser-use.mjs', 'install', '--claude-dir', path.join(temp, 'config'), '--yes']);
     record('install_ms', 'Install wall time into a new temporary config directory', Number((performance.now() - start).toFixed(3)), 'ms', 'node scripts/proof.mjs');
-    const pack = JSON.parse(command('npm', ['pack', '--dry-run', '--json'], { env: { ...process.env, npm_config_cache: path.join(temp, 'npm-cache') } }))[0];
+    const parsed = JSON.parse(command('npm', ['pack', '--dry-run', '--json'], { env: { ...process.env, npm_config_cache: path.join(temp, 'npm-cache') } })); const pack = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0];
     record('tarball_bytes', 'Packed tarball size reported before this proof refresh', pack.size, 'bytes', 'npm pack --dry-run --json');
     record('tarball_files', 'Files in the packed tarball', pack.files.length, 'files', 'npm pack --dry-run --json');
     fs.mkdirSync(path.dirname(proofPath), { recursive: true });
