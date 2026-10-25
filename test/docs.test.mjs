@@ -48,13 +48,26 @@ test('README quantities are backed by proof or captured program output', t => {
   // URLs and licence identifiers are names; check prose quantities and list numbers.
   const prose = read('README.md').replace(/\]\([^)]*\)/g, ']').replace(/(?:Apache|AGPL|CC-BY)-[\d.]+/g, 'licence');
   const proof = JSON.parse(read('proof/results.json'));
+  const benchmark = JSON.parse(read('proof/benchmark.json'));
   const value = id => { const row = proof.rows.find(r => r.id === id); assert.ok(row, id); return row.value; };
   for (const m of prose.matchAll(/about (\d+)x/g)) assert.equal(Number(m[1]), Math.round(value('paired_step_ratio')), 'README per-step ballpark must follow proof');
-  assert.match(prose, /about half/);
-  assert.equal(Math.round(value('paired_task_ratio')), 2, 'README about half must follow proof');
+  assert.match(prose, /about 3x/);
+  assert.doesNotMatch(read('README.md'), /about half/i);
+  const delta = Math.round(benchmark.derived.delta_percent);
+  assert.ok(prose.includes(`about ${delta}% higher overall`));
+  assert.ok(prose.includes(`${benchmark.arms.runner.browser_steps.runner}-step task`));
+  supported.add(delta);
+  supported.add(benchmark.arms.runner.browser_steps.runner);
   const formatted = id => value(id).toLocaleString('en-US');
   assert.ok(prose.includes(`| Per browser step (median tokens) | ${formatted('paired_step_tokens_plain')} | ${formatted('paired_step_tokens_runner')} | ${value('paired_step_ratio')} |`));
-  assert.ok(prose.includes(`| Whole task (browser-step tokens) | ${formatted('paired_task_tokens_plain')} | ${formatted('paired_task_tokens_runner_arm')} | ${value('paired_task_ratio')} |`));
+  assert.ok(prose.includes(`| All browser steps | ${formatted('paired_task_tokens_plain')} | ${formatted('paired_task_tokens_runner_arm')} | ${value('paired_task_ratio')} |`));
+  assert.ok(prose.includes(`| Everything the run read | ${formatted('paired_run_tokens_plain')} | ${formatted('paired_run_tokens_runner_arm')} | ${value('paired_run_ratio')} |`));
+  const llms = read('llms.txt');
+  assert.doesNotMatch(llms, /about half/i);
+  assert.ok(llms.includes(`about ${Math.round(value('paired_step_ratio'))}x fewer tokens per browser step`));
+  assert.ok(llms.includes(`${formatted('paired_run_tokens_plain')} tokens in the plain arm and ${formatted('paired_run_tokens_runner_arm')} in the runner arm`));
+  assert.ok(llms.includes(`about ${delta}% higher overall`));
+  assert.ok(llms.includes(`about ${Math.round(value('paired_break_even_steps'))} browser steps is an estimate`));
   for (const m of prose.matchAll(/(?:^|[\s|(>])([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)(?=[\s.,)|%<]|$)/gm)) assert.ok(supported.has(Number(m[1].replaceAll(',', ''))), `Unproved README quantity: ${m[1]}`);
 });
 test('README, docs and llms links resolve and headings name useful content', t => {

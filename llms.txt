@@ -4,9 +4,11 @@
 
 Install: `npx lean-browser-use`
 
+One paired run measured about 3x fewer tokens per browser step in the fresh runner. Everything the run read totalled 2,657,290 tokens in the plain arm and 2,846,792 in the runner arm: about 7% higher overall on this short 9-step task. Savings can grow with browser steps; model, caching and session size affect cost, with no guaranteed saving. The rough break-even of about 16 browser steps is an estimate.
+
 ## Docs
 
-- [Paired token benchmark, conditions, and reproduction](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/benchmark.md)
+- [Browser-step savings, whole-run totals, estimated break-even, and reproduction](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/benchmark.md)
 
 - [Installation, flags, health checks, and removal](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/install.md)
 - [How routing, packets, verification, and cleanup work](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/how-it-works.md)

@@ -7,8 +7,8 @@
 
 **Cut browser use token cost about 3x per step in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**
 
-A browser step in a plain session re-read a median 188,487 input-context tokens in one paired run.
-The fresh runner brought that to 59,725 per step, and the whole task took about half the browser-step tokens: [see the benchmark](docs/benchmark.md).
+A browser step re-read a median 188,487 tokens in a plain session and 59,725 in the runner (about 3x fewer per step).
+The runner pays off as browser steps pile up, because the main session re-reads its whole context on every call; this short 9-step task came out about 7% higher overall: [see the benchmark](docs/benchmark.md).
 
 ```sh
 npx lean-browser-use
@@ -39,10 +39,10 @@ It never installs third-party tools, runs a vendor login, or contacts the networ
 | Measurement | Plain session | Skill and runner | Plain / runner |
 | --- | --- | --- | --- |
 | Per browser step (median tokens) | 188,487 | 59,725 | 3.16 |
-| Whole task (browser-step tokens) | 1,506,374 | 725,151 | 2.08 |
-| What moved | Main-session context | Fresh-runner context plus main-session browser work | Same public-page task |
+| All browser steps | 1,506,374 | 725,151 | 2.08 |
+| Everything the run read | 2,657,290 | 2,846,792 | 0.93 |
 
-Cost varies with the model and session size; this single paired run gives a ballpark, and your saving will vary.
+Longer browser jobs can save more; cost varies with model, caching and session size, with no guaranteed saving.
 Read [the benchmark and how to reproduce it](docs/benchmark.md), then measure your own transcripts.
 
 ## After you install

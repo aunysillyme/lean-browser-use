@@ -13,7 +13,7 @@
     {
       "id": "tests_passing",
       "claim": "Passing Node tests, including Python suite checks",
-      "value": 85,
+      "value": 86,
       "unit": "tests",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -41,9 +41,9 @@
       "id": "guard_ms_median",
       "claim": "Median wall time per guard via its shim over 50 calls",
       "value": {
-        "pick-guard": 50.307,
-        "retry-guard": 49.629,
-        "batch-nudge": 49.657
+        "pick-guard": 39.185,
+        "retry-guard": 38.773,
+        "batch-nudge": 40.564
       },
       "unit": "ms",
       "measured": "2026-10-25",
@@ -53,7 +53,7 @@
     {
       "id": "install_ms",
       "claim": "Install wall time into a new temporary config directory",
-      "value": 75.936,
+      "value": 69.322,
       "unit": "ms",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -62,7 +62,7 @@
     {
       "id": "tarball_bytes",
       "claim": "Packed tarball size reported before this proof refresh",
-      "value": 79241,
+      "value": 81372,
       "unit": "bytes",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
@@ -103,7 +103,7 @@
     },
     {
       "id": "paired_task_tokens_plain",
-      "claim": "Plain arm total browser-step input-context tokens",
+      "claim": "Plain arm total browser-step tokens",
       "value": 1506374,
       "unit": "tokens",
       "measured": "2026-10-25",
@@ -111,7 +111,7 @@
     },
     {
       "id": "paired_task_tokens_runner_arm",
-      "claim": "Runner arm total browser-step input-context tokens",
+      "claim": "Runner arm total browser-step tokens",
       "value": 725151,
       "unit": "tokens",
       "measured": "2026-10-25",
@@ -119,9 +119,41 @@
     },
     {
       "id": "paired_task_ratio",
-      "claim": "Plain-to-runner arm total browser-step token ratio",
+      "claim": "Plain-to-runner arm total browser-step tokens ratio",
       "value": 2.08,
       "unit": "ratio",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_run_tokens_plain",
+      "claim": "Plain arm whole-run input-context tokens",
+      "value": 2657290,
+      "unit": "tokens",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_run_tokens_runner_arm",
+      "claim": "Runner arm whole-run input-context tokens",
+      "value": 2846792,
+      "unit": "tokens",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_run_ratio",
+      "claim": "Plain-to-runner whole-run input-context token ratio",
+      "value": 0.93,
+      "unit": "ratio",
+      "measured": "2026-10-25",
+      "how": "see docs/benchmark.md"
+    },
+    {
+      "id": "paired_break_even_steps",
+      "claim": "Estimated break-even browser steps",
+      "value": 15.54,
+      "unit": "steps",
       "measured": "2026-10-25",
       "how": "see docs/benchmark.md"
     }
