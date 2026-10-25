@@ -1,0 +1,15 @@
+{
+  "name": "lean-browser-use",
+  "version": "0.1.0",
+  "description": "Token-lean browser use for AI agents: runner subagent, bulk-read briefs, three guards, a compile-once page reader and a token meter, installed with one command",
+  "type": "module",
+  "license": "MIT",
+  "engines": {"node": ">=20"},
+  "bin": {"lean-browser-use": "bin/lean-browser-use.mjs"},
+  "files": ["bin", "src", "skills", "agents", "briefs", "hooks", "reader", "searxng", "proof", "docs", "README.md", "LICENSE", "CHANGELOG.md", "CREDITS.md", "llms.txt"],
+  "scripts": {"test": "node --test test/", "check": "node scripts/check.mjs", "proof": "node scripts/proof.mjs"},
+  "repository": "git+https://github.com/aunysillyme/lean-browser-use.git",
+  "homepage": "https://github.com/aunysillyme/lean-browser-use#readme",
+  "funding": "https://github.com/sponsors/aunysillyme",
+  "keywords": ["browser-use", "browser-automation", "claude-code", "ai-agents", "subagent", "token-efficiency", "mcp", "claude-in-chrome", "web-scraping", "hooks", "llm-cost", "context-window"]
+}

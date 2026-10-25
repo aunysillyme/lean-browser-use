@@ -1,0 +1,14 @@
+node_modules/
+.repo-build/private.local.txt
+*.tgz
+.DS_Store
+._*
+__pycache__/
+*.pyc
+state/
+.lbu-state/
+scratch-config/
+.claude/
+.agents/
+.codex/
+.aws/

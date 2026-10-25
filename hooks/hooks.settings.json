@@ -1,0 +1,58 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__claude-in-chrome__.*|mcp__Claude_Browser__.*|mcp__Control_Chrome__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/pick-guard.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__claude-in-chrome__.*|mcp__Claude_Browser__.*|mcp__Control_Chrome__.*|mcp__computer-use__.*|mcp__cua-driver__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/retry-guard.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__claude-in-chrome__select_browser|mcp__claude-in-chrome__switch_browser|mcp__claude-in-chrome__tabs_close_mcp",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/pick-guard.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__claude-in-chrome__.*|mcp__Claude_Browser__.*|mcp__Control_Chrome__.*|mcp__computer-use__.*|mcp__cua-driver__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/retry-guard.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__claude-in-chrome__.*|mcp__Claude_Browser__.*|mcp__Control_Chrome__.*|mcp__computer-use__.*|mcp__cua-driver__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/batch-nudge.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
