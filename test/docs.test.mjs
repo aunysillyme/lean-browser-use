@@ -23,7 +23,7 @@ test('CLAUDE pointer is exact and agent instructions are bounded', t => {
 test('README first-screen order, bounded fences, receipt markers and sibling row', t => {
   if (!available(t, ['README.md'])) return;
   const text = read('README.md'); assert.match(text, /^# lean-browser-use\n/);
-  const positions = ['**The process', 'npx lean-browser-use', '## What it does', '## After you install', '## Part of a set', '## Measure your own saving', '## Common questions', '## Uninstall', '## Read next', 'For agents', '## Contributing', '## Credits', '## License'].map(s => {
+  const positions = ['**Cut the token cost', 'npx lean-browser-use', '## What it does', '## After you install', '## Part of a set', '## Measure your own saving', '## Common questions', '## Uninstall', '## Read next', 'For agents', '## Contributing', '## Credits', '## License'].map(s => {
     const i = text.indexOf(s); assert.ok(i >= 0, `Missing ${s}`); return i;
   });
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
