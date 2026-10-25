@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">lean-browser-use</title>
+  <desc id="description">Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command</desc>
+  <defs><radialGradient id="glow"><stop stop-color="#123d22"/><stop offset="1" stop-color="#050806"/></radialGradient></defs>
+  <rect width="1200" height="630" fill="#050806"/>
+  <rect x="410" width="790" height="630" fill="url(#glow)"/>
+  <rect x="42" y="42" width="1116" height="546" rx="2" fill="none" stroke="#20382a"/>
+  <path d="M82 126H1118M82 500H1118" stroke="#20382a"/>
+  <text x="82" y="97" fill="#3df07a" font-family="system-ui,sans-serif" font-size="18" letter-spacing="3">BROWSER USE FOR AI AGENTS</text>
+  <text x="78" y="252" fill="#e0f0e5" font-family="system-ui,sans-serif" font-weight="600" font-size="68" letter-spacing="-3">lean-browser-use</text>
+  <text x="82" y="326" fill="#b6cfbf" font-family="system-ui,sans-serif" font-size="28">Cut browser use cost by about 25% in Claude Code:</text>
+  <text x="82" y="368" fill="#b6cfbf" font-family="system-ui,sans-serif" font-size="28">fresh runner subagent, bulk reads, three guards</text>
+  <text x="82" y="410" fill="#b6cfbf" font-family="system-ui,sans-serif" font-size="28">and a token meter. One npx command</text>
+  <rect x="82" y="532" width="16" height="16" fill="#3df07a"/>
+  <text x="114" y="546" fill="#8ba996" font-family="system-ui,sans-serif" font-size="19">npx lean-browser-use</text>
+</svg>

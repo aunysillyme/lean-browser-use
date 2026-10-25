@@ -12,3 +12,6 @@ scratch-config/
 .agents/
 .codex/
 .aws/
+website/dist/
+website/node_modules/
+website/facts.json

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
+<title>lean-browser-use | Browser use for AI agents</title>
+<meta name="description" content="Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command">
+<link rel="canonical" href="https://lean-browser-use.aunysillyme.dev/">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/site.js" defer></script>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "https://lean-browser-use.aunysillyme.dev/#software",
+  "name": "lean-browser-use",
+  "description": "Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command",
+  "applicationCategory": "DeveloperApplication",
+  "softwareRequirements": "Node.js >=20 and Claude Code",
+  "license": "https://spdx.org/licenses/MIT.html",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "url": "https://lean-browser-use.aunysillyme.dev/",
+  "author": {
+    "@type": "Person",
+    "@id": "https://www.aunysillyme.com/#person",
+    "name": "Auny",
+    "url": "https://www.aunysillyme.com/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://www.aunysillyme.com/#organization",
+    "name": "AunySillyMe",
+    "url": "https://www.aunysillyme.com/"
+  }
+}</script>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I install browser-use tools for Claude Code?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Run npx lean-browser-use, then start a fresh Claude Code session and invoke the skill. The installer copies the method, runner, briefs, and guards into your selected Claude config directory."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can a subagent run browser work on its own?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes: the subagent runner handles the full browser route with the same packets. Run npx lean-browser-use doctor to inspect the tools your machine provides, then follow the route table."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I install into just this project?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Run npx lean-browser-use --project to target the current project's .claude directory. Check it with npx lean-browser-use doctor --claude-dir ./.claude."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I add the page reader and search?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Run npx lean-browser-use --with-reader to copy both companions. The reader and search companions use tools you install separately; see their setup guides: reader and search."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I check browser hooks after installing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Run npx lean-browser-use doctor; hook behavior on your Claude Code version is confirmed there. For payload examples and stop rules, read the guards guide."
+      }
+    }
+  ]
+}</script>
+</head>
+<body class="landing">
+<a class="skip" href="#main">Skip to content</a><header class="top"><a class="brand" href="/">lean-browser-use</a><nav class="topnav" aria-label="Project links"><a href="https://github.com/aunysillyme/lean-browser-use">GitHub</a><a href="https://www.npmjs.com/package/lean-browser-use">npm</a></nav></header>
+  <div class="layout">
+    <div class="navigation">
+      <button class="menu-toggle" type="button" data-menu-toggle aria-controls="site-sidebar" aria-expanded="false">Menu</button>
+    <aside class="sidebar" id="site-sidebar">
+<p class="side-label">lean-browser-use</p><nav class="side-links" aria-label="On this page"><a href="#overview" class="active" aria-current="location">Overview</a>
+<a href="#how-it-works">How the method works</a>
+<a href="#trailer">Trailer poster</a>
+<a href="#quickstart">Getting started</a>
+<a href="#reference">Commands &amp; guides</a>
+<a href="#proof">Proof &amp; guarantees</a>
+<a href="#releases">Changelog</a></nav><p class="side-label">DOCUMENTATION</p><nav class="side-links" aria-label="DOCUMENTATION"><a href="/docs/overview/">Overview</a>
+<a href="/docs/how-it-works/">How it works</a>
+<a href="/docs/guides/">Guides</a>
+<a href="/docs/commands/">Commands</a>
+<a href="/docs/proof/">Proof</a>
+<a href="/docs/changelog/">Changelog</a>
+<a href="/docs/install/">Install</a>
+<a href="/docs/guarantees/">Guarantees</a></nav>
+    </aside>
+    </div>
+    <main class="main" id="main">
+<section class="hero" id="overview"><div><p class="eyebrow">BROWSER USE FOR AI AGENTS</p><h1><span class="headline-line">Let your AI use the web.</span><em>In a fresh, small context.</em></h1><p class="lede">Token-lean browser use for Claude Code: give a subagent the page work in a fresh context, batch predictable actions, and check saved evidence. Measure tokens on your own tasks.</p><div class="install"><span aria-hidden="true">$</span><code id="install-command">npx lean-browser-use</code><button class="copy" type="button" data-copy="install-command" aria-label="Copy install command">Copy install command</button></div><p id="copy-status" role="status" class="sr-only" data-success="Install command copied." data-fallback="Select the install command to copy it."></p><div class="hero-actions"><a class="primary" href="#quickstart">From install to your first task</a><a href="https://github.com/aunysillyme/lean-browser-use">Source</a></div></div><div class="routing"><p class="eyebrow">ONE BOUNDED PAGE TASK</p><div class="route-step">Frame: URLs, fields, scope and done check</div><div class="route-step">Run: predictable batch in a fresh runner</div><div class="route-step">Read: named fields and saved evidence</div><div class="route-step">Verify: independent check and cleanup proof</div><p class="note">The main session prepares the task and checks the saved evidence.</p></div></section>
+<div class="trust"><span>Fresh runner</span><span>Bulk reads</span><span>User-selected profile</span><span>Cleanup proof</span><span>MIT licensed</span></div>
+<section class="content section" id="how-it-works"><div class="section-title"><h2>A shared way to get work done.</h2></div><div class="three"><article><div class="feature-num">01</div><h3>Prepare one clear page task.</h3><p>Name the URLs, fields, permitted actions and evidence destination before dispatch.</p></article><article><div class="feature-num">02</div><h3>Send the packet to a fresh runner.</h3><p>The runner batches predictable actions and reads all requested fields together.</p></article><article><div class="feature-num">03</div><h3>Check the evidence and cleanup.</h3><p>Verify consequential values from saved reads, then check the owned tabs and processes.</p></article></div></section>
+<section class="content section" id="trailer"><div class="section-title"><h2>What this does</h2></div><figure class="poster"><img src="/assets/poster.png" alt="lean-browser-use trailer end card: measure your own saving." width="1280" height="720" loading="lazy"><figcaption>The end card from the package trailer.</figcaption></figure></section>
+<section class="content section" id="quickstart"><div class="section-title"><h2>From install to your first task</h2></div><div class="docs-grid"><div><div class="step"><b>01</b><div><h3>Review the installation plan.</h3><p>Install the method, runner, packet briefs and guards into your selected config directory.</p></div></div><div class="step"><b>02</b><div><h3>Start a fresh session and run doctor.</h3><p>Invoke the skill and inspect installed files, registrations and available companions.</p></div></div><div class="step"><b>03</b><div><h3>Give the agent a bounded page task.</h3><p>Name the requested fields, save evidence, verify the result and return cleanup proof.</p></div></div></div><div class="code"><pre><code>npx lean-browser-use
+
+npx lean-browser-use doctor
+
+npx lean-browser-use install --with-reader</code></pre><a href="/docs/install/">Read the complete installation guide</a></div></div></section>
+<section class="content section" id="reference"><div class="section-title"><h2>Go a little deeper.</h2></div><div class="docs-links"><a class="doc-link" href="/docs/commands/">Page reader and search<span>Find public URLs and reuse compiled extraction specs.</span></a><a class="doc-link" href="/docs/guides/">Packet briefs<span>Prepare scope, supplied code, stop conditions and cleanup ownership.</span></a><a class="doc-link" href="/docs/commands/">Measure and doctor<span>Inspect your installation and compare local context use.</span></a><a class="doc-link" href="/docs/guarantees/">Pick, retry and batch guards<span>Choose the session target, bound retries and group actions.</span></a></div></section>
+<section class="content section" id="requirements"><div class="section-title"><h2>Requirements</h2></div><div class="requirements"><article><h3>Node 20 or newer</h3><p>The installer, doctor and transcript meter use Node.js.</p></article><article><h3>Claude Code</h3><p>Start a fresh session to discover the installed skill and agent. Connected browser work uses your own setup and permissions.</p></article><article><h3>Optional page reader</h3><p>Python 3 runs the companion. Install Crawl4AI separately for CSS extraction and browser fetch fallback.</p></article><article><h3>Optional search</h3><p>Provide a SearXNG instance. The included container setup uses Docker.</p></article></div></section>
+<section class="content section" id="questions"><div class="section-title"><h2>Common questions</h2></div><div class="faq"><details><summary data-faq-question>How do I install browser-use tools for Claude Code?</summary><p data-faq-answer>Run <code>npx lean-browser-use</code>, then start a fresh Claude Code session and invoke the skill.
+The installer copies the method, runner, briefs, and guards into your selected Claude config directory.</p></details>
+<details><summary data-faq-question>Can a subagent run browser work on its own?</summary><p data-faq-answer>Yes: the subagent runner handles the full browser route with the same packets.
+Run <code>npx lean-browser-use doctor</code> to inspect the tools your machine provides, then follow the <a href="/docs/guides/">route table</a>.</p></details>
+<details><summary data-faq-question>How do I install into just this project?</summary><p data-faq-answer>Run <code>npx lean-browser-use --project</code> to target the current project&#39;s <code>.claude</code> directory.
+Check it with <code>npx lean-browser-use doctor --claude-dir ./.claude</code>.</p></details>
+<details><summary data-faq-question>How do I add the page reader and search?</summary><p data-faq-answer>Run <code>npx lean-browser-use --with-reader</code> to copy both companions.
+The reader and search companions use tools you install separately; see their setup guides: <a href="/docs/guides/">reader</a> and <a href="/docs/guides/">search</a>.</p></details>
+<details><summary data-faq-question>How do I check browser hooks after installing?</summary><p data-faq-answer>Run <code>npx lean-browser-use doctor</code>; hook behavior on your Claude Code version is confirmed there.
+For payload examples and stop rules, read <a href="/docs/guarantees/">the guards guide</a>.</p></details></div></section>
+<section class="content section" id="set"><div class="section-title"><h2>Part of a set</h2></div><div class="markdown"><div class="table-scroll"><table><thead><tr><th scope="col">Package</th><th scope="col">What it gives</th></tr></thead><tbody><tr><td><strong>lean-browser-use</strong></td><td>Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command</td></tr><tr><td><a href="https://github.com/aunysillyme/lean-computer-use">lean-computer-use</a></td><td>Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command</td></tr></tbody></table></div></div></section>
+<section class="content section" id="proof"><div class="section-title"><h2>Evidence you can inspect.</h2></div><p class="note">Dollar cost rows describe two measured runs on one setup at list API prices. Savings vary with model, task and session size. Whole-run context totals and browser-step context totals measure different things. The break-even row is an estimate.</p><div class="table-scroll"><table class="proof-table"><thead><tr><th scope="col">Measurement</th><th scope="col">Value</th><th scope="col">Measured</th><th scope="col">Expires</th></tr></thead><tbody>
+<tr data-proof="runtime_dependencies"><th scope="row">Runtime dependencies</th><td data-value>0 dependencies</td><td data-measured>2026-10-25</td><td data-expires>2027-01-25</td></tr>
+<tr data-proof="paired_step_ratio"><th scope="row">Plain-to-runner median browser-step token ratio</th><td data-value>3.16 ratio</td><td data-measured>2026-10-25</td><td data-expires></td></tr>
+<tr data-proof="paired_run_tokens_plain"><th scope="row">Plain arm whole-run input-context tokens</th><td data-value>2657290 tokens</td><td data-measured>2026-10-25</td><td data-expires></td></tr>
+<tr data-proof="paired_run_tokens_runner_arm"><th scope="row">Runner arm whole-run input-context tokens</th><td data-value>2846792 tokens</td><td data-measured>2026-10-25</td><td data-expires></td></tr>
+<tr data-proof="paired_cost_usd_plain"><th scope="row">Run 1 plain arm dollar cost at list API prices</th><td data-value>0.5975 usd</td><td data-measured>2026-10-25</td><td data-expires></td></tr>
+<tr data-proof="paired_cost_usd_runner_arm"><th scope="row">Run 1 runner arm dollar cost at list API prices</th><td data-value>0.5787 usd</td><td data-measured>2026-10-25</td><td data-expires></td></tr>
+<tr data-proof="paired_small_cost_usd_plain"><th scope="row">Run 2 plain arm dollar cost at list API prices</th><td data-value>0.5779 usd</td><td data-measured>2026-10-25</td><td data-expires></td></tr>
+<tr data-proof="paired_small_cost_usd_runner_arm"><th scope="row">Run 2 runner arm dollar cost at list API prices</th><td data-value>0.4319 usd</td><td data-measured>2026-10-25</td><td data-expires></td></tr>
+<tr data-proof="paired_cost_best_saving_percent"><th scope="row">Best dollar saving in two measured runs on one setup</th><td data-value>25.26 percent</td><td data-measured>2026-10-25</td><td data-expires></td></tr>
+</tbody></table></div><p><a href="/docs/proof/">Measured results</a> · <a href="/docs/guarantees/">Guarantees</a></p></section>
+<section class="content section" id="releases"><div class="section-title"><h2>Fresh from the repo.</h2></div><div class="release"><strong>v0.1.0 not released yet</strong><a href="/docs/changelog/">Full changelog</a></div></section>
+<footer class="bottom"><span>MIT licensed.</span><a href="https://github.com/aunysillyme/lean-browser-use">View on GitHub</a><span>Source <a href="https://github.com/aunysillyme/lean-browser-use/commit/0000000000000000000000000000000000000000">0000000</a></span></footer>
+    </main>
+  </div>
+</body>
+</html>

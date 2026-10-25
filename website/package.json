@@ -1,0 +1,7 @@
+{
+  "name": "lean-browser-use-website",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" }
+}

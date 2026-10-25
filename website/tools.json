@@ -1,0 +1,112 @@
+[
+  {
+    "id": "skill",
+    "name": "Method skill and references",
+    "kind": "skill",
+    "does": "Chooses the first eligible route for public reads, repeated extraction, forms and logged-in pages. The focused references cover context cost, packets, route choice, profile handoff, runner rules, offline drafting, verification, cleanup and recovery. Main prepares the job and checks evidence; the fresh runner executes it, with a cheap helper optional for eligible public reads.",
+    "commands": [],
+    "source": ["skills/lean-browser-use/SKILL.md", "skills/lean-browser-use/references/cost-model.md", "skills/lean-browser-use/references/packet-principle.md", "skills/lean-browser-use/references/route-by-job.md", "skills/lean-browser-use/references/logged-in-run.md", "skills/lean-browser-use/references/runner-rules.md", "skills/lean-browser-use/references/draft-offline.md", "skills/lean-browser-use/references/verify.md", "skills/lean-browser-use/references/cleanup.md", "skills/lean-browser-use/references/failure-modes.md"],
+    "must_appear": ["Choose the first eligible route", "Main frames the job, delegates screen work, verifies evidence, and reports.", "# Cost model", "# Packet principle", "# Route by job", "# Logged-in run", "# Runner rules", "# Draft offline first", "# Verify the result", "# Cleanup with proof", "# Browser recovery"],
+    "keywords": { "primary": "browser use", "secondary": [] }
+  },
+  {
+    "id": "runner",
+    "name": "Fresh runner",
+    "kind": "agent",
+    "does": "Executes the supplied batch and reads named fields on the named tab in a fresh context. Selects only the deviceId provided in the brief, stops on an absent element, a guard block or the same error twice, and preserves partial evidence. Returns requested fields, evidence, action counts, blockers and checked cleanup for main to verify.",
+    "commands": [],
+    "source": ["agents/aun-browser-runner.md"],
+    "must_appear": ["name: aun-browser-runner", "Use one `browser_batch` for every predictable sequence.", "Paste the supplied read code unchanged.", "Call `select_browser` only with the exact `deviceId` named in the brief.", "The same error twice means stop and report", "Cleanup:"],
+    "keywords": { "primary": "subagent", "secondary": [] }
+  },
+  {
+    "id": "brief",
+    "name": "Packet briefs",
+    "kind": "templates",
+    "does": "Captures the ask, purpose, URLs, named fields, observable checks, granted paths, tool capabilities, supplied code, stop bounds and cleanup ownership before execution. The browser packet names the selected browser and tab; the public-read packet groups independent reads within one session. Both return per-page evidence and preserve the handoff for independent verification.",
+    "commands": [],
+    "source": ["briefs/browser-read.md", "briefs/helper-read.md"],
+    "must_appear": ["# Browser read packet", "# Cheap-helper read packet", "## Granted scope", "## Capabilities", "## Denied actions", "## Cleanup", "## Report contract", "## Exit parameters", "A subagent runner can execute the same packet"],
+    "keywords": { "primary": "subagent", "secondary": [] }
+  },
+  {
+    "id": "pick",
+    "name": "Pick guard",
+    "kind": "hook",
+    "does": "Records a successful browser selection for the current session and requires that pick before page actions. Probe calls remain available, a missing session id blocks, and closing a supported tab clears the pick. An explicit pane marker can record or reset a session pick. Malformed payloads and state failures allow calls, so doctor is needed to check guard health.",
+    "commands": ["node hooks/pick-guard.mjs --pick 'Work' --session 'demo'", "node hooks/pick-guard.mjs --reset --session 'demo'"],
+    "source": ["hooks/pick-guard.mjs", "hooks/common.mjs", "docs/guards.md"],
+    "must_appear": ["if (!p.session_id) return block(message);", "['select_browser', 'switch_browser']", "if (name === 'tabs_close_mcp')", "writeState(file, { picked: true })", "--pick", "--reset", "--session", "state failures allow the call"],
+    "keywords": { "primary": "claude-in-chrome", "secondary": [] }
+  },
+  {
+    "id": "retry",
+    "name": "Retry guard",
+    "kind": "hook",
+    "does": "Bounds cumulative waits per run and tab, repeated navigation to the same URL, fruitless reads and identical native errors. A targeted action, changed origin or changed read text resets relevant counters. Probe calls stay available; malformed input and state failures allow the call. A block returns its reason so main can choose a new approach within the brief.",
+    "commands": [],
+    "source": ["hooks/retry-guard.mjs", "hooks/common.mjs", "docs/guards.md"],
+    "must_appear": ["LBU_WAIT_CAP_SECONDS", "s.nativeCount >= 2", "s.fruitless >= 2", "s.navCount >= 2", "movedOrigin || targeted", "if (text !== s.text) s = empty();", "state failures allow the call"],
+    "keywords": { "primary": "hooks", "secondary": [] }
+  },
+  {
+    "id": "batch",
+    "name": "Batch nudge",
+    "kind": "hook",
+    "does": "Shares a streak across supported browser and native post-action events and suggests returning fields together when the streak reaches its threshold. A probe or browser_batch resets the streak. The suggestion is non-blocking and always allows the next call, including when input is malformed or state is unavailable.",
+    "commands": [],
+    "source": ["hooks/batch-nudge.mjs", "hooks/common.mjs", "docs/guards.md"],
+    "must_appear": ["p.hook_event_name !== 'PostToolUse'", "probe(p.tool_name) || shortName(p.tool_name) === 'browser_batch'", "state.streak === 3", "Chain these actions into one browser_batch; return the needed fields together.", "The nudge informs and always allows."],
+    "keywords": { "primary": "browser-automation", "secondary": [] }
+  },
+  {
+    "id": "reader",
+    "name": "Optional page reader",
+    "kind": "Python companion",
+    "does": "Compiles a public HTTP or HTTPS page into an extraction spec through a user-selected stdin compiler command. Later valid runs fetch and extract with code, without a model call; validation can trigger one self-heal, stored separately from shipped specs. Lists saved specs and supports a code-only run with --no-heal. Private targets and authenticated browsing use the selected browser route.",
+    "commands": ["reader/reader compile packages --url 'https://www.npmjs.com/package/{name}' --param name=react --want 'Name, version, license, repository URL'", "reader/reader run packages --param name=zod --no-heal", "reader/reader ls"],
+    "source": ["docs/reader.md", "reader/reader_runtime.py", "reader/reader_compile.py"],
+    "must_appear": ["READER_COMPILE_CMD", "commands.add_parser(\"compile\"", "commands.add_parser(\"run\"", "commands.add_parser(\"ls\"", "--no-heal", "save(healed, runtime=True)", "Only public HTTP and HTTPS pages are eligible.", "--url", "--param", "--want"],
+    "keywords": { "primary": "web scraping", "secondary": [] }
+  },
+  {
+    "id": "search",
+    "name": "Optional search companion",
+    "kind": "Python companion",
+    "does": "Queries a user-provided SearXNG instance and prints result titles, URLs and source engines, or JSON. Query flags select engines, categories, time range, language, page, result bound and timeout. The companion includes loopback container configuration and a setup script; the user supplies Docker and hosting. Search results identify pages to read and verify.",
+    "commands": ["bash searxng/deploy.sh", "searxng/searx 'public documentation' --json"],
+    "source": ["searxng/searx", "searxng/README.md", "docs/search.md"],
+    "must_appear": ["SEARXNG_URL", "p.add_argument(\"--json\"", "p.add_argument(\"--timeout\"", "return 0 if results else 1", "bash searxng/deploy.sh", "--engines", "--categories", "--time", "--lang", "--page", "--max-results"],
+    "keywords": { "primary": "searxng", "secondary": [] }
+  },
+  {
+    "id": "measure",
+    "name": "Token meter",
+    "kind": "command",
+    "does": "Walks local JSONL transcripts and counts distinct assistant message ids using supported browser tools. Keeps the largest input total for each id, including input, cache creation and cache read, and separates main from runner steps. Reports steps, median, p90, total context, reread share, eligible median ratio and skipped lines. Date and directory filters and JSON output leave message text and tool inputs private.",
+    "commands": ["npx lean-browser-use measure --dir ./transcripts --since 2026-10-25 --json"],
+    "source": ["src/measure.mjs", "src/cli.mjs", "docs/measure.md"],
+    "must_appear": ["const messages = new Map();", "candidate.total >= old.total", "isSidechain === true", "includes('subagents')", "reread_share", "skipped_lines", "--dir", "--since", "--json"],
+    "keywords": { "primary": "transcript", "secondary": [] }
+  },
+  {
+    "id": "doctor",
+    "name": "Doctor",
+    "kind": "command",
+    "does": "Checks Node, the install manifest, file hashes, registered hook paths and executable shims. Runs synthetic malformed-payload checks against the installed guards. Reports optional Python, page extraction, Docker, agent and local transcript capabilities, with JSON available. Missing optional tools are capabilities to add; a failed installation check produces a failing exit.",
+    "commands": ["npx lean-browser-use doctor --json"],
+    "source": ["src/doctor.mjs", "src/cli.mjs", "docs/install.md"],
+    "must_appear": ["add('node'", "add('manifest'", "sha256(fs.readFileSync(file))", "Hook registration missing.", "Executable; malformed payload fails open.", "capability:transcripts", "return result.ok ? 0 : 1", "--json"],
+    "keywords": { "primary": "Claude Code", "secondary": [] }
+  },
+  {
+    "id": "installer",
+    "name": "Installer and uninstall",
+    "kind": "commands",
+    "does": "Prints a plan, copies the method, runner, briefs and guards into the selected config directory, merges registrations and records install-time hashes. Optional companions are copied only when requested. Dry mode leaves files unchanged. Uninstall rechecks owned file hashes before removal, preserves edited files and the settings backup, removes owned registrations and empty created directories, and removes the manifest last.",
+    "commands": ["npx lean-browser-use install --dry", "npx lean-browser-use uninstall --dry"],
+    "source": ["src/install.mjs", "src/uninstall.mjs", "src/paths.mjs", "src/cli.mjs", "docs/install.md"],
+    "must_appear": ["Proceed? [Y/n]", "if (options.dry) return 0;", "manifest.json", "--with-reader", "--no-hooks", "Keep edited", "File changed during uninstall; preserved.", "Remove lean-browser-use/manifest.json last.", "--dry"],
+    "keywords": { "primary": "agent-skill", "secondary": [] }
+  }
+]
