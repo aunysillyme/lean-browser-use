@@ -61,13 +61,14 @@ for (const unsafe of ['../outside', '/tmp/outside', 'lean-browser-use/hooks/../.
   assert.equal(r.status, 2); assert.ok(fs.existsSync(file));
   assert.ok(fs.existsSync(path.join(cfg, 'agents/aun-browser-runner.md')));
 });
-test('symlink file and ancestor refused before removing anything', t => {
+test('managed symlink file and parent refused before removing anything', t => {
   for (const parent of [false, true]) {
     const cfg = installed(t); if (!cfg) return;
     const outside = path.join(temp(t), 'outside'); fs.mkdirSync(outside);
     const target = path.join(cfg, 'lean-browser-use/hooks', parent ? '' : 'pick-guard.sh');
     fs.rmSync(target, { recursive: true, force: true });
-    fs.symlinkSync(parent ? outside : path.join(outside, 'missing'), target);
+    try { fs.symlinkSync(parent ? outside : path.join(outside, 'missing'), target); }
+    catch (e) { if (['EPERM', 'EACCES', 'ENOSYS'].includes(e.code)) return t.skip(`Symlinks unavailable: ${e.code}`); throw e; }
     assert.equal(cli(['uninstall', '--claude-dir', cfg]).status, 2);
     assert.ok(fs.existsSync(path.join(cfg, 'agents/aun-browser-runner.md')));
   }
@@ -101,4 +102,55 @@ test('uninstall removes an empty config root created by a no-hooks install', t =
   const dry = cli(['uninstall', '--claude-dir', cfg, '--dry']);
   const result = cli(['uninstall', '--claude-dir', cfg]);
   assert.equal(result.status, 0); assert.equal(result.stdout, dry.stdout); assert.ok(!fs.existsSync(cfg));
+});
+
+test('install and uninstall through a symlinked config ancestor', async t => {
+  for (const existing of [false, true]) await t.test(existing ? 'existing config' : 'new nested config', t => {
+    const dir = temp(t); const actual = path.join(dir, 'actual'); const alias = path.join(dir, 'alias');
+    fs.mkdirSync(actual);
+    try { fs.symlinkSync(actual, alias, 'dir'); }
+    catch (e) { if (['EPERM', 'EACCES', 'ENOSYS'].includes(e.code)) return t.skip(`Symlinks unavailable: ${e.code}`); throw e; }
+    const cfg = path.join(alias, 'nested', '.claude');
+    const realCfg = path.join(actual, 'nested', '.claude');
+    if (existing) fs.mkdirSync(realCfg, { recursive: true });
+    const args = ['install', '--claude-dir', cfg, '--yes'];
+    const dry = cli([...args, '--dry']); assert.equal(dry.status, 0, dry.stderr);
+    assert.ok(!fs.existsSync(path.join(realCfg, 'lean-browser-use')));
+    const install = cli(args); assert.equal(install.status, 0, install.stderr); assert.equal(install.stdout, dry.stdout);
+    const settings = fs.readFileSync(path.join(realCfg, 'settings.json'), 'utf8');
+    assert.ok(settings.includes(realCfg)); assert.ok(!settings.includes(alias));
+    const again = cli(['install', '--claude-dir', realCfg, '--yes']); assert.equal(again.status, 0, again.stderr);
+    assert.equal(fs.readFileSync(path.join(realCfg, 'settings.json'), 'utf8'), settings);
+    const doctor = cli(['doctor', '--claude-dir', cfg, '--json']); assert.equal(doctor.status, 0, doctor.stdout);
+    const uninstall = cli(['uninstall', '--claude-dir', cfg]); assert.equal(uninstall.status, 0, uninstall.stderr);
+    assert.ok(!fs.existsSync(path.join(realCfg, 'lean-browser-use')));
+    assert.ok(fs.lstatSync(alias).isSymbolicLink());
+  });
+});
+test('uninstall accepts a symlinked ancestor of an existing installation', t => {
+  const cfg = installed(t); if (!cfg) return;
+  const alias = path.join(temp(t), 'alias');
+  try { fs.symlinkSync(path.dirname(cfg), alias, 'dir'); }
+  catch (e) { if (['EPERM', 'EACCES', 'ENOSYS'].includes(e.code)) return t.skip(`Symlinks unavailable: ${e.code}`); throw e; }
+  const result = cli(['uninstall', '--claude-dir', path.join(alias, path.basename(cfg))]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(!fs.existsSync(path.join(cfg, 'lean-browser-use')));
+});
+test('managed tree symlinks refuse install, doctor and uninstall', async t => {
+  for (const relative of ['skills', 'lean-browser-use/manifest.json', 'lean-browser-use/hooks/pick-guard.sh']) await t.test(relative, t => {
+    const cfg = installed(t); if (!cfg) return;
+    const target = path.join(cfg, relative); const outside = path.join(temp(t), 'original');
+    const isDir = fs.statSync(target).isDirectory();
+    fs.renameSync(target, outside);
+    try { fs.symlinkSync(outside, target, isDir ? 'dir' : 'file'); }
+    catch (e) { if (['EPERM', 'EACCES', 'ENOSYS'].includes(e.code)) return t.skip(`Symlinks unavailable: ${e.code}`); throw e; }
+    for (const [command, status] of [['install', 2], ['doctor', 1], ['uninstall', 2]]) {
+      const result = cli([command, '--claude-dir', cfg]);
+      assert.equal(result.status, status, result.stdout + result.stderr);
+      assert.match(result.stdout + result.stderr, /Refused symlink target/);
+      assert.ok(fs.lstatSync(target).isSymbolicLink());
+      assert.ok(fs.existsSync(outside));
+      assert.ok(fs.existsSync(path.join(cfg, 'agents/aun-browser-runner.md')));
+    }
+  });
 });

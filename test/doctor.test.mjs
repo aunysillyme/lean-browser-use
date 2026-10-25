@@ -24,3 +24,14 @@ test('doctor detects removed registration and missing manifest', t => {
   const result = cli(['doctor', '--claude-dir', cfg, '--json']); assert.equal(result.status, 1);
   assert.ok(JSON.parse(result.stdout).checks.some(c => c.id.startsWith('registration:') && c.status === 'error'));
 });
+test('doctor accepts a symlinked ancestor of an existing installation', t => {
+  const dir = temp(t); const actual = path.join(dir, 'actual'); const alias = path.join(dir, 'alias');
+  const cfg = path.join(actual, '.claude');
+  fs.mkdirSync(actual);
+  const install = cli(['install', '--claude-dir', cfg, '--yes']); assert.equal(install.status, 0, install.stderr);
+  try { fs.symlinkSync(actual, alias, 'dir'); }
+  catch (e) { if (['EPERM', 'EACCES', 'ENOSYS'].includes(e.code)) return t.skip(`Symlinks unavailable: ${e.code}`); throw e; }
+  const result = cli(['doctor', '--claude-dir', path.join(alias, '.claude'), '--json']);
+  assert.equal(result.status, 0, result.stdout);
+  assert.equal(JSON.parse(result.stdout).ok, true);
+});

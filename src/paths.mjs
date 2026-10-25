@@ -7,7 +7,11 @@ import { exists, refusal, readJSON } from './util.mjs';
 export const root = fileURLToPath(new URL('../', import.meta.url));
 export function configDir(options = {}) {
   if (options.project && options.claudeDir) throw refusal('Choose --project or --claude-dir.');
-  return path.resolve(options.claudeDir || (options.project ? '.claude' : process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude')));
+  let cfg = path.resolve(options.claudeDir || (options.project ? '.claude' : process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude')));
+  const missing = [];
+  // Resolve the selected root, keeping symlink checks inside its managed tree.
+  while (!exists(cfg)) { missing.unshift(path.basename(cfg)); cfg = path.dirname(cfg); }
+  return path.join(fs.realpathSync(cfg), ...missing);
 }
 export const manifestPath = cfg => path.join(cfg, 'lean-browser-use', 'manifest.json');
 export function noSymlinks(target) {
