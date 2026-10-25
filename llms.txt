@@ -1,0 +1,36 @@
+# lean-browser-use
+
+> The process and tools for token-lean browser work: a fresh subagent runner, bulk packets, guards, reusable extraction, and a local transcript meter.
+
+Install: `npx lean-browser-use`
+
+## Docs
+
+- [Installation, flags, health checks, and removal](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/install.md)
+- [How routing, packets, verification, and cleanup work](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/how-it-works.md)
+- [Guard rules, registration, and payload checks](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/guards.md)
+- [How to measure main and runner browser context](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/measure.md)
+
+## Reference
+
+- [Skill entrypoint and task routing](https://github.com/aunysillyme/lean-browser-use/blob/main/skills/lean-browser-use/SKILL.md)
+- [Route table with a complete subagent-only path](https://github.com/aunysillyme/lean-browser-use/blob/main/skills/lean-browser-use/references/route-by-job.md)
+- [Profile selection and logged-in tab handoff](https://github.com/aunysillyme/lean-browser-use/blob/main/skills/lean-browser-use/references/logged-in-run.md)
+- [Runner execution and evidence contract](https://github.com/aunysillyme/lean-browser-use/blob/main/agents/aun-browser-runner.md)
+- [Browser read packet template](https://github.com/aunysillyme/lean-browser-use/blob/main/briefs/browser-read.md)
+- [Cheap-helper read packet template](https://github.com/aunysillyme/lean-browser-use/blob/main/briefs/helper-read.md)
+- [Repository commands and tested rules](https://github.com/aunysillyme/lean-browser-use/blob/main/AGENTS.md)
+- [Package measurements and reproduction commands](https://github.com/aunysillyme/lean-browser-use/blob/main/proof/results.json)
+- [Public concept names and provenance](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/PROVENANCE.md)
+
+## Optional
+
+- [Compile-once reader setup and command contract](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/reader.md)
+- [SearXNG setup and link discovery](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/search.md)
+- [Upstream contributions and licenses](https://github.com/aunysillyme/lean-browser-use/blob/main/CREDITS.md)
+- [Contribution workflow and useful changes](https://github.com/aunysillyme/lean-browser-use/blob/main/CONTRIBUTING.md)
+
+## Part of a set
+
+- [lean-browser-use: browser method, runner, packets, guards, reader, and meter](https://github.com/aunysillyme/lean-browser-use/blob/main/README.md)
+- [lean-computer-use: Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command](https://github.com/aunysillyme/lean-computer-use)

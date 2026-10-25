@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible failure in the method or tools.
+title: "bug: "
+body:
+  - type: markdown
+    attributes:
+      value: "Share sanitized steps and output. Report vulnerabilities through the repository Security tab."
+  - type: input
+    id: version
+    attributes:
+      label: Package and runtime versions
+      description: Include lean-browser-use, Node, and relevant optional tools.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the exact command and a minimal safe fixture when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Observed behavior
+      description: Include sanitized output and exit status. Remove secrets and personal paths.
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Observable success check
+      description: What exact result would prove this is fixed?
+    validations:
+      required: true
