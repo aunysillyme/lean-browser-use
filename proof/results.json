@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "rows": [
+    {
+      "id": "runtime_dependencies",
+      "claim": "Runtime dependencies",
+      "value": 0,
+      "unit": "dependencies",
+      "measured": "2026-10-25",
+      "expires": "2027-01-25",
+      "how": "node scripts/proof.mjs"
+    },
+    {
+      "id": "tests_passing",
+      "claim": "Passing Node tests, including Python suite checks",
+      "value": 84,
+      "unit": "tests",
+      "measured": "2026-10-25",
+      "expires": "2027-01-25",
+      "how": "node --test test/"
+    },
+    {
+      "id": "tests_failing",
+      "claim": "Failing Node tests at measurement time",
+      "value": 0,
+      "unit": "tests",
+      "measured": "2026-10-25",
+      "expires": "2027-01-25",
+      "how": "node --test test/"
+    },
+    {
+      "id": "guard_rules",
+      "claim": "Blocking guard rules verified by the suite",
+      "value": 7,
+      "unit": "rules",
+      "measured": "2026-10-25",
+      "expires": "2027-01-25",
+      "how": "node --test test/"
+    },
+    {
+      "id": "guard_ms_median",
+      "claim": "Median wall time per guard via its shim over 50 calls",
+      "value": {
+        "pick-guard": 22.709,
+        "retry-guard": 22.176,
+        "batch-nudge": 22.703
+      },
+      "unit": "ms",
+      "measured": "2026-10-25",
+      "expires": "2027-01-25",
+      "how": "node scripts/proof.mjs"
+    },
+    {
+      "id": "install_ms",
+      "claim": "Install wall time into a new temporary config directory",
+      "value": 37.171,
+      "unit": "ms",
+      "measured": "2026-10-25",
+      "expires": "2027-01-25",
+      "how": "node scripts/proof.mjs"
+    },
+    {
+      "id": "tarball_bytes",
+      "claim": "Packed tarball size reported before this proof refresh",
+      "value": 77443,
+      "unit": "bytes",
+      "measured": "2026-10-25",
+      "expires": "2027-01-25",
+      "how": "npm pack --dry-run --json"
+    },
+    {
+      "id": "tarball_files",
+      "claim": "Files in the packed tarball",
+      "value": 74,
+      "unit": "files",
+      "measured": "2026-10-25",
+      "expires": "2027-01-25",
+      "how": "npm pack --dry-run --json"
+    }
+  ]
+}

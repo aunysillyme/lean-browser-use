@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { root } from './paths.mjs';
+import { install } from './install.mjs';
+import { uninstall } from './uninstall.mjs';
+import { doctor } from './doctor.mjs';
+
+export const usage = `lean-browser-use [install] [--claude-dir DIR] [--project] [--no-hooks] [--with-reader] [--dry] [--yes]
+lean-browser-use uninstall [--claude-dir DIR] [--dry] (also --uninstall)
+lean-browser-use doctor [--claude-dir DIR] [--json]
+lean-browser-use measure [--dir DIR] [--since YYYY-MM-DD] [--json]
+--help  --version
+Exit codes: 0 ok; 1 check failed; 2 usage or refused target; 3 edited files kept.
+Requirements: Node >=20; optional Python 3.
+Guard defaults: wait cap 60 seconds; stop on attempt 3; element wait 10 seconds.
+Install budgets: 400000 bytes packed; 5 seconds. Skill budgets: 6144 bytes; 120 lines.`;
+export async function main(args = process.argv.slice(2)) {
+  const options = {};
+  let command = 'install', commandSet = false;
+  const values = { '--claude-dir': 'claudeDir', '--dir': 'dir', '--since': 'since' };
+  const booleans = { '--project': 'project', '--no-hooks': 'noHooks', '--with-reader': 'withReader', '--dry': 'dry', '--yes': 'yes', '--json': 'json' };
+  const fail = message => { console.error(`${message}\n${usage}`); return 2; };
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--help' || arg === '-h') { console.log(usage); return 0; }
+    if (arg === '--version') { console.log(JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version); return 0; }
+    if (arg in values) {
+      if (!args[i + 1] || args[i + 1].startsWith('--')) return fail(`Value required for ${arg}.`);
+      options[values[arg]] = args[++i];
+    } else if (arg in booleans) options[booleans[arg]] = true;
+    else if (['install', 'uninstall', 'doctor', 'measure', '--uninstall'].includes(arg) && !commandSet) { command = arg.replace(/^--/, ''); commandSet = true; }
+    else return fail('Unknown command or option.');
+  }
+  const permitted = { install: ['claudeDir', 'project', 'noHooks', 'withReader', 'dry', 'yes'], uninstall: ['claudeDir', 'project', 'dry'], doctor: ['claudeDir', 'project', 'json'], measure: ['claudeDir', 'dir', 'since', 'json'] };
+  if (Object.keys(options).some(k => !permitted[command].includes(k))) return fail('Option does not apply to this command.');
+  try {
+    if (command === 'install') return await install(options);
+    if (command === 'uninstall') return uninstall(options);
+    if (command === 'doctor') return doctor(options);
+    const { measure } = await import('./measure.mjs'); return measure(options);
+  } catch (e) { console.error(e.exitCode === 2 ? e.message : 'Operation failed; check target permissions and file integrity.'); return e.exitCode || 2; }
+}
