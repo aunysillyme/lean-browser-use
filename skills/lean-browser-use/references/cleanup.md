@@ -2,7 +2,7 @@
 
 Record resource ownership in the brief before acting: existing tabs, run-created tabs, process IDs, scratch paths, and the evidence handoff path. Existing user resources stay open. Never run a command that closes the user's whole browser profile.
 
-At the end, close only tabs this run created or that the brief explicitly assigns to it. Close them once after the work finishes. A tab close clears the browser pick. Close a Browser pane only when this run opened it and it is unused by other work.
+At the end, close only tabs this run created or that the brief explicitly assigns to it. Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick, so close run tabs once at the end. Closing a tab in the in-app Browser pane keeps its pick. Close a Browser pane only when this run opened it and it is unused by other work.
 
 Stop only processes started by the run, using recorded process IDs. Check each owned process with a PID-specific `ps` or `pgrep` probe; avoid broad process-name kills. Delete only run-owned scratch files. Keep evidence at the main-owned handoff path until main finishes verification, then let main remove it.
 

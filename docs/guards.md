@@ -10,7 +10,7 @@ The guards turn common mistakes into a prompt to choose a better next step. They
 | aun-retry-guard | Stops repeated waits, reloads, and fruitless reads per run and tab. |
 | aun-batch-nudge | Suggests a `browser_batch` after a streak of 3 single actions. |
 
-The pick guard records successful `select_browser` or `switch_browser` results. Page reads count as actions. Closing a tab clears the pick. A missing session id blocks because a pick needs a session key. A runner uses its own session and may reselect only the deviceId in its brief. For the in-app Browser pane, record its explicitly selected target with:
+The pick guard records successful `select_browser` or `switch_browser` results. Page reads count as actions. Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick on PostToolUse, so close run tabs once at the end. Closing a tab in the in-app Browser pane keeps its pick. A missing session id blocks because a pick needs a session key. A runner uses its own session and may reselect only the deviceId in its brief. For the in-app Browser pane, record its explicitly selected target with:
 
 ```sh
 node hooks/pick-guard.mjs --pick '<profile label>' --session '<session id>'
@@ -29,7 +29,7 @@ The installer merges [hooks.settings.json](../hooks/hooks.settings.json), replac
 | --- | --- | --- |
 | PreToolUse | Browser tools | `pick-guard.sh` |
 | PreToolUse | Browser and native tools | `retry-guard.sh` |
-| PostToolUse | Chrome select, switch, and tab close | `pick-guard.sh` |
+| PostToolUse | Chrome extension `select_browser`, `switch_browser`, and `tabs_close_mcp` (clears the pick; close run tabs once at the end); the in-app pane keeps its pick | `pick-guard.sh` |
 | PostToolUse | Browser and native tools | `retry-guard.sh` |
 | PostToolUse | Browser and native tools | `batch-nudge.sh`, timeout 10 s |
 

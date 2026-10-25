@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { root, cli } from './helpers.mjs';
 import { walk } from '../src/util.mjs';
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
@@ -104,7 +105,7 @@ test('README quantities are backed by proof or captured program output', t => {
 });
 test('README, docs and llms links resolve and headings name useful content', t => {
   if (!available(t, ['README.md', 'llms.txt', 'docs/install.md'])) return;
-  const files = ['README.md', 'llms.txt', ...walk(path.join(root, 'docs')).filter(p => p.endsWith('.md')).map(p => path.relative(root, p))];
+  const files = ['README.md', 'RELEASING.md', 'REPO_SETTINGS.md', 'llms.txt', ...walk(path.join(root, 'docs')).filter(p => p.endsWith('.md')).map(p => path.relative(root, p))];
   for (const file of files) {
     const text = read(file);
     for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
@@ -134,6 +135,79 @@ test('runner frontmatter declares its name, description, tools and model', t => 
   const front = read(file).match(/^---\n([\s\S]*?)\n---\n/); assert.ok(front);
   for (const key of ['name', 'description', 'tools', 'model']) assert.match(front[1], new RegExp(`^${key}: .+`, 'm'));
   assert.match(front[1], /^name: aun-browser-runner$/m); assert.match(front[1], /^model: haiku$/m);
+});
+
+test('provenance distinguishes generated measurements from static benchmark rows', () => {
+  const text = read('docs/PROVENANCE.md');
+  assert.match(text, /Generated rows carry a command, measurement date, and expiry\./);
+  assert.match(text, /20 paired benchmark rows \(ids starting `paired_`\) are static records copied or derived from/);
+  assert.match(text, /proof\/benchmark\.json/);
+  assert.match(text, /carry the measurement date and no expiry by the owner's ruling, and are never re-measured by the proof script/);
+  assert.doesNotMatch(text, /(?:every|each|per) row[^.]*expir|expir[^.]*per row/i);
+  const paired = JSON.parse(read('proof/results.json')).rows.filter(row => row.id.startsWith('paired_'));
+  assert.equal(paired.length, 20);
+  assert.ok(paired.every(row => row.measured && !row.expires));
+  assert.match(read('docs/measure.md'), /The twenty paired benchmark rows/);
+});
+
+test('pick reset docs match the registered Chrome extension close hook', () => {
+  const settings = JSON.parse(read('hooks/hooks.settings.json'));
+  const pick = settings.hooks.PostToolUse.find(entry => entry.hooks.some(hook => hook.command.includes('pick-guard.sh')));
+  assert.ok(pick.matcher.split('|').includes('mcp__claude-in-chrome__tabs_close_mcp'));
+  for (const file of ['docs/guards.md', 'skills/lean-browser-use/references/cleanup.md', 'skills/lean-browser-use/references/logged-in-run.md']) {
+    const text = read(file);
+    assert.match(text, /Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick/);
+    assert.match(text, /close run tabs once at the end/);
+    assert.match(text, /Closing a tab in the in-app Browser pane keeps its pick/);
+  }
+  assert.match(read('docs/guards.md'), /\| PostToolUse \| Chrome extension `select_browser`, `switch_browser`, and `tabs_close_mcp`/);
+});
+
+test('release workflow requires approval, pinned actions and matching versions', () => {
+  const text = read('.github/workflows/release.yml');
+  assert.match(text, /^name: release$/m);
+  assert.match(text, /^    tags: \['v\*'\]$/m);
+  assert.match(text, /^  contents: read$/m);
+  assert.match(text, /^  id-token: write$/m);
+  assert.match(text, /^concurrency:\n  group: release-\$\{\{ github.ref \}\}\n  cancel-in-progress: false$/m);
+  assert.match(text, /^  publish:\n    runs-on: ubuntu-latest\n    environment: release$/m);
+  assert.doesNotMatch(text, /\b(?:NODE_AUTH_TOKEN|NPM_TOKEN)\b/);
+  const actions = [...text.matchAll(/uses: ([^\s]+) # v[^\n]+/g)].map(match => match[1]);
+  assert.deepEqual(actions, [
+    'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1',
+    'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1'
+  ]);
+  assert.equal([...text.matchAll(/uses:/g)].length, actions.length);
+  assert.match(text, /node-version: 24\n          registry-url: https:\/\/registry\.npmjs\.org/);
+  assert.match(text, /npm install -g npm@12\.1\.0\n          npm --version/);
+  const versionStep = text.match(/- name: tag and package\.json must name the same version\n        run: \|\n([\s\S]*?)(?=      -)/);
+  assert.ok(versionStep, 'Tag/version check must precede tests and publishing');
+  assert.ok(versionStep[1].includes('tag="${GITHUB_REF_NAME#v}"'));
+  assert.ok(versionStep[1].includes("require('./package.json').version"));
+  assert.ok(versionStep[1].includes('test "$tag" = "$pkg"'));
+  const version = JSON.parse(read('package.json')).version;
+  for (const [tag, expected] of [[`v${version}`, 0], ['v0.0.0-mismatch', 1]]) {
+    const result = spawnSync('sh', ['-c', versionStep[1]], { cwd: root, env: { ...process.env, GITHUB_REF_NAME: tag }, encoding: 'utf8' });
+    assert.equal(result.status, expected, result.stderr);
+  }
+  assert.match(text, /      - run: npm test\n      - run: npm run check\n      - run: npm publish --provenance --access public\n$/);
+});
+
+test('repository settings prepare the public flip and release environment', () => {
+  const text = read('REPO_SETTINGS.md');
+  const pkg = JSON.parse(read('package.json'));
+  assert.ok(!text.includes(String.fromCodePoint(0x2014)));
+  assert.ok(text.includes(`Description: ${pkg.description}\n`));
+  assert.ok(text.includes(`Homepage: ${pkg.homepage}\n`));
+  const topics = ['ai-agents', 'browser-automation', 'browser-use', 'claude-code', 'claude-in-chrome', 'context-window', 'hooks', 'llm-cost', 'mcp', 'subagent', 'token-efficiency', 'web-scraping'];
+  assert.deepEqual(text.match(/^Topics: (.+)$/m)[1].split(', '), topics);
+  assert.deepEqual(pkg.keywords.filter(keyword => topics.includes(keyword)).sort(), topics);
+  assert.deepEqual(JSON.parse(text.match(/^\{"names":\[.+\]\}$/m)[0]).names, topics);
+  for (const value of ['REPO=aunysillyme/lean-browser-use', 'gh api users/aunysillyme --jq .id', 'gh api --method PUT "repos/$REPO/environments/release"', 'gh api --method POST "repos/$REPO/environments/release/deployment-branches-policies"', "-f name='v*' -f type=tag", '"reviewers":[{"type":"User","id":$REVIEWER_ID}]', '"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}', 'Workflow filename | release.yml', 'Environment | release', 'npm view lean-browser-use dist.integrity']) assert.ok(text.includes(value), value);
+  const rows = text.slice(text.indexOf('| Setting |'), text.indexOf('Set the repository')).trim().split('\n').slice(2);
+  assert.ok(rows.length >= 8);
+  for (const row of rows) assert.ok(row.endsWith('| to be read back after the flip |'), row);
+  assert.match(read('RELEASING.md'), /\[repository settings\]\(REPO_SETTINGS\.md\)/);
 });
 
 test('historical saving figures stay outside the public tree', () => {

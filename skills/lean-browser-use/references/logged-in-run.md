@@ -20,4 +20,4 @@ The runner uses the named tab directly and confirms the expected account from a 
 
 ## Verify, then close
 
-Main re-reads saved evidence before the cleanup owner closes run-created tabs. The runner preserves evidence at the handoff path. Close tabs once at the end: a tab close clears the pick. Preserve the user's existing tabs and whole browser profile. Finish with the checks in [cleanup](cleanup.md).
+Main re-reads saved evidence before the cleanup owner closes run-created tabs. The runner preserves evidence at the handoff path. Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick, so close run tabs once at the end. Closing a tab in the in-app Browser pane keeps its pick. Preserve the user's existing tabs and whole browser profile. Finish with the checks in [cleanup](cleanup.md).
