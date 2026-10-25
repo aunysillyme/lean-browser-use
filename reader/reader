@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""Compile a public page once, then extract its fields as code."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from reader_base import *
+from reader_crawl import *
+from reader_fetch import *
+from reader_extract import *
+from reader_compile import *
+from reader_runtime import *
+
+if __name__ == "__main__":
+    sys.exit(main())

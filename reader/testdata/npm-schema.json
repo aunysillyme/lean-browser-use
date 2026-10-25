@@ -1,0 +1,14 @@
+{
+  "type": "embedded_json",
+  "source": "__context__",
+  "rows": "context",
+  "paths": {
+    "name": "packument.name",
+    "latest_version": "packument.dist-tags.latest",
+    "weekly_downloads": "downloads.weeklyDownloads",
+    "license": "packageVersion.license",
+    "repository_url": "packageVersion.repository.url"
+  },
+  "required": ["name", "latest_version", "weekly_downloads", "license", "repository_url"],
+  "transforms": {"weekly_downloads": "number"}
+}

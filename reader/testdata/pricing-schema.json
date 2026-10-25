@@ -1,0 +1,24 @@
+{
+  "type": "css",
+  "schema": {
+    "name": "claude_pricing",
+    "baseSelector": "#content-container table:has(colgroup[span=\"3\"]) > tbody > tr:has(td[rowspan]):not(:has(button[aria-label*=\"Retired\"]))",
+    "fields": [
+      {"name": "model", "selector": "td:nth-child(1)", "type": "text"},
+      {"name": "input", "selector": "td:nth-child(2)", "type": "text"},
+      {"name": "output", "selector": "td:nth-child(3)", "type": "text"},
+      {"name": "cache_write_5m", "selector": "td:nth-child(4)", "type": "text"},
+      {"name": "cache_write_1h", "selector": "td:nth-child(5)", "type": "text"},
+      {"name": "cache_read", "selector": "td:nth-child(6)", "type": "text"}
+    ]
+  },
+  "required": ["model", "input", "output"],
+  "transforms": {
+    "model": {"regex": "(Claude\\s+\\w+\\s+\\d+(?:\\.\\d+)?)"},
+    "input": {"regex": "\\$([\\d.]+)", "number": true},
+    "output": {"regex": "\\$([\\d.]+)", "number": true},
+    "cache_write_5m": {"regex": "\\$([\\d.]+)", "number": true},
+    "cache_write_1h": {"regex": "\\$([\\d.]+)", "number": true},
+    "cache_read": {"regex": "\\$([\\d.]+)", "number": true}
+  }
+}

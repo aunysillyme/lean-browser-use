@@ -1,0 +1,21 @@
+# Loopback binding keeps this private. To expose it deliberately, bind a private
+# interface and add access controls for that network before starting the container.
+name: searxng
+
+services:
+  core:
+    container_name: searxng-core
+    image: docker.io/searxng/searxng:2026.10.19-81371861f
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8888:8080"
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?run through deploy.sh}
+      FORCE_OWNERSHIP: "false"
+    volumes:
+      - ./core-config/:/etc/searxng/:ro
+      - core-data:/var/cache/searxng/
+    mem_limit: 320m
+
+volumes:
+  core-data:

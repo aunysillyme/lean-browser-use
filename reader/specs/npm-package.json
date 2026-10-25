@@ -1,0 +1,67 @@
+{
+  "type": "embedded_json",
+  "source": "__context__",
+  "rows": "context",
+  "paths": {
+    "name": "packument.name",
+    "latest_version": "packument.version",
+    "weekly_downloads": "downloads.-1.downloads",
+    "license": "packument.license",
+    "repository_url": "packument.repository"
+  },
+  "required": [
+    "name",
+    "latest_version",
+    "weekly_downloads",
+    "license",
+    "repository_url"
+  ],
+  "transforms": {
+    "weekly_downloads": "number"
+  },
+  "example": {
+    "name": "react",
+    "latest_version": "19.2.0",
+    "weekly_downloads": 42000000,
+    "license": "MIT",
+    "repository_url": "git+https://github.com/facebook/react.git"
+  },
+  "name": "npm-package",
+  "url_template": "https://www.npmjs.com/package/{name}",
+  "params": {
+    "name": "react"
+  },
+  "want": "Return package name, latest version, numeric weekly downloads, license, and repository URL.",
+  "sample_output": [
+    {
+      "name": "react",
+      "latest_version": "19.2.0",
+      "weekly_downloads": 42000000,
+      "license": "MIT",
+      "repository_url": "git+https://github.com/facebook/react.git"
+    }
+  ],
+  "compiled_at": "2026-10-23T09:14:06+00:00",
+  "compiled_by": "python3 reader/testdata/compile_stub.py",
+  "fetch_method": "crwl",
+  "crawl4ai_version": "0.9.2",
+  "page_hash": "92237ff233695cbf21545d7fddf95cc51981e1f2874e26310c8522e2eb8d126d",
+  "last_ok": "2026-10-23T09:14:06+00:00",
+  "healed_at": null,
+  "verification": {
+    "status": "live_zod_snapshot",
+    "url": "https://www.npmjs.com/package/zod",
+    "verified_at": "2026-10-23T09:45:06+00:00",
+    "page_hash": "9c860f2f365e31322abab76710ab3c85694cef021d13b5c8fc1e4ec61c820890",
+    "sample_output": [
+      {
+        "name": "zod",
+        "latest_version": "4.6.7",
+        "weekly_downloads": 144621339,
+        "license": "MIT",
+        "repository_url": "https://github.com/colinhacks/zod"
+      }
+    ],
+    "note": "Paths manually corrected against the public zod HTML fetched with bundled crwl -o all. Original compiled_by and compile sample retained. React live fetch and a real compile lane were not rerun in this fix."
+  }
+}
