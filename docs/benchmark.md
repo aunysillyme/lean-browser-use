@@ -22,24 +22,26 @@ The meter counts input-context tokens on browser steps: fresh input tokens plus 
 
 ## Everything each run read
 
-| Measurement | Plain session | Skill and runner |
+Two runs, both measured the same way on 2026-10-25. Every model call counts: setup, reading the skill and brief files, dispatching, verifying and reporting. Context tokens are fresh input plus cache creation plus cache read; output tokens are separate.
+
+| | Run 1: 9-step read (Hacker News and example.com, in-app Browser pane) | Run 2: small task (one page, Claude in Chrome) |
 | --- | --- | --- |
-| All calls | Unavailable | Unavailable |
-| Fresh input tokens | Unavailable | Unavailable |
-| Cache-creation input tokens | Unavailable | Unavailable |
-| Cache-read input tokens | Unavailable | Unavailable |
-| Total input-context tokens | 2,657,290 | 2,846,792 |
-| Output tokens (separate) | Unavailable | Unavailable |
+| Browser steps, plain session | 8 | 4 |
+| Whole-run context tokens, plain session | 2,657,290 (14 calls) | 1,133,195 (6 calls) |
+| Browser steps with the package | 1 main + 9 runner | 1 main + 4 runner |
+| Whole-run context tokens with the package | 2,846,792 (11 main + 12 runner calls) | 1,241,361 (5 main + 5 runner calls) |
+| Median per browser step, plain / runner | 188,487 / 59,725 (3.16x) | 189,084 / 58,057 (3.26x) |
+| Whole run, plain / with the package | 0.93 (7.13% more with the package) | 0.91 (9.55% more with the package) |
 
-The supplied whole-run totals include all calls. The call counts, fresh/cache breakdown, output counts and runner-arm model split were not supplied; their fields are `null` in the saved record. The runner arm read 7.13% more context overall (plain / runner: 0.93).
+Run 1 detail: plain 28 fresh, 129,118 cache-creation, 2,528,144 cache-read, 2,188 output; with the package 46 fresh, 195,388 cache-creation, 2,651,358 cache-read, 5,905 output (the runner's 712,461 context tokens ran on Claude Haiku 5.5, the main session's 2,134,331 on Claude Sonnet 5.5). Run 2: native 734 output; with the package 2,846 output.
 
-Ratios divide plain by runner and round to two decimal places. [proof/benchmark.json](../proof/benchmark.json) is the hand-recorded source. `npm run proof` appends ten rows copied or derived from it to [proof/results.json](../proof/results.json). Those rows retain this measurement date, carry no expiry, and are never re-measured by the proof script.
+Ratios divide plain by the package arm and round to two decimal places. [proof/benchmark.json](../proof/benchmark.json) is the hand-recorded source. `npm run proof` appends fourteen rows copied or derived from it to [proof/results.json](../proof/results.json). Those rows retain this measurement date, carry no expiry, and are never re-measured by the proof script.
 
-## When it pays off
+## Where the saving appears
 
-Moving a browser step out of the main session saves context per step: the medians here differ by 128,762 tokens. The main session still re-reads its whole context on every call, about 190K tokens per call in this comparison. Setup, delegation and reporting can outweigh browser-step savings on a short task, as the whole-run totals show.
+Per browser step, measured twice: the runner re-reads about 3x fewer tokens (128,762 fewer in run 1). Over a whole run, the package used more tokens in both measured runs. The main session still makes its own calls (loading the skill, reading the brief template, dispatching, verifying), each re-reading its whole context, about 190K tokens per call in this setup, and the runner adds a fresh start. On short tasks those calls outweigh the per-step saving.
 
-The supplied rough break-even is about 16 browser steps (15.54, flagged `estimate: true` in the saved record). It assumes similar session sizes and call overhead, and its calculation remains unverified until the detailed call counts are available. More browser steps moved into the runner can increase the saving; this is an estimate for planning, with no guaranteed saving or currency cost.
+Not measured: a longer job. No run here had more than 9 browser steps, so where the whole-run total drops below the plain session is unmeasured. A rough break-even of about 16 browser steps (15.54, flagged `estimate: true` in the saved record) comes from extending the two data points and assumes similar session sizes and call overhead. Treat it as a planning guess, with no guaranteed saving and no currency cost.
 
 ## Reproduce a paired comparison
 
@@ -66,6 +68,3 @@ This is one paired run of one task on public pages. Results move with the model,
 
 Tokens re-read are not a price list: cached tokens and fresh input tokens can have different prices. Cost varies by model, and this ballpark guarantees no particular saving. Measure your own similar work to see what changes for you.
 
-## A second, smaller run
-
-A one-page task through Claude in Chrome (open example.com, read the title and first sentence, close the tab) gave the same picture. Native Claude in Chrome: 6 calls, 1,133,195 context tokens, 4 browser steps at about 189K each. With the package: 10 calls (5 main session, 5 runner), 1,241,361 context tokens, 1 main-session browser step plus 4 runner steps at about 58K each (3.26x fewer per step), 9.55% more tokens overall. A task this short does not repay the main session's own calls; the figures are recorded in [proof/benchmark.json](../proof/benchmark.json) under `small_task`.

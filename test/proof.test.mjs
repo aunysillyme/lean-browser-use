@@ -40,8 +40,15 @@ test('paired benchmark rows match the saved run, whole-run totals and derived es
     paired_run_tokens_plain: plain.whole_run.context_total,
     paired_run_tokens_runner_arm: runner.whole_run.context_total,
     paired_run_ratio: Number((plain.whole_run.context_total / runner.whole_run.context_total).toFixed(2)),
-    paired_break_even_steps: benchmark.derived.break_even_browser_steps
+    paired_break_even_steps: benchmark.derived.break_even_browser_steps,
+    paired_small_run_tokens_plain: benchmark.small_task.test_a_native.context_total,
+    paired_small_run_tokens_runner_arm: benchmark.small_task.test_b_package.context_total,
+    paired_small_run_ratio: Number((benchmark.small_task.test_a_native.context_total / benchmark.small_task.test_b_package.context_total).toFixed(2)),
+    paired_small_step_ratio: Number((benchmark.small_task.test_a_native.browser_steps.median / benchmark.small_task.test_b_package.browser_steps.runner_median).toFixed(2))
   };
+  const small = benchmark.small_task;
+  assert.equal(small.test_b_package.context_total, small.test_b_package.main.context_total + small.test_b_package.runner.context_total);
+  assert.equal(small.derived.whole_run_delta_percent, Number(((small.test_b_package.context_total / small.test_a_native.context_total - 1) * 100).toFixed(2)));
   assert.equal(benchmark.derived.whole_run_ratio, expected.paired_run_ratio);
   assert.equal(benchmark.derived.delta_percent, Number(((runner.whole_run.context_total / plain.whole_run.context_total - 1) * 100).toFixed(2)));
   assert.equal(benchmark.derived.break_even_browser_steps, 15.54);
@@ -51,7 +58,7 @@ test('paired benchmark rows match the saved run, whole-run totals and derived es
     if ([run.fresh_input, run.cache_creation, run.cache_read].every(Number.isInteger)) assert.equal(run.context_total, run.fresh_input + run.cache_creation + run.cache_read);
   }
   const rows = proof.rows.filter(r => r.id.startsWith('paired_'));
-  assert.equal(rows.length, 10);
+  assert.equal(rows.length, 14);
   for (const [id, value] of Object.entries(expected)) {
     const row = rows.find(r => r.id === id);
     assert.ok(row, id); assert.equal(row.value, value, id);
@@ -62,4 +69,13 @@ test('paired benchmark rows match the saved run, whole-run totals and derived es
     if (id === 'paired_break_even_steps') assert.match(row.claim, /estimat/i);
     if (id.startsWith('paired_task_')) assert.match(row.claim, /browser-step tokens/);
   }
+});
+
+test('docs/benchmark.md states the recorded whole-run totals and carries no unsupplied-data text', () => {
+  const benchmark = JSON.parse(fs.readFileSync(path.join(root, 'proof/benchmark.json'), 'utf8'));
+  const doc = fs.readFileSync(path.join(root, 'docs/benchmark.md'), 'utf8');
+  const totals = [benchmark.arms.plain.whole_run.context_total, benchmark.arms.runner.whole_run.context_total, benchmark.small_task.test_a_native.context_total, benchmark.small_task.test_b_package.context_total];
+  for (const n of totals) assert.ok(doc.includes(n.toLocaleString('en-US')), String(n));
+  assert.doesNotMatch(doc, /Unavailable|were not supplied|not supplied/);
+  assert.equal(JSON.stringify(benchmark).includes('null'), false);
 });
