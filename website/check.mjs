@@ -13,7 +13,7 @@ const rootDir = fileURLToPath(new URL('..', import.meta.url));
 const origin = 'https://lean-browser-use.aunysillyme.dev';
 const pageFile = route => `${route.slice(1)}index.html`;
 const twinFile = route => `${route.slice(1)}index.md`;
-const assets = ['site.css', 'site.js', 'poster.png', 'social-preview.svg', 'social-preview.png'];
+import { assets, csp, fontLink, fontFile } from './resources.mjs';
 const read = (root, file) => readFileSync(join(root, file), 'utf8');
 const decode = text => text.replace(/&(?:amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/gi, entity => {
   const named = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'" };
@@ -161,6 +161,8 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
     const meta = name => tags('meta').filter(node => (node.attrs.name || node.attrs.property || '').toLowerCase() === name);
     const links = rel => tags('link').filter(node => (node.attrs.rel || '').split(/\s+/).includes(rel));
     const h1s = tags('h1');
+    const policy = tags('meta').filter(node => node.attrs['http-equiv']?.toLowerCase() === 'content-security-policy');
+    check(policy.length === 1 && policy[0].attrs.content === csp, file, 'resource CSP differs from allowed policy');
     check(h1s.length === 1, file, 'expected one H1');
     const titles = tags('title');
     check(titles.length === 1 && text(titles[0].inner).length > 0 && text(titles[0].inner).length <= 60, file, 'title must have 1 to 60 characters');
@@ -194,7 +196,9 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
       for (const [attr, value] of Object.entries(node.attrs)) {
         if (!/(?:https?:)?\/\//i.test(value)) continue;
         const rels = (node.attrs.rel || '').split(/\s+/);
-        const allowed = node.name === 'a' && attr === 'href'
+        const allowed = fontLink(node) && attr === 'href'
+          || node.name === 'meta' && attr === 'content' && node.attrs['http-equiv']?.toLowerCase() === 'content-security-policy' && value === csp
+          || node.name === 'a' && attr === 'href'
           || node.name === 'link' && attr === 'href' && rels.some(rel => ['canonical', 'describedby', 'alternate'].includes(rel))
           || node.name === 'meta' && attr === 'content' && /^(?:og:|twitter:)/.test(node.attrs.property || node.attrs.name || '');
         // Local resources also use absolute site URLs.
@@ -210,11 +214,14 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
           if (url.origin === origin) resolveLink(file, value, { anchor: node.name !== 'link' });
           else {
             const rel = (node.attrs.rel || '').split(/\s+/);
-            const permitted = attr === 'href' && (node.name === 'a' || node.name === 'link' && rel.some(value => ['canonical', 'describedby', 'alternate'].includes(value)));
+            const permitted = attr === 'href' && (fontLink(node) || node.name === 'a' || node.name === 'link' && rel.some(value => ['canonical', 'describedby', 'alternate'].includes(value)));
             check(permitted && ['http:', 'https:'].includes(url.protocol), file, `external resource: ${node.name}[${attr}]`);
           }
           if (node.name === 'a' && attr === 'href') check(safeAnchor(url), file, 'unsafe external anchor');
         }
+      }
+      if (['video', 'source'].includes(node.name)) {
+        for (const attr of ['src', 'poster']) if (own(node.attrs, attr)) check(/^\/assets\/[a-zA-Z0-9._-]+$/.test(node.attrs[attr]), file, 'media must use local /assets/ sources');
       }
       if (node.name === 'article' && own(node.attrs, 'data-tool')) {
         const tool = facts.tools.find(tool => tool.id === node.attrs['data-tool']);
@@ -263,10 +270,12 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
       check(same(blocks, [buildJsonLd(facts, { live }), buildFaqJsonLd(facts)]), file, 'landing JSON-LD differs from generated facts');
       attempt(file, () => validateKeywords(facts, html));
       const hero = nodes.find(node => node.name === 'section' && (node.attrs.class || '').split(/\s+/).includes('hero'))?.inner || '';
+      const headline = text(h1s[0]?.inner || '');
+      check(!/about 25%/.test(headline) || /\b(?:cost|dollars?|USD)\b/i.test(headline), file, 'hero about 25% needs a dollar qualifier');
       for (const phrase of ['browser use', 'Claude Code', 'tokens', 'subagent', 'fresh context']) check(text(hero).includes(phrase), file, `hero missing ${phrase}`);
       const release = attempt('release', () => existsSync(join(root, 'website/release.json')) ? JSON.parse(read(root, 'website/release.json')) : {});
       const verified = release?.verified === true && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(release.version);
-      check(tags('a').some(node => node.attrs.class === 'brand' && text(node.inner) === facts.name), file, 'package name differs from displayed brand');
+      check(tags('a').some(node => node.attrs.class === 'brand' && text(parseHtml(node.inner).find(child => child.name === 'b')?.inner || '') === facts.name), file, 'package name differs from displayed brand');
       const fresh = nodes.find(node => node.attrs.id === 'releases');
       check(fresh && text(fresh.inner).includes(`v${facts.version}`) && (!verified || release.version === facts.version), file, 'package version differs from display');
       check(fresh && text(fresh.inner).includes('Fresh from the repo') && (verified || /not released yet/i.test(text(fresh.inner))), file, 'Fresh from the repo must say not released yet');
@@ -304,6 +313,7 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
   });
   for (const [file, value] of texts) {
     const privateText = value + '\n' + text(value);
+    check(!privateText.includes(String.fromCharCode(0x2014)), file, 'em dash');
     check(!hashes || !hashMatches(file + '\n' + value, hashes) && !hashMatches(text(value), hashes), file, 'private term hash match');
     check(!/\/Us[e]rs\//.test(privateText), file, 'personal path');
     check(!/\bAU[N]-\d+/.test(privateText), file, 'private issue id');
@@ -313,7 +323,7 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
     if (/\.(?:html|css|svg|js)$/.test(file)) {
       for (const match of value.matchAll(/(?:url\(\s*["']?|@import\s+["'])([^\s'";)]+)/gi)) {
         const url = attempt(file, () => new URL(decode(match[1]), `${origin}/${file}`));
-        if (url) { check(url.origin === origin, file, 'external CSS resource'); if (url.origin === origin) resolveLink(file, match[1]); }
+        if (url) { check(url.origin === origin || fontFile(url), file, 'external CSS resource'); if (url.origin === origin) resolveLink(file, match[1]); }
       }
     }
     const scripts = file.endsWith('.js') ? [value] : file.endsWith('.html')

@@ -104,7 +104,7 @@ function modePolicy(dir, live) {
     assert.ok(sections.length);
     for (const section of sections) assert.match(section, /\[[^\]]+\]\(https:\/\//);
     assert.ok(llms.indexOf(origin + '/docs/overview/') < llms.indexOf('https://github.com/'));
-    assert.ok(read(dir, 'llms-full.txt').includes('Let your AI use the web.'));
+    assert.ok(read(dir, 'llms-full.txt').includes('Cut browser use cost by about 25%.'));
     assert.ok(read(dir, 'llms-full.txt').includes('How'));
   } else {
     assert.match(read(dir, 'robots.txt'), /^Disallow: \/$/m);
@@ -218,9 +218,9 @@ test('RED hero has approved headline and visible keywords, with the prohibited h
     const hero = value.match(/<section\b[^>]*class="[^"]*hero[^]*?<\/section>/)?.[0] || '';
     for (const phrase of ['browser use', 'Claude Code', 'tokens', 'subagent', 'fresh context']) assert.ok(text(hero).includes(phrase), phrase);
     for (const heading of value.matchAll(/<h[1-6]\b[^>]*>([^]*?)<\/h[1-6]>/g)) assert.doesNotMatch(text(heading[1]), /your agent keeps working/i);
-    assert.match(text(hero), /Let your AI use the web\. In a fresh, small context\./);
+    assert.match(text(hero), /Cut browser use cost by about 25%\. A fresh runner, bulk reads, three guards\./);
   };
-  assert.throws(() => check(html.replace('Let your AI use the web.', 'Your agent keeps working')));
+  assert.throws(() => check(html.replace('Cut browser use cost by about 25%.', 'Your agent keeps working')));
   check(html);
 });
 
@@ -288,13 +288,13 @@ test('metadata, unique anchors, breadcrumbs, proof dates and same origin assets 
     assert.deepEqual(blocks.map(block => block['@type']), route === '/' ? ['SoftwareApplication', 'FAQPage'] : ['BreadcrumbList']);
     if (route !== '/') {
       const visible = text(html.match(/<nav\b[^>]*aria-label="Breadcrumb"[^>]*>([^]*?)<\/nav>/i)?.[1] || '');
-      assert.equal(blocks[0].itemListElement.length, 3);
+      assert.equal(blocks[0].itemListElement.length, 2);
       for (const item of blocks[0].itemListElement) assert.ok(visible.includes(item.name), item.name);
     }
     for (const match of html.matchAll(/<(?:script|img)\b[^>]*\bsrc="([^"]+)"/g)) assert.ok(match[1].startsWith('/assets/'), match[1]);
     assert.match(html, /href="\/assets\/site.css"/);
     assert.match(html, /src="\/assets\/site.js"/);
-    assert.doesNotMatch(html, /<(?:video|iframe|audio)\b|\.mp4\b|googletagmanager|google-analytics/i);
+    assert.doesNotMatch(html, /<(?:iframe|audio)\b|googletagmanager|google-analytics/i);
   }
   const landing = read(output, 'index.html');
   const rowIds = html => [...html.matchAll(/<tr data-proof="([^"]+)"/g)].map(match => match[1]);
@@ -308,4 +308,21 @@ test('metadata, unique anchors, breadcrumbs, proof dates and same origin assets 
   for (const asset of ['poster.png', 'social-preview.png', 'site.css', 'site.js']) assert.ok(existsSync(join(output, 'assets', asset)), asset);
   assert.deepEqual([...readFileSync(join(output, 'assets/social-preview.png')).subarray(16, 24)], [0, 0, 4, 176, 0, 0, 2, 118]);
   assert.doesNotMatch(read(output, 'assets/site.js'), /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource)\s*\(/);
+});
+
+test('RED live build requires every local trailer asset before replacing output', t => {
+  const dir = fixture(t);
+  const output = built(dir, { live: true });
+  const original = read(output, 'index.html');
+  for (const asset of ['trailer.mp4', 'trailer.webm', 'trailer-poster.jpg']) {
+    const path = join(dir, 'website/assets', asset);
+    const bytes = readFileSync(path);
+    rmSync(path);
+    const result = build(dir, { live: true });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Live build asset missing: website\/assets\/trailer/);
+    assert.equal(read(output, 'index.html'), original);
+    writeFileSync(path, bytes);
+  }
+  built(dir, { live: true });
 });

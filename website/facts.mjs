@@ -125,9 +125,9 @@ export function validateKeywords(facts, html) {
   const text = visibleText(body);
   const h1 = [...body.matchAll(/<h1\b[^>]*>([^]*?)<\/h1>/gi)];
   requireFact(h1.length === 1, 'H1 must occur exactly once');
-  const first = text.split(/\s+/).slice(0, 100).join(' ');
+  const first = visibleText(body.match(/<section class="hero"[^>]*>([^]*?)<\/section>/)?.[1] || body).split(/\s+/).slice(0, 100).join(' ');
   for (const phrase of [facts.name, 'browser use', 'Claude Code', 'tokens', 'subagent', 'fresh context']) requireFact(first.includes(phrase), `First 100 words missing ${phrase}`);
-  requireFact(visibleText(h1[0][1].replace(/<\/span>/gi, '</span> ')) === 'Let your AI use the web. In a fresh, small context.', 'H1 must contain both approved headline lines');
+  requireFact(visibleText(h1[0][1].replace(/<br\s*\/?>/gi, ' ').replace(/<\/span>/gi, '</span> ')) === 'Cut browser use cost by about 25%. A fresh runner, bulk reads, three guards.', 'H1 must contain both approved headline lines');
   const title = visibleText(html.match(/<title>([^]*?)<\/title>/i)?.[1] || '');
   requireFact(title.length > 0 && title.length <= 60, 'Title must contain at most 60 characters');
   requireFact(title.includes(facts.name), 'Title must contain the package name');

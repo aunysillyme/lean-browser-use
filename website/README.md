@@ -5,8 +5,10 @@
 The static site ports the sibling package's builder, checker and layout. It renders the
 landing page and documentation from this repository. Editable copy lives in `content.mjs`,
 the source and route map in `pages.mjs`, exact tool evidence in `tools.json`, and page shells
-in the templates. Assets and system fonts are local. The navigation script copies the
-install command, marks sections and opens the mobile menu. The site has no analytics.
+in the templates. The design system, avatar and navigation come from model-orchestrator. Google Fonts
+loads Cormorant Garamond and JetBrains Mono from the two pinned font hosts. All other
+resources are local. Navigation copies the install command, marks sections and closes
+the mobile accordion after a selection. The four flow buttons illustrate the method. The site has no analytics.
 
 ## Trigger and deployment mode
 
@@ -38,8 +40,11 @@ and Claude Code. Git supplies the source commit when `VERCEL_GIT_COMMIT_SHA` is 
 No supported operating system is stated in the package README or documentation, so the
 SoftwareApplication schema omits `operatingSystem`.
 
-Asset preparation is separate from the site build. `assets/poster.png` is the trailer
-GIF's end card, extracted with ffmpeg. The site embeds only that PNG. Render the editable
+Asset preparation is separate from the site build. Supply `assets/trailer.mp4`,
+`assets/trailer.webm` and `assets/trailer-poster.jpg` before building. Both modes copy
+these files and fail clearly if an asset is missing. The silent trailer autoplays muted,
+loops and has a keyboard pause/play control. Reduced motion disables automatic playback
+and resets the video to its poster until the viewer presses play. Render the editable
 `assets/social-preview.svg` with `rsvg-convert` to refresh its PNG.
 
 ## Reads
@@ -93,8 +98,8 @@ error can leave partial output; correct it and rerun.
 
 Source HTML is data. The renderer constructs a limited tag set, removes active raw blocks
 and refuses unsafe schemes. Images use named local assets. Source links use included routes
-or repository file links. Documented code URLs are checked against source evidence; external
-resources and unsafe anchors remain rejected. Source contradictions remain in the source
+or repository file links. Documented code URLs are checked against source evidence; external resources other than the pinned Google font stylesheet and font files,
+and unsafe anchors remain rejected. Source contradictions remain in the source
 and must be resolved by its owner.
 
 ## Hand-run verification
@@ -118,3 +123,7 @@ without reading repository revision state. Remove generated output after verific
 The source of truth is the package code and documentation, `proof/results.json`,
 `pages.mjs`, `tools.json` and `content.mjs`. The three `test/website-*.test.mjs` suites
 verify the fact, build and checker contracts. Publishing and deployment are outside this build.
+
+Design source: [model-orchestrator website](https://github.com/aunysillyme/model-orchestrator/tree/main/website).
+The shared CSS and navigation are reused under its MIT license. Product copy and proof
+come from this repository; the reference analytics and remote media are excluded.
