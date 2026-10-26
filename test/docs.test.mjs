@@ -55,7 +55,7 @@ test('README first-screen order, bounded fences, receipt markers and sibling row
   assert.ok(read('llms.txt').includes(`> ${description}\n`));
   assert.ok(read('llms.txt').includes(`[lean-browser-use: ${description}]`));
   assert.match(text, /\[lean-computer-use\]\(https:\/\/github.com\/aunysillyme\/lean-computer-use\)/);
-  assert.ok(text.includes('Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command'));
+  assert.ok(text.includes('Background Mac computer control for AI agents: desk tools, a fresh runner subagent, retry guards and a transcript token meter, installed with one command'));
   const questions = text.slice(text.indexOf('## Common questions'), text.indexOf('## Uninstall')).match(/^### /gm) || [];
   assert.ok(questions.length >= 4 && questions.length <= 6);
 });

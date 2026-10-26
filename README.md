@@ -73,7 +73,7 @@ See [installation and activation](docs/install.md) for target directories and op
 | Package | What it gives |
 | --- | --- |
 | **lean-browser-use** | Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command |
-| [lean-computer-use](https://github.com/aunysillyme/lean-computer-use) | Token-lean computer use for AI agents: runner subagent, desktop scripts, guards and a token meter, installed with one command |
+| [lean-computer-use](https://github.com/aunysillyme/lean-computer-use) | Background Mac computer control for AI agents: desk tools, a fresh runner subagent, retry guards and a transcript token meter, installed with one command |
 
 ## Measure your own saving
 
