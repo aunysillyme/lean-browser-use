@@ -108,7 +108,7 @@ From the repository root:
 
 ```sh
 npm --prefix website ci
-node --test test/website-facts.test.mjs test/website-build.test.mjs test/website-check.test.mjs
+node --test test/website-*.test.mjs
 node website/build.mjs
 node website/check.mjs
 node website/build.mjs --live
@@ -121,8 +121,8 @@ short label when comparing a default landing to the mock. Its tests cover other 
 without reading repository revision state. Remove generated output after verification.
 
 The source of truth is the package code and documentation, `proof/results.json`,
-`pages.mjs`, `tools.json` and `content.mjs`. The three `test/website-*.test.mjs` suites
-verify the fact, build and checker contracts. Publishing and deployment are outside this build.
+`pages.mjs`, `tools.json` and `content.mjs`. The `test/website-*.test.mjs` suites
+verify the fact, build, checker, copy, interaction and landing contracts. Publishing and deployment are outside this build.
 
 Design source: [model-orchestrator website](https://github.com/aunysillyme/model-orchestrator/tree/main/website).
 The shared CSS and navigation are reused under its MIT license. Product copy and proof
