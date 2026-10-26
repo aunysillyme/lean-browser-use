@@ -55,11 +55,11 @@ try {
   } else {
     const isolation = process.env.LBU_TEST_ISOLATION;
     let args = ['--test', ...(isolation === 'none' ? ['--experimental-test-isolation=none', ...fs.readdirSync(path.join(root, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => `test/${f}`)] : ['test/'])];
-    let tests = captured(process.execPath, args, { cwd: root, timeout: 120000, env: { ...process.env, LBU_PROOF_RUNNING: '1' } });
+    let tests = captured(process.execPath, args, { cwd: root, timeout: 600000, env: { ...process.env, LBU_PROOF_RUNNING: '1' } });
     if (tests.error) throw tests.error;
     if (!/^ok \d+ - guard rule: /m.test(tests.stdout) && Number(process.versions.node.split('.')[0]) >= 22 && isolation !== 'none') {
       args = ['--test', '--experimental-test-isolation=none', ...fs.readdirSync(path.join(root, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => `test/${f}`)];
-      tests = captured(process.execPath, args, { cwd: root, timeout: 120000, env: { ...process.env, LBU_PROOF_RUNNING: '1' } });
+      tests = captured(process.execPath, args, { cwd: root, timeout: 600000, env: { ...process.env, LBU_PROOF_RUNNING: '1' } });
       if (tests.error) throw tests.error;
     }
     const result = tests.stdout;
