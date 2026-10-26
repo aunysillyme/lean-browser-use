@@ -43,11 +43,6 @@ test('every landing card and action starts with a decorative three-part ray', t 
     ['install panel', node => hasClass(node, 'code'), 1],
     ['requirements', node => node.name === 'article' && hasClass(node.parent, 'requirements'), 4],
     ['proof card', node => hasClass(node, 'proof-card'), 1],
-    ['hero actions', node => node.name === 'a' && hasClass(node.parent, 'hero-actions'), 4],
-    ['copy button', node => hasClass(node, 'copy'), 1],
-    ['step buttons', node => node.name === 'button' && hasClass(node.parent, 'task-tabs'), 4],
-    ['trailer control', node => hasClass(node, 'trailer-toggle'), 1],
-    ['routing nodes', node => 'data-role' in node.attrs, 4],
   ];
   for (const [name, select, count] of groups) {
     const cards = nodes.filter(select);
@@ -58,6 +53,21 @@ test('every landing card and action starts with a decorative three-part ray', t 
     }
   }
   for (const node of nodes.filter(node => node.name === 'aside' || node.name === 'header')) assert.ok(!node.inner.includes('card-trace'));
+  const inner = [
+    ['hero actions', node => node.name === 'a' && hasClass(node.parent, 'hero-actions'), 4],
+    ['copy button', node => hasClass(node, 'copy'), 1],
+    ['step buttons', node => node.name === 'button' && hasClass(node.parent, 'task-tabs'), 4],
+    ['routing nodes', node => 'data-role' in node.attrs, 4],
+    ['trailer control', node => hasClass(node, 'trailer-toggle'), 1],
+  ];
+  for (const [name, select, count] of inner) {
+    const items = nodes.filter(select);
+    assert.equal(items.length, count, name);
+    for (const item of items) assert.ok(!hasClass(item, 'card') && !item.inner.includes('card-trace'), `${name} carries no ray`);
+  }
+  const toggle = nodes.find(node => hasClass(node, 'trailer-toggle'));
+  assert.ok(toggle.inner.includes('icon-pause') && toggle.inner.includes('icon-play') && toggle.inner.includes('data-button-label'), 'trailer control is a small icon button with a hidden label');
+  for (const node of nodes.filter(node => hasClass(node, 'card'))) assert.ok(!node.inner.slice(trace.length).includes('card-trace') || !node.parent || !hasClass(node.parent, 'card') , 'no nested rays');
 });
 
 test('docs tool and proof cards get rays while document code blocks stay plain', t => {
