@@ -17,7 +17,7 @@
       "unit": "tests",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
-      "how": "node --test test/"
+      "how": "node --test --experimental-test-isolation=none test/budgets.test.mjs test/docs.test.mjs test/doctor.test.mjs test/gate.test.mjs test/guards.test.mjs test/install.test.mjs test/measure.test.mjs test/pack.test.mjs test/proof.test.mjs test/python.test.mjs test/redproof.test.mjs test/website-build.test.mjs test/website-check.test.mjs test/website-facts.test.mjs test/website-interactions.test.mjs"
     },
     {
       "id": "tests_failing",
@@ -26,7 +26,7 @@
       "unit": "tests",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
-      "how": "node --test test/"
+      "how": "node --test --experimental-test-isolation=none test/budgets.test.mjs test/docs.test.mjs test/doctor.test.mjs test/gate.test.mjs test/guards.test.mjs test/install.test.mjs test/measure.test.mjs test/pack.test.mjs test/proof.test.mjs test/python.test.mjs test/redproof.test.mjs test/website-build.test.mjs test/website-check.test.mjs test/website-facts.test.mjs test/website-interactions.test.mjs"
     },
     {
       "id": "guard_rules",
@@ -35,7 +35,7 @@
       "unit": "rules",
       "measured": "2026-10-25",
       "expires": "2027-01-25",
-      "how": "node --test test/"
+      "how": "node --test --experimental-test-isolation=none test/budgets.test.mjs test/docs.test.mjs test/doctor.test.mjs test/gate.test.mjs test/guards.test.mjs test/install.test.mjs test/measure.test.mjs test/pack.test.mjs test/proof.test.mjs test/python.test.mjs test/redproof.test.mjs test/website-build.test.mjs test/website-check.test.mjs test/website-facts.test.mjs test/website-interactions.test.mjs"
     },
     {
       "id": "guard_ms_median",

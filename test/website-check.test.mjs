@@ -203,10 +203,10 @@ test('RED private hash match uses only a temporary hash file, then accepts remov
 });
 
 test('exact mode inventory derives from pages and accepts both builder outputs', () => {
-  assert.equal(expectedFiles().length, pages.length + 8);
-  assert.equal(expectedFiles(true).length, pages.length * 2 + 11);
-  assert.equal(expectedFiles().length, 17);
-  assert.equal(expectedFiles(true).length, 29);
+  assert.equal(expectedFiles().length, pages.length + 14);
+  assert.equal(expectedFiles(true).length, pages.length * 2 + 17);
+  assert.equal(expectedFiles().length, 23);
+  assert.equal(expectedFiles(true).length, 35);
   for (const live of [false, true]) assert.deepEqual(run(sources[live ? 'live' : 'default'], { live }), []);
 });
 
@@ -286,4 +286,28 @@ test('RED every allowed JSON-LD type rejects an invented property', t => {
     write(dir, file, source);
     assert.deepEqual(run(dir), []);
   }
+});
+
+red('hero about 25 percent without a dollar qualifier', dir => edit(dir, 'index.html', html => html.replace(/<h1\b[^>]*>[^]*?<\/h1>/, '<h1>Cut browser use by about 25%.<br><em>A fresh runner, bulk reads, three guards.</em></h1>')), /dollar qualifier/);
+
+red('broadened CSP', dir => edit(dir, doc, html => html.replace("connect-src 'none'", 'connect-src *')), /resource CSP differs/);
+red('Google font lookalike host', dir => append(dir, doc, '<link rel="stylesheet" href="https://fonts.googleapis.com.example.org/css2">'), /external resource: link/);
+red('Google host used for a script', dir => append(dir, doc, '<script src="https://fonts.googleapis.com/test.js"></script>'), /external resource: script/);
+red('Google host used for media', dir => append(dir, doc, '<video src="https://fonts.gstatic.com/test.mp4"></video>'), /external resource: video/);
+red('unapproved font stylesheet', dir => append(dir, doc, '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Other">'), /external resource: link/);
+red('unapproved preconnect', dir => append(dir, doc, '<link rel="preconnect" href="https://example.org">'), /external resource: link/);
+red('remote video poster', dir => append(dir, doc, '<video poster="https://example.org/poster.jpg"></video>'), /external resource: video/);
+red('media outside local assets', dir => append(dir, doc, '<video src="/index.html"></video>'), /media must use local/);
+red('encoded media traversal', dir => append(dir, doc, '<video src="/assets/%2e%2e/index.html"></video>'), /media must use local/);
+red('em dash in copy', dir => append(dir, doc, `<p>Text${String.fromCharCode(0x2014)}copy</p>`), /em dash/);
+
+test('pinned Google Fonts and local media pass the resource policy', t => {
+  const dir = fixture(t);
+  const html = read(dir, 'index.html');
+  assert.match(html, /fonts.googleapis.com\/css2\?family=Cormorant\+Garamond/);
+  assert.match(html, /<video autoplay muted loop playsinline preload="auto"/);
+  for (const file of ['trailer.webm', 'trailer.mp4', 'trailer-poster.jpg']) assert.ok(existsSync(join(dir, 'assets', file)));
+  append(dir, doc, '<video poster="/assets/trailer-poster.jpg"><source src="/assets/trailer.mp4" type="video/mp4"></video>');
+  edit(dir, 'assets/site.css', css => css + '\n@font-face{font-family:Example;src:url(https://fonts.gstatic.com/s/jetbrainsmono/v1/example.woff2)}');
+  assert.deepEqual(run(dir), []);
 });

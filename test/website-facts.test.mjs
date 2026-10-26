@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { loadFacts, buildJsonLd, buildFaqJsonLd, validateMock, validateTools, validateKeywords, visibleText, validateToolHeading, keywordCounts } from '../website/facts.mjs';
 
 import { buildSite } from '../website/build.mjs';
+import { setupCopy } from '../website/assets/site.js';
+import { fontStylesheet } from '../website/resources.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = file => readFileSync(join(root, file), 'utf8');
@@ -168,7 +170,7 @@ test('RED real command prefixes and documented flags reject planted violations',
 });
 
 test('RED keyword H1 rule rejects a planted heading and accepts both headline lines', () => {
-  assert.throws(() => validateKeywords(facts, html.replace('Let your AI use the web.', 'Other headline')), /H1/);
+  assert.throws(() => validateKeywords(facts, html.replace('cost by about 25%.', 'cost differently.')), /H1/);
   assert.doesNotThrow(() => validateKeywords(facts, html));
 });
 
@@ -225,22 +227,23 @@ test('tool blocks cover every setup row, all references and installer removal wi
 });
 
 test('mock sections, README introduction, requirements, links and credits are present', () => {
-  const positions = ['class="hero"', 'id="how-it-works"', 'id="trailer"', 'id="quickstart"',
-    'id="reference"', 'id="requirements"', 'id="questions"', 'id="set"', 'id="proof"', 'id="releases"', '<footer'].map(marker => html.indexOf(marker));
+  const positions = ['class="hero"', 'id="trailer"', 'id="how-it-works"', 'id="quickstart"',
+    'id="reference"', 'id="requirements"', 'id="questions"', 'id="proof"', 'id="releases"', '<footer'].map(marker => html.indexOf(marker));
   assert.ok(positions.every((value, index) => value >= 0 && (!index || value > positions[index - 1])));
   for (const line of facts.lines) assert.ok(text(documents).includes(line), line);
   for (const required of ['Node 20 or newer', 'Claude Code', facts.repository, facts.npm,
     'https://github.com/aunysillyme/lean-computer-use']) assert.ok(html.includes(required), required);
   for (const required of ['npx lean-browser-use uninstall', 'https://github.com/trycua/cua']) assert.ok(documents.includes(required), required);
-  assert.match(html, /Trailer/);
-  assert.doesNotMatch(html, /<(?:video|iframe)\b/i);
+  assert.match(html, /trailer/i);
+  assert.match(html, /<video autoplay muted loop playsinline/);
+  assert.doesNotMatch(html, /<iframe\b/i);
   const proof = html.split('<table class="proof-table">')[1].split('</table>')[0];
   assert.doesNotMatch(text(proof), /\b(?:ms|seconds|traffic)\b/i);
 });
 
-test('mock metadata and static responsive layout have no external resource requests', () => {
+test('mock metadata and responsive layout allow only local resources and the pinned font stylesheet', () => {
   for (const tag of ['<meta name="robots" content="noindex">', `<link rel="canonical" href="${facts.url}">`]) assert.ok(html.includes(tag), tag);
-  for (const match of html.matchAll(/<(?:img|script|iframe|video|audio|source)\b[^>]*\bsrc="([^"]+)"|<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"/gi)) assert.ok((match[1] || match[2]).startsWith('/assets/'));
+  for (const match of html.matchAll(/<(?:img|script|iframe|video|audio|source)\b[^>]*\bsrc="([^"]+)"|<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"/gi)) assert.ok((match[1] || match[2]).startsWith('/assets/') || match[2] === fontStylesheet);
   const css = read('website/assets/site.css');
   assert.match(css, /@media/);
   assert.match(css, /minmax\(0,\s*1fr\)/);
@@ -253,7 +256,6 @@ test('mock metadata and static responsive layout have no external resource reque
 });
 
 test('copy button copies the exact install command and reports a clipboard failure', async () => {
-  const script = read('website/assets/site.js');
   for (const fail of [false, true]) {
     let listener, copied;
     const status = { textContent: '', dataset: { success: 'Copied.', fallback: 'Select and copy the command above.' } };
@@ -263,7 +265,7 @@ test('copy button copies the exact install command and reports a clipboard failu
       querySelector: () => null, querySelectorAll: selector => selector === '[data-copy]' ? [button] : [],
     };
     const navigator = { clipboard: { writeText: async value => { if (fail) throw Error('Unavailable'); copied = value; } } };
-    Function('document', 'navigator', script)(document, navigator);
+    setupCopy(document, navigator.clipboard, () => {});
     await listener();
     if (fail) assert.equal(status.textContent, 'Select and copy the command above.');
     else { assert.equal(copied, 'npx lean-browser-use'); assert.equal(status.textContent, 'Copied.'); }
@@ -293,7 +295,7 @@ test('RED package name must occur in title and first 100 visible words', () => {
 
 test('RED exactly one H1 and both headline lines survive the new markup', () => {
   assert.throws(() => validateKeywords(facts, html.replace('</body>', '<h1>Extra</h1></body>')), /H1 must occur exactly once/);
-  assert.throws(() => validateKeywords(facts, html.replace('In a fresh, small context.</em>', 'Other line.</em>')), /H1 must contain both/);
+  assert.throws(() => validateKeywords(facts, html.replace('A fresh runner, bulk reads, three guards.</em>', 'Other line.</em>')), /H1 must contain both/);
   assert.doesNotThrow(() => validateKeywords(facts, html));
 });
 
