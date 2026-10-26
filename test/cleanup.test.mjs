@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { spawn, execFile } from 'node:child_process';
+import { spawn, spawnSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { root, temp, cli, run } from './helpers.mjs';
 import { psTable, writeLease, readLeases } from '../hooks/lease.mjs';
@@ -139,6 +139,7 @@ fs.writeFileSync(${JSON.stringify(out)},JSON.stringify([a.pid,b.pid]));setTimeou
 test('cleanup refuses to end a leased ancestor of itself', async t => {
   const L = lab(t); const out = path.join(L.dir, 'result.json'); const script = path.join(L.dir, 'self.cjs');
   fs.writeFileSync(script, `const {spawnSync}=require('node:child_process');const fs=require('node:fs');
+const dir=${JSON.stringify(L.leaseDir)};const until=Date.now()+8000;while(Date.now()<until&&!(fs.existsSync(dir)&&fs.readdirSync(dir).length))Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,50);
 const r=spawnSync(process.execPath,[${JSON.stringify(path.join(root, 'bin/lean-browser-use.mjs'))},'cleanup','--apply','--all'],{encoding:'utf8'});
 fs.writeFileSync(${JSON.stringify(out)},JSON.stringify({status:r.status,stdout:r.stdout,stderr:r.stderr}));setTimeout(()=>{},120000);`);
   const pid = L.leased('S1', [path.join(L.bin, 'node-helper'), script]);
@@ -236,16 +237,68 @@ test('installer registers the cleanup hooks once and uninstall removes only them
   assert.ok(!fs.existsSync(path.join(cfg, 'lean-browser-use')));
 });
 
-test('cleanup closes page tabs through the leased Chrome loopback debugging port', async t => {
-  const L = lab(t); const closed = [];
-  const server = http.createServer((req, res) => {
-    if (req.url === '/json/list') res.end(JSON.stringify([{ id: 'A1', type: 'page' }, { id: 'B2', type: 'page' }, { id: 'W3', type: 'service_worker' }]));
-    else if (req.url.startsWith('/json/close/')) { closed.push(req.url.split('/').pop()); res.end('Target is closing'); } else { res.statusCode = 404; res.end(); }
-  });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); t.after(() => server.close());
-  const port = server.address().port;
-  const pid = L.leased('S1', L.chrome([`--remote-debugging-port=${port}`]));
+const hasLsof = spawnSync('lsof', ['-v'], { stdio: 'ignore' }).status !== null;
+// A fake Chrome that serves the debugging endpoints itself and logs every close request.
+const cdpServer = (port, log) => ['-e', `const http=require('http'),fs=require('fs');http.createServer((q,r)=>{
+if(q.url==='/json/list')return r.end(JSON.stringify([{id:'A1',type:'page'},{id:'B2',type:'page'},{id:'W3',type:'service_worker'}]));
+if(q.url.startsWith('/json/close/')){fs.appendFileSync(${JSON.stringify(log)},q.url.split('/').pop()+'\\n');return r.end('ok');}r.statusCode=404;r.end();}).listen(${port},'127.0.0.1');`, '--'];
+const freePort = () => new Promise(resolve => { const s = http.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => resolve(p)); }); });
+
+test('cleanup closes page tabs through the leased Chrome loopback debugging port', { skip: !hasLsof && 'lsof is unavailable' }, async t => {
+  const L = lab(t); const log = path.join(L.dir, 'closed.log'); const port = await freePort();
+  const pid = L.leased('S1', [path.join(L.bin, 'chrome'), ...cdpServer(port, log), '--headless', `--user-data-dir=${L.profile}`, `--remote-debugging-port=${port}`]);
+  assert.ok(await waitFor(() => psTable().get(pid) && spawnSync('lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN'], { stdio: 'ignore' }).status === 0));
   const { stdout } = await promisify(execFile)(process.execPath, [path.join(root, 'bin/lean-browser-use.mjs'), 'cleanup', '--apply', '--all'], L.withVars());
   assert.match(stdout.trim(), /^cleanup: tabs_closed=2 ended=chrome:1 left=0$/);
-  assert.deepEqual(closed.sort(), ['A1', 'B2']); assert.ok(!alive(pid));
+  assert.deepEqual(fs.readFileSync(log, 'utf8').trim().split('\n').sort(), ['A1', 'B2']); assert.ok(!alive(pid));
+});
+
+test('a debugging port owned by another process is never contacted', { skip: !hasLsof && 'lsof is unavailable' }, async t => {
+  const L = lab(t); const closed = [];
+  const server = http.createServer((req, res) => { closed.push(req.url); res.end('[{"id":"A1","type":"page"}]'); });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); t.after(() => server.close());
+  const pid = L.leased('S1', L.chrome([`--remote-debugging-port=${server.address().port}`]));
+  const { stdout } = await promisify(execFile)(process.execPath, [path.join(root, 'bin/lean-browser-use.mjs'), 'cleanup', '--apply', '--all'], L.withVars());
+  assert.match(stdout.trim(), /^cleanup: tabs_closed=0 ended=chrome:1 left=0$/);
+  assert.deepEqual(closed, []); assert.ok(!alive(pid));
+});
+
+test('a profile path with spaces cannot hide a symlink to the real profile', t => {
+  const L = lab(t); const real = path.join(L.home, 'Library/Application Support/Google/Chrome'); fs.mkdirSync(real, { recursive: true });
+  const tricky = `${L.profile} --alias`; fs.symlinkSync(real, tricky);
+  const pid = L.start('chrome', ['--headless', `--user-data-dir=${tricky}`]);
+  const row = psTable().get(pid);
+  writeLease({ pid, kind: 'chrome', start: row.start, command: row.command, argv: [path.join(L.bin, 'chrome'), ...SLEEP, '--headless', `--user-data-dir=${L.profile}`, '--alias'], session: 'S1', run: '', created: new Date().toISOString() }, L.leaseDir);
+  const r = L.clean(['--apply', '--all']);
+  assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /refused=1/); assert.ok(alive(pid));
+});
+
+test('a desktop app below a leased helper stays running', async t => {
+  const L = lab(t); const out = path.join(L.dir, 'app.json'); const appDir = path.join(L.dir, 'Fake.app/Contents/MacOS');
+  fs.mkdirSync(appDir, { recursive: true }); fs.symlinkSync(process.execPath, path.join(appDir, 'FakeApp'));
+  const script = path.join(L.dir, 'app-parent.cjs');
+  fs.writeFileSync(script, `const {spawn}=require('node:child_process');const a=spawn(${JSON.stringify(path.join(appDir, 'FakeApp'))},['-e','setTimeout(()=>{},120000)'],{stdio:'ignore'});
+require('node:fs').writeFileSync(${JSON.stringify(out)},String(a.pid));setTimeout(()=>{},120000);`);
+  const parent = L.leased('S1', [path.join(L.bin, 'node-helper'), script]);
+  assert.ok(await waitFor(() => fs.existsSync(out))); const app = Number(fs.readFileSync(out, 'utf8')); L.pids.add(app);
+  const r = L.clean(['--apply', '--all']);
+  assert.equal(r.status, 0, r.stdout + r.stderr); assert.match(r.stdout, /kept_other_chrome=1/);
+  assert.ok(!alive(parent)); assert.ok(alive(app));
+});
+
+test('spawn judges the running command: a wrapper that execs into a real-profile Chrome is stopped', async t => {
+  const L = lab(t); const real = path.join(L.home, 'Library/Application Support/Google/Chrome');
+  const script = path.join(L.dir, 'wrap.sh');
+  fs.writeFileSync(script, `#!/bin/sh\nexec ${JSON.stringify(path.join(L.bin, 'chrome'))} -e 'setTimeout(()=>{},120000)' -- --headless '--user-data-dir=${real}'\n`, { mode: 0o755 });
+  const r = L.lease(['--', script]);
+  assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /Refused/);
+  assert.ok(await waitFor(() => ![...psTable().values()].some(row => row.command.includes(real) && !row.stat.startsWith('Z'))));
+  assert.deepEqual(fs.existsSync(L.leaseDir) ? fs.readdirSync(L.leaseDir) : [], []);
+});
+
+test('a lease file other users could read is not trusted', t => {
+  const L = lab(t); const pid = L.start('node-helper', ['keep']); const row = psTable().get(pid);
+  const lease = writeLease({ pid, kind: 'helper', start: row.start, command: row.command, argv: row.command.split(' '), session: 'S1', run: '', created: new Date().toISOString() }, L.leaseDir);
+  fs.chmodSync(path.join(L.leaseDir, `${lease.id}.json`), 0o644);
+  assert.match(L.clean(['--apply', '--all']).stdout, /ended=none/); assert.ok(alive(pid));
 });

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { configDir, safePath, loadManifest } from './paths.mjs';
 import { exists, sha256, captured } from './util.mjs';
 import { readSettings, ownedHook, registrations } from './install.mjs';
-import { scan, age } from '../hooks/lease.mjs';
+import { scan, age, readLeases } from '../hooks/lease.mjs';
 
 export function doctor(options = {}) {
   const cfg = configDir(options);
@@ -46,10 +46,11 @@ export function doctor(options = {}) {
     }
   }
   try {
-    const live = scan().items.filter(item => item.state === 'live');
+    const leased = readLeases().leases.length;
+    const live = leased ? scan().items.filter(item => item.state === 'live') : [];
     const list = live.map(({ lease, tree }) => `${lease.kind === 'chrome' ? 'chrome' : lease.argv[0].split('/').at(-1)} pid ${lease.pid} (${tree.kill.length + 1} processes, age ${age(Math.max(0, Math.round((Date.now() - Date.parse(lease.created)) / 1000) || 0))})`);
     add('leftover-processes', live.length ? 'error' : 'ok', live.length ? `Leftover leased processes: ${list.join('; ')}. Run: npx lean-browser-use cleanup --apply` : 'No leased processes are running.');
-  } catch { add('leftover-processes', 'ok', 'Process list unavailable: leftover check skipped.'); }
+  } catch { add('leftover-processes', 'error', 'The process list could not be read, so leftover processes could not be checked.'); }
   for (const [tool, gives] of [['python3', 'Reader and search commands'], ['crwl', 'Page text extraction'], ['docker', 'Search container'], ['claude', 'Agent runner and optional reader compile']]) {
     const available = (process.env.PATH || '').split(path.delimiter).some(dir => { try { fs.accessSync(path.join(dir, tool), fs.constants.X_OK); return true; } catch { return false; } });
     add(`capability:${tool}`, 'optional', `${available ? 'available' : 'absent'}: ${gives}`);

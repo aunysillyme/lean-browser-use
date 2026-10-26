@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { classify, psTable, writeLease, sessionFromEnv } from '../hooks/lease.mjs';
+import { classify, liveVerdict, psOne, writeLease, sessionFromEnv } from '../hooks/lease.mjs';
 import { refusal } from './util.mjs';
 
 export const spawnUsage = 'lean-browser-use spawn [--session ID] [--run NAME] -- COMMAND [ARGS...]';
@@ -18,6 +18,18 @@ export function parseSpawn(args) {
   if (!command.length) throw refusal(`A command is required after --.\n${spawnUsage}`);
   return { ...options, command };
 }
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+// A wrapper or interpreter may re-exec just after start; wait until two reads agree.
+async function settledRow(pid) {
+  let previous = null;
+  for (let i = 0; i < 10; i++) {
+    const row = psOne(pid);
+    if (!row || row.stat.startsWith('Z')) return null;
+    if (previous && previous.command === row.command && previous.start === row.start) return row;
+    previous = row; await sleep(100);
+  }
+  return previous;
+}
 // Start COMMAND detached, record a lease for it, and return. A process that cannot be
 // leased is stopped again, so nothing runs without an owner on record.
 export async function spawnCommand(args) {
@@ -26,15 +38,19 @@ export async function spawnCommand(args) {
   if (!verdict.ok) throw refusal(`Refused: ${verdict.reason}.`);
   const child = spawn(command[0], command.slice(1), { detached: true, stdio: 'ignore' });
   try { await once(child, 'spawn'); } catch { throw refusal(`Could not start ${command[0]}.`); }
-  const row = psTable().get(child.pid);
-  if (!row || row.stat.startsWith('Z')) { console.error('The command exited right away; no lease was written.'); return 1; }
+  // The child is ours until we unref it, so SIGKILL reaches exactly this process.
+  const stop = message => { child.kill('SIGKILL'); throw refusal(message); };
   try {
+    const row = await settledRow(child.pid);
+    if (!row) { console.error('The command exited right away; no lease was written.'); return 1; }
+    const live = liveVerdict(row.command);
+    if (!live.ok || live.kind !== verdict.kind) stop(`Refused: ${live.reason || 'the running command differs from the one requested'}.`);
     const lease = writeLease({ pid: child.pid, kind: verdict.kind, start: row.start, command: row.command, argv: command, session, run, created: new Date().toISOString() });
     child.unref();
     console.log(`spawned pid=${child.pid} lease=${lease.id} kind=${verdict.kind}${session ? ` session=${session}` : ''}`);
     return 0;
-  } catch {
-    try { process.kill(child.pid, 'SIGTERM'); } catch { /* already gone */ }
-    throw refusal('Could not record the lease, so the process was stopped.');
+  } catch (error) {
+    if (error.exitCode === 2) throw error;
+    stop('Could not record the lease, so the process was stopped.');
   }
 }

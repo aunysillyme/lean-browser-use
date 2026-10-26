@@ -42,6 +42,10 @@ export function psTable() {
   }
   return rows;
 }
+export function psOne(pid) {
+  const m = ROW.exec(capture('ps', ['-ww', '-p', String(pid), '-o', 'pid=,ppid=,uid=,stat=,lstart=,command=']).split('\n')[0] || '');
+  return m ? { pid: Number(m[1]), ppid: Number(m[2]), uid: Number(m[3]), stat: m[4], start: m[5].replace(/\s+/g, ' '), command: m[6] } : null;
+}
 const isLive = row => !!row && !row.stat.startsWith('Z');
 export function ancestors(table, pid = process.pid) {
   const chain = new Set([pid]);
@@ -100,6 +104,28 @@ export function classify(argv, { home } = {}) {
   if (/\.app\/Contents\/MacOS\//.test(argv[0])) return no('a desktop app executable is never leased');
   return { ok: true, kind: 'helper' };
 }
+// Judge the running command line itself. Wrappers and interpreters can re-exec, so the
+// live text is the ground truth for what is running, not the argument list.
+const programOf = command => path.basename(command.split(/ -/)[0]);
+function userDataDirs(command) {
+  const at = command.indexOf('--user-data-dir=');
+  if (at < 0) return [];
+  const rest = command.slice(at + '--user-data-dir='.length);
+  const ends = [...rest.matchAll(/ --/g)].map(m => m.index);
+  return [...new Set([...ends, rest.length])].map(end => rest.slice(0, end)).filter(Boolean);
+}
+export function liveVerdict(command, { home } = {}) {
+  const no = reason => ({ ok: false, reason });
+  const program = programOf(command);
+  if (CHROMIUM_START.test(program)) {
+    const dirs = userDataDirs(command);
+    if (!dirs.length || dirs.some(dir => !path.isAbsolute(dir) || unsafeProfile(dir, home))) return no('the running command line is not an automation Chrome with a private profile');
+    if (!/ --(headless|remote-debugging-port=\d+|remote-debugging-pipe)/.test(command)) return no('the running Chrome has no automation flag');
+    return { ok: true, kind: 'chrome' };
+  }
+  if (OTHER_BROWSER.test(program.split(' ')[0])) return no('this browser is not an automation Chrome');
+  return { ok: true, kind: 'helper' };
+}
 const labelOf = lease => (lease.kind === 'chrome' ? 'chrome' : path.basename(lease.argv[0]));
 
 // Leases -----------------------------------------------------------------------
@@ -136,7 +162,7 @@ export function readLeases(dir = leaseDir()) {
     const file = path.join(dir, name);
     try {
       const stat = fs.lstatSync(file);
-      if (!stat.isFile() || (stat.uid !== uid() && uid() !== -1)) throw new Error('not ours');
+      if (!stat.isFile() || (stat.uid !== uid() && uid() !== -1) || (stat.mode & 0o077) !== 0) throw new Error('not ours');
       const lease = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (!valid(lease, match[1]) || !ID.test(lease.id)) throw new Error('invalid');
       leases.push(lease);
@@ -151,21 +177,25 @@ export function removeLease(lease, dir = leaseDir()) {
 }
 
 // Scan: decide, without touching anything, what each lease proves ---------------
-function protectedChrome(row, home) {
-  const head = row.command.split(/ --/)[0];
-  if (!CHROMIUM_START.test(path.basename(head)) || / --type=/.test(row.command)) return false;
-  const dir = /--user-data-dir=(.*?)(?= --[A-Za-z]|$)/.exec(row.command)?.[1];
-  if (!dir || !path.isAbsolute(dir) || unsafeProfile(dir, home)) return true;
-  return !/ --(headless|remote-debugging-port=\d+|remote-debugging-pipe)/.test(row.command);
+// A descendant that is a main Chrome process outside the rules, or a desktop app
+// outside the leader's own bundle, is the user's and stays running.
+function protectedProcess(row, leader, home) {
+  const head = row.command.split(/ -/)[0];
+  if (CHROMIUM_START.test(path.basename(head)) && !/ --type=/.test(row.command) && !liveVerdict(row.command, { home }).ok) return true;
+  if (!row.command.includes('.app/Contents/')) return false;
+  const bundle = leader.command.includes('.app/') ? `${leader.command.split('.app/')[0]}.app/` : null;
+  if (bundle && row.command.startsWith(bundle)) return false;
+  return !/\/Python\.app\/Contents\//.test(row.command);
 }
 function subtree(table, root, home) {
+  const leader = table.get(root);
   const children = new Map();
   for (const row of table.values()) { if (!children.has(row.ppid)) children.set(row.ppid, []); children.get(row.ppid).push(row); }
   const order = []; let kept = 0;
   const walk = row => {
     for (const child of (children.get(row.pid) || []).sort((a, b) => a.pid - b.pid)) {
       if (!isLive(child) || child.pid === row.pid) continue;
-      if (child.uid !== uid() || protectedChrome(child, home)) { kept++; continue; }
+      if (child.uid !== uid() || protectedProcess(child, leader, home)) { kept++; continue; }
       walk(child); order.push(child);
     }
   };
@@ -177,12 +207,9 @@ function evaluate(lease, table, mine, home) {
   if (!isLive(row)) return { lease, state: 'gone' };
   if (row.uid !== uid() || row.start !== lease.start || row.command !== lease.command) return { lease, state: 'reused' };
   const refuse = reason => ({ lease, state: 'refused', reason });
-  if (lease.argv.join(' ') !== lease.command) return refuse('the lease command does not match its argument list');
-  const verdict = classify(lease.argv, { home });
+  const verdict = liveVerdict(row.command, { home });
   if (!verdict.ok) return refuse(verdict.reason);
-  if (verdict.kind !== lease.kind) return refuse('the lease kind does not match its command');
-  // The live command line is the ground truth: judge it directly, not only the lease's argument list.
-  if (verdict.kind === 'chrome' && protectedChrome(row, home)) return refuse('the running command line is not an automation Chrome with a private profile');
+  if (verdict.kind !== lease.kind) return refuse('the lease kind does not match the running command');
   if (mine.has(lease.pid)) return refuse('it is an ancestor of this cleanup run');
   const tree = subtree(table, lease.pid, home);
   if (tree.kill.some(item => mine.has(item.pid))) return refuse('it contains an ancestor of this cleanup run');
@@ -198,30 +225,36 @@ export function scan({ session, run, home, dir } = {}) {
 
 // Reap -------------------------------------------------------------------------
 function signal(pid, name) { try { process.kill(pid, name); } catch { /* already gone or not ours */ } }
+const same = (row, s) => isLive(row) && row.uid === s.uid && row.start === s.start && row.command === s.command;
+// Read the single process again right before each signal, so the window for a recycled pid is a few milliseconds.
+function signalIfSame(s, name) {
+  let row;
+  try { row = psOne(s.pid); } catch { return; }
+  if (same(row, s)) signal(s.pid, name);
+}
 async function endAll(snaps) {
-  const same = (table, s) => { const row = table.get(s.pid); return isLive(row) && row.uid === s.uid && row.start === s.start && row.command === s.command; };
-  const survivors = () => { const table = psTable(); return snaps.filter(s => same(table, s)); };
+  const survivors = () => { const table = psTable(); return snaps.filter(s => same(table.get(s.pid), s)); };
   const settle = async ms => {
     const limit = Date.now() + ms;
     let live;
     do { await sleep(POLL_MS); live = survivors(); } while (live.length && Date.now() < limit);
     return live;
   };
-  for (const s of survivors()) signal(s.pid, 'SIGTERM');
+  for (const s of survivors()) signalIfSame(s, 'SIGTERM');
   let live = await settle(TERM_WAIT_MS);
   if (live.length) {
-    // Re-read first: only a process that still matches its snapshot gets SIGKILL.
-    for (const s of survivors()) signal(s.pid, 'SIGKILL');
+    // Only a process that still matches its snapshot gets SIGKILL.
+    for (const s of live) signalIfSame(s, 'SIGKILL');
     live = await settle(KILL_WAIT_MS);
   }
   return { ended: snaps.length - live.length, left: live.length };
 }
-function debugPort(lease) {
-  const arg = lease.argv.find(a => /^--remote-debugging-port=\d+$/.test(a));
-  if (!arg) return 0;
-  const port = Number(arg.split('=')[1]);
+function debugPort(command) {
+  const arg = /--remote-debugging-port=(\d+)/.exec(command)?.[1];
+  if (arg === undefined) return 0;
+  const port = Number(arg);
   if (port > 0 && port < 65536) return port;
-  const dir = userDataDir(lease.argv);
+  const dir = userDataDirs(command)[0];
   try {
     const file = path.join(dir, 'DevToolsActivePort');
     const stat = fs.lstatSync(file);
@@ -230,10 +263,19 @@ function debugPort(lease) {
     return value > 0 && value < 65536 ? value : 0;
   } catch { return 0; }
 }
+// The port must be listened on by the leased tree itself; any other owner means no request is sent.
+function listenerPids(port) {
+  try {
+    return capture('lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-Fp']).split('\n').filter(l => l.startsWith('p')).map(l => Number(l.slice(1)));
+  } catch { return []; }
+}
 // Close page tabs through the leased Chrome's own loopback debugging port.
-async function closeTabs(lease) {
-  const port = lease.kind === 'chrome' ? debugPort(lease) : 0;
+async function closeTabs(lease, row, tree) {
+  const port = lease.kind === 'chrome' ? debugPort(row.command) : 0;
   if (!port) return 0;
+  const owners = listenerPids(port);
+  const owned = new Set([row.pid, ...tree.kill.map(item => item.pid)]);
+  if (!owners.length || !owners.every(pid => owned.has(pid))) return 0;
   const base = `http://127.0.0.1:${port}`;
   try {
     const targets = await (await fetch(`${base}/json/list`, { signal: AbortSignal.timeout(1500) })).json();
@@ -257,7 +299,7 @@ export async function reap({ apply = false, session, run, home, dir } = {}) {
     result.candidates.push({ id: lease.id, name, kind: lease.kind, pid: lease.pid, processes: item.tree.kill.length + 1, ageSeconds: Math.max(0, Math.round((Date.now() - Date.parse(lease.created)) / 1000) || 0), session: lease.session, run: lease.run });
     result.kept += item.tree.kept;
     if (!apply) { result.ended[name] = (result.ended[name] || 0) + item.tree.kill.length + 1; continue; }
-    result.tabsClosed += await closeTabs(lease);
+    result.tabsClosed += await closeTabs(lease, item.row, item.tree);
     const leader = { pid: item.row.pid, start: item.row.start, command: item.row.command, uid: item.row.uid };
     const outcome = await endAll([...item.tree.kill, leader]);
     result.ended[name] = (result.ended[name] || 0) + outcome.ended;
