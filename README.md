@@ -68,6 +68,17 @@ For logged-in work, choose your Chrome profile by name when asked. The runner re
 The subagent runner runs the same packets on its own; a cheap helper is another option.
 See [installation and activation](docs/install.md) for target directories and optional companions.
 
+## Cleanup: nothing keeps running
+
+Every process the runner starts goes through `npx lean-browser-use spawn`, which records a lease. When the run ends, the runner executes:
+
+```sh
+npx lean-browser-use cleanup --apply
+```
+
+It ends only leased automation processes, children first, with SIGTERM and a 3 second wait before SIGKILL for the same process. Registered hooks repeat the cleanup when a runner stops, a turn ends or the session ends, and `doctor` reports any leftover.
+Your normal Chrome windows, your profile and any process without a lease are never touched. Add `--apply` yourself only after the dry run lists what you expect. See [cleanup](docs/cleanup.md).
+
 ## Part of a set
 
 | Package | What it gives |
@@ -128,6 +139,7 @@ Use `--claude-dir` to target the same directory as the install; follow printed m
 - [Install and manage](docs/install.md): every flag, target path, health check, and removal behavior.
 - [How the method works](docs/how-it-works.md): prepare, route, batch, verify, and clean up.
 - [Guards](docs/guards.md): selection, retry bounds, batching, and fail-open checks.
+- [Cleanup](docs/cleanup.md): leases, the cleanup command, hooks, and what is never touched.
 - [Page reader](docs/reader.md): compile a public extraction and reuse it as code.
 - [Search](docs/search.md): find URLs with the optional SearXNG companion.
 - [Benchmark](docs/benchmark.md): the paired run, exact counts, and how far to trust the ballpark.

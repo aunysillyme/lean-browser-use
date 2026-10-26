@@ -3,6 +3,7 @@ import path from 'node:path';
 import { configDir, safePath, loadManifest } from './paths.mjs';
 import { exists, sha256, captured } from './util.mjs';
 import { readSettings, ownedHook, registrations } from './install.mjs';
+import { scan, age } from '../hooks/lease.mjs';
 
 export function doctor(options = {}) {
   const cfg = configDir(options);
@@ -25,7 +26,7 @@ export function doctor(options = {}) {
       const expected = manifest.manualHooks ? manifest.settingsEntries : Object.entries(registrations(cfg)).flatMap(([event, entries]) => entries.flatMap(entry => entry.hooks.map(hook => ({ event, matcher: entry.matcher, hook }))));
       for (const entry of expected) {
         const found = (settings.hooks?.[entry.event] || []).some(e => e.matcher === entry.matcher && e.hooks.some(h => h.command === entry.hook.command));
-        add(`registration:${entry.event}:${entry.matcher}`, found ? 'ok' : 'error', found ? 'Registered.' : 'Hook registration missing.');
+        add(`registration:${entry.event}:${entry.matcher || '*'}`, found ? 'ok' : 'error', found ? 'Registered.' : 'Hook registration missing.');
       }
       for (const entries of Object.values(settings.hooks || {})) for (const entry of entries) for (const hook of entry.hooks.filter(ownedHook)) {
         const wanted = Object.values(registrations(cfg)).flatMap(items => items.flatMap(item => item.hooks));
@@ -35,7 +36,7 @@ export function doctor(options = {}) {
       }
       if (manifest.manualHooks && !manifest.settingsEntries.length) add('manual-hooks', 'optional', 'Paste the printed hook snippet to activate guards.');
     } catch { add('settings', 'error', 'Settings could not be checked.'); }
-    for (const name of ['pick-guard', 'retry-guard', 'batch-nudge']) {
+    for (const name of ['pick-guard', 'retry-guard', 'batch-nudge', 'cleanup']) {
       try {
         const file = safePath(cfg, `lean-browser-use/hooks/${name}.sh`);
         fs.accessSync(file, fs.constants.X_OK);
@@ -44,6 +45,11 @@ export function doctor(options = {}) {
       } catch { add(`hook:${name}`, 'error', 'Hook missing or not executable.'); }
     }
   }
+  try {
+    const live = scan().items.filter(item => item.state === 'live');
+    const list = live.map(({ lease, tree }) => `${lease.kind === 'chrome' ? 'chrome' : lease.argv[0].split('/').at(-1)} pid ${lease.pid} (${tree.kill.length + 1} processes, age ${age(Math.max(0, Math.round((Date.now() - Date.parse(lease.created)) / 1000) || 0))})`);
+    add('leftover-processes', live.length ? 'error' : 'ok', live.length ? `Leftover leased processes: ${list.join('; ')}. Run: npx lean-browser-use cleanup --apply` : 'No leased processes are running.');
+  } catch { add('leftover-processes', 'ok', 'Process list unavailable: leftover check skipped.'); }
   for (const [tool, gives] of [['python3', 'Reader and search commands'], ['crwl', 'Page text extraction'], ['docker', 'Search container'], ['claude', 'Agent runner and optional reader compile']]) {
     const available = (process.env.PATH || '').split(path.delimiter).some(dir => { try { fs.accessSync(path.join(dir, tool), fs.constants.X_OK); return true; } catch { return false; } });
     add(`capability:${tool}`, 'optional', `${available ? 'available' : 'absent'}: ${gives}`);

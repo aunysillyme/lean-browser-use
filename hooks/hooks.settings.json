@@ -53,6 +53,40 @@
           }
         ]
       }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "aun-browser-runner",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/cleanup.sh\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/cleanup.sh\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/cleanup.sh\"",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   }
 }

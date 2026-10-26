@@ -26,7 +26,7 @@ test('install merge, idempotence, backup once, uninstall shared settings', t => 
   assert.equal(fs.readFileSync(`${file}.lean-browser-use.bak`, 'utf8'), backup);
   const manifest = json(path.join(cfg, 'lean-browser-use/manifest.json'));
   assert.ok(manifest.files.every(f => /^[a-f0-9]{64}$/.test(f.sha256)));
-  assert.equal(manifest.settingsEntries.length, 5);
+  assert.equal(manifest.settingsEntries.length, 8);
   assert.equal(cli(['uninstall', '--claude-dir', cfg]).status, 0);
   assert.ok(fs.existsSync(path.join(cfg, 'agents')));
   assert.equal(json(file).theme, 'dark'); assert.ok(fs.readFileSync(file, 'utf8').includes('user-hook'));

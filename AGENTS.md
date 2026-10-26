@@ -27,6 +27,7 @@ Public browser pages and login pages take different routes. The reader accepts p
 - `test/budgets.test.mjs`: dependency, package size, install-time, description-length, and built-in import budgets.
 - `test/install.test.mjs` and `test/doctor.test.mjs`: settings preservation, file ownership, edited-file behavior, and health checks.
 - `test/guards.test.mjs` and `test/redproof.test.mjs`: intentional blocking, resets, fail-open behavior, and always-allow counterexamples.
+- `test/cleanup.test.mjs`: lease ownership, signature refusals, pid reuse, escalation, ancestors, hook exit 0, installer idempotence, and doctor leftovers, all with fake processes.
 - `test/measure.test.mjs`: browser-step classification, deduplication, runner grouping, and token totals.
 - `test/gate.test.mjs` and `scripts/gate.mjs`: public terminology, sensitive text, file names, and history.
 

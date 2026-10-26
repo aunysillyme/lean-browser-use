@@ -23,8 +23,9 @@ export function uninstall(options = {}) {
       if (hooks.length !== entry.hooks.length) settingsChanged = true;
       if (hooks.length || !entry.hooks.length) kept.push({ ...entry, hooks });
     }
-    settings.hooks[event] = kept;
+    if (kept.length || !entries.length) settings.hooks[event] = kept; else delete settings.hooks[event];
   }
+  if (settings.hooks && !Object.keys(settings.hooks).length && settingsChanged) delete settings.hooks;
   const removalSet = new Set(removals.map(f => f.path));
   const directories = [];
   for (const dir of [...manifest.directories].sort((a, b) => b.length - a.length)) {

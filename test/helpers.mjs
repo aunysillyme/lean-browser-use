@@ -5,6 +5,12 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 export const root = fileURLToPath(new URL('../', import.meta.url));
+// Every test process sees its own empty lease directory, never the developer's real one.
+if (!process.env.LBU_LEASE_DIR) {
+  const leases = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'lbu-leases-'));
+  process.env.LBU_LEASE_DIR = leases;
+  process.on('exit', () => fs.rmSync(leases, { recursive: true, force: true }));
+}
 export function temp(t) {
   const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'lbu-test-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
