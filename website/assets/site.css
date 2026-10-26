@@ -20,10 +20,10 @@
 .routing.card{padding:22px}
 .install.card{padding:15px}
 .hero-actions{flex-wrap:wrap;gap:12px}
-.hero-actions a.card{border:1px solid var(--line);padding:8px 12px}
-.copy.card{padding:8px 10px}
-.task-tabs button.card,.trailer-toggle.card{padding:8px 12px}
-.route-core.card,.route-options .card{padding:10px}
+.hero-actions a{border:1px solid var(--line);padding:8px 12px}
+.copy{padding:8px 10px}
+.task-tabs button{padding:8px 12px}.trailer-toggle{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;flex:none}.trailer-toggle svg{width:12px;height:12px;fill:var(--green)}.trailer-toggle[aria-pressed="true"] .icon-play,.trailer-toggle[aria-pressed="false"] .icon-pause{display:none}
+.route-core,.route-options .route-node{padding:10px}
 .proof-card{padding:18px;border:1px solid var(--line);background:var(--panel)}
 .card-trace{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);overflow:visible;pointer-events:none;opacity:0;fill:none;stroke:var(--green);stroke-width:2.5;filter:drop-shadow(0 0 4px var(--green)) drop-shadow(0 0 9px var(--green));z-index:2}
 .card-trace rect{width:calc(100% - 1px);height:calc(100% - 1px)}
