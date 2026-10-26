@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, rmSync } from 'node:fs';
@@ -6,7 +7,7 @@ import { join } from 'node:path';
 import { readPins, copyPinFailures } from '../website/copy.mjs';
 import { loadSourceFacts } from '../website/facts.mjs';
 import { content } from '../website/content.mjs';
-const root = new URL('..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('..', import.meta.url));
 const pins = readPins(root);
 const facts = loadSourceFacts(root);
 const copy = { headlineSource: facts.lead, headline: content.headline, installCommand: content.install.command, description: facts.description };
