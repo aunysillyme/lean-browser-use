@@ -86,3 +86,24 @@ test('ray CSS defines border travel, hover and focus triggers, stacking and moti
   assert.match(css, /\.card-trace\{[^}]*z-index:2/);
   assert.match(css, /@media\s*\(forced-colors:\s*active\)\{\.card \.card-trace\{display:none\}\}/);
 });
+
+test('every docs page puts the skip link before the header', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'website-docs-skip-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  buildSite({ root, outDir: dir, live: false, commit });
+  for (const route of ['docs/overview', 'docs/install']) {
+    const html = readFileSync(join(dir, route, 'index.html'), 'utf8');
+    assert.equal(html.split('class="skip"').length - 1, 1, route);
+    assert.ok(html.indexOf('class="skip"') < html.indexOf('<header'), route);
+  }
+});
+
+test('live markdown twins carry no mobile navigation summary text', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'website-twin-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  buildSite({ root, outDir: dir, live: true, commit });
+  for (const route of ['', 'docs/overview/']) {
+    const lines = readFileSync(join(dir, route, 'index.md'), 'utf8').split('\n').map(line => line.trim());
+    for (const label of ['Documentation', 'On this page']) assert.ok(!lines.includes(label), `${route || 'home'} has a stray "${label}" line`);
+  }
+});
