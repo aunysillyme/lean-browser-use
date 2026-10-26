@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setupTrailer } from '../website/assets/trailer.js';
-import { setupFlow } from '../website/assets/site.js';
+import { setupFlow, setupCopy } from '../website/assets/site.js';
 import { currentSection } from '../website/assets/navigation.js';
 
 function playback(reduced = false) {
@@ -15,7 +15,8 @@ function playback(reduced = false) {
     pause() { this.paused = true; events.pause?.(); },
     load() { this.loads++; },
   };
-  const button = { attrs: {}, setAttribute: (key, value) => { button.attrs[key] = value; }, addEventListener: (_, callback) => { clicks.click = callback; } };
+  const label = {};
+  const button = { label, textContent: 'trace and label', querySelector: () => label, attrs: {}, setAttribute: (key, value) => { button.attrs[key] = value; }, addEventListener: (_, callback) => { clicks.click = callback; } };
   const doc = { hidden: false, addEventListener: (_, callback) => { lifecycle.visibility = callback; } };
   setupTrailer(video, button, { matchMedia: () => preference }, doc);
   return { video, button, doc, preference, click: () => clicks.click(), visibility: () => lifecycle.visibility() };
@@ -26,9 +27,12 @@ test('trailer autoplays muted, keeps button state, and preserves an explicit pau
   assert.equal(run.video.paused, false);
   assert.equal(run.video.muted, true);
   assert.equal(run.button.attrs['aria-pressed'], 'true');
+  assert.equal(run.button.textContent, 'trace and label');
+  assert.equal(run.button.label.textContent, 'Pause trailer');
   run.click();
   assert.equal(run.video.paused, true);
   assert.equal(run.button.attrs['aria-label'], 'Play trailer');
+  assert.equal(run.button.label.textContent, 'Play trailer');
   run.doc.hidden = true; run.visibility();
   run.doc.hidden = false; run.visibility();
   assert.equal(run.video.paused, true);
@@ -89,4 +93,24 @@ test('reference navigation chooses the visible section and handles the bottom of
   const sections = [{ id: 'overview', top: -50 }, { id: 'trailer', top: 110 }, { id: 'proof', top: 500 }];
   assert.equal(currentSection(sections, 115, false), 'trailer');
   assert.equal(currentSection(sections, 115, true), 'proof');
+});
+
+test('copy feedback keeps the decorative SVG while changing and restoring its label', async () => {
+  const label = { textContent: '⧉' };
+  let click, restore, copied;
+  const button = {
+    dataset: { copy: 'install-command' }, textContent: 'trace and label',
+    querySelector: selector => { assert.equal(selector, '[data-button-label]'); return label; },
+    addEventListener: (_, callback) => { click = callback; },
+  };
+  const status = { dataset: { success: 'Copied', fallback: 'Copy manually' } };
+  const doc = { querySelectorAll: () => [button], getElementById: id => id === 'copy-status' ? status : { textContent: 'npx lean-browser-use' } };
+  setupCopy(doc, { writeText: async text => { copied = text; } }, callback => { restore = callback; });
+  await click();
+  assert.equal(copied, 'npx lean-browser-use');
+  assert.equal(button.textContent, 'trace and label');
+  assert.equal(label.textContent, '✓');
+  assert.equal(status.textContent, 'Copied');
+  restore();
+  assert.equal(label.textContent, '⧉');
 });

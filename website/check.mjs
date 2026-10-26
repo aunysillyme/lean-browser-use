@@ -37,7 +37,7 @@ const safeAnchor = url => {
 };
 
 // Read tags once so quoted attributes and script text keep their boundaries.
-function parseHtml(html) {
+export function parseHtml(html) {
   const nodes = [], stack = [];
   const pattern = /<!--[\s\S]*?-->|<![^>]*>|<\/?[a-z][a-z\d:-]*\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
   for (let match; (match = pattern.exec(html));) {
@@ -199,6 +199,10 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
       check(meta('og:image').length === 1 && meta('og:image')[0].attrs.content === origin + '/assets/social-preview.png', file, 'wrong social preview');
     }
     for (const node of nodes) {
+      if ((node.attrs.class || '').split(/\s+/).includes('card-trace')) {
+        check(node.name === 'svg' && node.attrs['aria-hidden'] === 'true', file, 'card trace must be aria-hidden');
+        check(node.attrs.focusable === 'false', file, 'card trace must not be focusable');
+      }
       for (const [attr, value] of Object.entries(node.attrs)) {
         if (!/(?:https?:)?\/\//i.test(value)) continue;
         const rels = (node.attrs.rel || '').split(/\s+/);
