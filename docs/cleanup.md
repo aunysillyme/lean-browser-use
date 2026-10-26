@@ -22,7 +22,7 @@ npx lean-browser-use cleanup            # dry run: lists what would end
 npx lean-browser-use cleanup --apply    # ends it and prints one summary line
 ```
 
-The summary line reads `cleanup: tabs_closed=1 ended=chrome:9 left=0`. It counts the page tabs closed through the leased Chrome's own loopback debugging port, the processes ended by name, and the leased processes still alive.
+The summary line reads `cleanup: tabs_closed=1 ended=chrome:9 left=0`. It counts the page tabs closed through the leased Chrome's own loopback debugging port, the processes ended by name, and the leased processes still alive. Tabs are closed only when `lsof` confirms that the leased Chrome tree is the listener on that port; otherwise the processes simply end.
 
 | Option | Effect |
 | --- | --- |
@@ -42,8 +42,8 @@ The summary line reads `cleanup: tabs_closed=1 ended=chrome:9 left=0`. It counts
 A process is ended when all of these hold:
 
 - A lease names it, in a lease directory only your user can write.
-- The live process has the same id, start time, command line and owner as its lease. A recycled process id fails this check, and its stale lease is cleared.
-- It passes the signature check. Chrome needs `--headless` or `--remote-debugging-port=N` and an explicit absolute `--user-data-dir` that is not a real browser profile and does not contain one. Other commands are leased as helpers.
+- The live process has the same id, start time, command line and owner as its lease. A recycled process id fails this check, and its stale lease is cleared. The check repeats right before each signal.
+- It passes the signature check, judged on the running command line, since wrappers and interpreters can re-exec. Chrome needs `--headless` or `--remote-debugging-port=N` and an explicit absolute `--user-data-dir` that is not a real browser profile and does not contain one. Other commands are leased as helpers.
 - It is not an ancestor of the cleanup run itself.
 
 Its children go first. Each process gets SIGTERM, then a 3 second wait, then SIGKILL only if the same process (same id, start time and command line) is still alive.
@@ -52,9 +52,13 @@ Its children go first. Each process gets SIGTERM, then a 3 second wait, then SIG
 
 - Your normal Chrome windows and profile, and any Chrome without automation flags.
 - Any directory under the real Chrome, Chromium, Edge, Brave, Vivaldi or Opera profile roots.
-- A Chrome found below a leased helper that lacks automation flags or uses a real profile: it stays running and the line reports `kept_other_chrome=N`.
+- A Chrome or desktop app found below a leased helper that lacks automation flags, uses a real profile, or lives outside the helper's own bundle: it stays running and the line reports `kept_other_chrome=N`.
 - Desktop app executables, other browsers, and processes with no lease.
 - Processes of other users.
+
+## Trust
+
+Lease files are mode 0600 in a directory only your user can write, and a lease with looser permissions is ignored. A lease names a process; it never replaces the live checks above. Anyone able to write inside that directory can already signal your processes directly, so the lease directory is the boundary to protect.
 
 ## Hooks
 
