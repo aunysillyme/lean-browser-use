@@ -127,3 +127,12 @@ verify the fact, build and checker contracts. Publishing and deployment are outs
 Design source: [model-orchestrator website](https://github.com/aunysillyme/model-orchestrator/tree/main/website).
 The shared CSS and navigation are reused under its MIT license. Product copy and proof
 come from this repository; the reference analytics and remote media are excluded.
+
+## Copy pins
+
+`pins.json` records the reviewed GitHub About, README lead, install command and package
+metadata. The builder and checker compare the headline's README source, its opening
+clause, the install box and the meta description with that snapshot. The H1 retains the
+owner's two-line treatment. The audience and package summary are rendered from README.
+Changing copy requires reviewing the sources and updating the snapshot together.
+The checks are offline. [Copy parity](COPY-PARITY.md) records the live source comparison.

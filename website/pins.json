@@ -1,0 +1,7 @@
+{
+  "captured": "2026-10-26",
+  "about": "Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command",
+  "readmeLead": "Cut browser use cost by about 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.",
+  "installCommand": "npx lean-browser-use",
+  "packageDescription": "Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command"
+}

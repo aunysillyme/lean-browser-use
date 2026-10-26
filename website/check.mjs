@@ -6,6 +6,7 @@ import { isIP } from 'node:net';
 import { pages } from './pages.mjs';
 import { loadFacts, featuredProof, buildJsonLd, buildFaqJsonLd, visibleText, validateKeywords,
   validateToolHeading, commandEvidence, validateCommand } from './facts.mjs';
+import { readPins, copyPinFailures } from './copy.mjs';
 import { scanText } from '../scripts/gate.mjs';
 const hashMatches = (value, hashes) => scanText(value, hashes).some(hit => hit.class.startsWith('private-term:'));
 
@@ -101,6 +102,11 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
   check(Number.isFinite(timestamp), 'clock', 'invalid --now date');
   const facts = attempt('facts', () => loadFacts(root));
   if (!facts) return failures;
+  const pins = attempt('copy pins', () => readPins(root));
+  if (pins) {
+    check(facts.lead === pins.readmeLead, 'copy pins', 'pinned headline source differs from current README');
+    check(facts.description === pins.packageDescription && facts.description === pins.about, 'copy pins', 'pinned meta description differs from current package or About');
+  }
   const jsonUrls = new Set([...projectUrls, ...pages.map(page => origin + page.route)]);
   const collectUrls = value => {
     if (typeof value === 'string' && /^https?:\/\//i.test(value)) jsonUrls.add(value);
@@ -270,6 +276,12 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
       check(same(blocks, [buildJsonLd(facts, { live }), buildFaqJsonLd(facts)]), file, 'landing JSON-LD differs from generated facts');
       attempt(file, () => validateKeywords(facts, html));
       const hero = nodes.find(node => node.name === 'section' && (node.attrs.class || '').split(/\s+/).includes('hero'))?.inner || '';
+      if (pins) for (const finding of copyPinFailures(pins, {
+        headlineSource: h1s[0]?.attrs['data-headline-source'],
+        headline: text((h1s[0]?.inner || '').split(/<br\s*\/?>/i)[0]),
+        installCommand: text(nodes.find(node => node.attrs.id === 'install-command')?.inner || ''),
+        description: descriptions[0]?.attrs.content,
+      })) fail(file, finding);
       const headline = text(h1s[0]?.inner || '');
       check(!/about 25%/.test(headline) || /\b(?:cost|dollars?|USD)\b/i.test(headline), file, 'hero about 25% needs a dollar qualifier');
       for (const phrase of ['browser use', 'Claude Code', 'tokens', 'subagent', 'fresh context']) check(text(hero).includes(phrase), file, `hero missing ${phrase}`);

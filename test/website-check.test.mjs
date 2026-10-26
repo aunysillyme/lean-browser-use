@@ -311,3 +311,8 @@ test('pinned Google Fonts and local media pass the resource policy', t => {
   edit(dir, 'assets/site.css', css => css + '\n@font-face{font-family:Example;src:url(https://fonts.gstatic.com/s/jetbrainsmono/v1/example.woff2)}');
   assert.deepEqual(run(dir), []);
 });
+
+red('headline source differs from pinned README', dir => edit(dir, 'index.html', html => html.replace(/<h1\b[^>]*>/, '<h1 data-headline-source="Changed source">')), /pinned headline source/, { live: true });
+red('install command differs from pin', dir => edit(dir, 'index.html', html => html.replace('<code id="install-command">npx lean-browser-use</code>', '<code id="install-command">npx other-package</code>')), /pinned install command/, { live: true });
+red('meta description differs from pin', dir => edit(dir, 'index.html', html => html.replace(/(<meta name="description" content=")[^"]+/, '$1Changed description')), /pinned meta description/, { live: true });
+red('headline differs from pinned lead', dir => edit(dir, 'index.html', html => html.replace('Cut browser use cost by about 25%.<br>', 'Change the browser use cost.<br>')), /pinned headline/, { live: true });

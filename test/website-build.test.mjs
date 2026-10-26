@@ -326,3 +326,24 @@ test('RED live build requires every local trailer asset before replacing output'
   }
   built(dir, { live: true });
 });
+
+test('RED copy pins stop source drift before replacing the existing build', t => {
+  const dir = fixture(t);
+  const output = built(dir);
+  const originalOutput = read(output, 'index.html');
+  for (const [file, transform, diagnostic] of [
+    ['README.md', text => text.replace('and see your own saving.**', 'and see a changed saving.**'), /pinned headline source/],
+    ['website/content.mjs', text => text.replace("command: 'npx lean-browser-use'", "command: 'npx other-package'"), /pinned install command/],
+  ]) {
+    const original = read(dir, file);
+    const changed = transform(original);
+    assert.notEqual(changed, original);
+    write(dir, file, changed);
+    const failed = build(dir);
+    assert.equal(failed.status, 1);
+    assert.match(failed.stderr, diagnostic);
+    assert.equal(read(output, 'index.html'), originalOutput);
+    write(dir, file, original);
+  }
+  built(dir);
+});
