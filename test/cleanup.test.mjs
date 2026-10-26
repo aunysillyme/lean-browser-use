@@ -302,3 +302,25 @@ test('a lease file other users could read is not trusted', t => {
   fs.chmodSync(path.join(L.leaseDir, `${lease.id}.json`), 0o644);
   assert.match(L.clean(['--apply', '--all']).stdout, /ended=none/); assert.ok(alive(pid));
 });
+
+test('doctor fails on a leased process it cannot prove safe to end', t => {
+  const L = lab(t); const cfg = path.join(L.dir, 'cfg'); const opts = L.withVars();
+  assert.equal(cli(['--claude-dir', cfg, '--yes'], opts).status, 0);
+  const real = path.join(L.home, 'Library/Application Support/Google/Chrome');
+  const pid = L.start('chrome', ['--headless', `--user-data-dir=${real}`]); const row = psTable().get(pid);
+  writeLease({ pid, kind: 'chrome', start: row.start, command: row.command, argv: row.command.split(' '), session: 'S1', run: '', created: new Date().toISOString() }, L.leaseDir);
+  const d = cli(['doctor', '--claude-dir', cfg], opts);
+  assert.equal(d.status, 1); assert.match(d.stdout, /error\tleftover-processes\t1 leased process\(es\) are running but cannot be proven safe/);
+  assert.ok(alive(pid));
+});
+
+test('a failed lease write stops the child and what it started', async t => {
+  const L = lab(t); const out = path.join(L.dir, 'grandchild.txt'); const script = path.join(L.dir, 'fork.cjs');
+  fs.writeFileSync(script, `const {spawn}=require('node:child_process');
+const g=spawn(process.execPath,['-e','setTimeout(()=>{},120000)'],{stdio:'ignore'});
+require('node:fs').writeFileSync(${JSON.stringify(out)},String(g.pid));setTimeout(()=>{},120000);`);
+  const blocked = path.join(L.dir, 'blocked'); fs.writeFileSync(blocked, 'not a directory');
+  const r = L.lease(['--', path.join(L.bin, 'node-helper'), script], { LBU_LEASE_DIR: path.join(blocked, 'leases') });
+  assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /stopped/);
+  if (await waitFor(() => fs.existsSync(out), 1500)) { const grandchild = Number(fs.readFileSync(out, 'utf8')); L.pids.add(grandchild); assert.ok(await waitFor(() => !alive(grandchild))); }
+});

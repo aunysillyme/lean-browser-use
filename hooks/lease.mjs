@@ -22,6 +22,7 @@ export function leaseDir(env = process.env) {
 export const sessionFromEnv = (env = process.env) => String(env.CLAUDE_CODE_SESSION_ID || env.CLAUDE_SESSION_ID || '');
 
 // Regular files keep this working where child-process pipes are restricted.
+const PS = ['/bin/ps', '/usr/bin/ps'].find(file => fs.existsSync(file)) || 'ps';
 function capture(command, args) {
   const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'lbu-ps-'));
   const file = path.join(dir, 'out');
@@ -36,14 +37,14 @@ function capture(command, args) {
 const ROW = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\w{3}\s+\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.*)$/;
 export function psTable() {
   const rows = new Map();
-  for (const line of capture('ps', ['-axww', '-o', 'pid=,ppid=,uid=,stat=,lstart=,command=']).split('\n')) {
+  for (const line of capture(PS, ['-axww', '-o', 'pid=,ppid=,uid=,stat=,lstart=,command=']).split('\n')) {
     const m = ROW.exec(line);
     if (m) rows.set(Number(m[1]), { pid: Number(m[1]), ppid: Number(m[2]), uid: Number(m[3]), stat: m[4], start: m[5].replace(/\s+/g, ' '), command: m[6] });
   }
   return rows;
 }
 export function psOne(pid) {
-  const m = ROW.exec(capture('ps', ['-ww', '-p', String(pid), '-o', 'pid=,ppid=,uid=,stat=,lstart=,command=']).split('\n')[0] || '');
+  const m = ROW.exec(capture(PS, ['-ww', '-p', String(pid), '-o', 'pid=,ppid=,uid=,stat=,lstart=,command=']).split('\n')[0] || '');
   return m ? { pid: Number(m[1]), ppid: Number(m[2]), uid: Number(m[3]), stat: m[4], start: m[5].replace(/\s+/g, ' '), command: m[6] } : null;
 }
 const isLive = row => !!row && !row.stat.startsWith('Z');
