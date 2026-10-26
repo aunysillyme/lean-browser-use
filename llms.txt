@@ -13,6 +13,7 @@ Two measured runs cost 3.15% and 25.26% less with the package at list API prices
 - [Installation, flags, health checks, and removal](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/install.md)
 - [How routing, packets, verification, and cleanup work](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/how-it-works.md)
 - [Guard rules, registration, and payload checks](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/guards.md)
+- [Cleanup command, leases, hooks, and what is never touched](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/cleanup.md)
 - [How to measure main and runner browser context](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/measure.md)
 
 ## Reference

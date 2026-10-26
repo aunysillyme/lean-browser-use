@@ -1,0 +1,40 @@
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { classify, psTable, writeLease, sessionFromEnv } from '../hooks/lease.mjs';
+import { refusal } from './util.mjs';
+
+export const spawnUsage = 'lean-browser-use spawn [--session ID] [--run NAME] -- COMMAND [ARGS...]';
+export function parseSpawn(args) {
+  const split = args.indexOf('--');
+  const flags = split < 0 ? args : args.slice(0, split);
+  const command = split < 0 ? [] : args.slice(split + 1);
+  const options = { session: sessionFromEnv(), run: '' };
+  for (let i = 0; i < flags.length; i++) {
+    if (flags[i] === '--session' || flags[i] === '--run') {
+      if (!flags[i + 1] || flags[i + 1].startsWith('--')) throw refusal(`Value required for ${flags[i]}.\n${spawnUsage}`);
+      options[flags[i].slice(2)] = flags[++i];
+    } else throw refusal(`Unknown option.\n${spawnUsage}`);
+  }
+  if (!command.length) throw refusal(`A command is required after --.\n${spawnUsage}`);
+  return { ...options, command };
+}
+// Start COMMAND detached, record a lease for it, and return. A process that cannot be
+// leased is stopped again, so nothing runs without an owner on record.
+export async function spawnCommand(args) {
+  const { session, run, command } = parseSpawn(args);
+  const verdict = classify(command);
+  if (!verdict.ok) throw refusal(`Refused: ${verdict.reason}.`);
+  const child = spawn(command[0], command.slice(1), { detached: true, stdio: 'ignore' });
+  try { await once(child, 'spawn'); } catch { throw refusal(`Could not start ${command[0]}.`); }
+  const row = psTable().get(child.pid);
+  if (!row || row.stat.startsWith('Z')) { console.error('The command exited right away; no lease was written.'); return 1; }
+  try {
+    const lease = writeLease({ pid: child.pid, kind: verdict.kind, start: row.start, command: row.command, argv: command, session, run, created: new Date().toISOString() });
+    child.unref();
+    console.log(`spawned pid=${child.pid} lease=${lease.id} kind=${verdict.kind}${session ? ` session=${session}` : ''}`);
+    return 0;
+  } catch {
+    try { process.kill(child.pid, 'SIGTERM'); } catch { /* already gone */ }
+    throw refusal('Could not record the lease, so the process was stopped.');
+  }
+}

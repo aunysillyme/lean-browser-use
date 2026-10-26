@@ -37,7 +37,7 @@ Here `<cfg>` means the selected config directory.
 | --- | --- |
 | `<cfg>/skills/lean-browser-use/` | Method entrypoint and focused references. |
 | `<cfg>/agents/aun-browser-runner.md` | Browser subagent definition. |
-| `<cfg>/lean-browser-use/hooks/` | Guard scripts and registration source. |
+| `<cfg>/lean-browser-use/hooks/` | Guard and cleanup scripts and registration source. |
 | `<cfg>/lean-browser-use/briefs/` | Browser and cheap-helper packet templates. |
 | `<cfg>/lean-browser-use/reader/` | Optional compile-once reader and specs. |
 | `<cfg>/lean-browser-use/searxng/` | Optional search script and container configuration. |
@@ -56,7 +56,7 @@ npx lean-browser-use doctor
 npx lean-browser-use doctor --claude-dir ./sandbox-config --json
 ```
 
-Doctor checks installed file hashes, registered hook paths, executable shims, and synthetic hook responses. Edited files are reported. Its capability table explains what Python, `crwl`, Docker, Claude Code, and local transcripts enable; missing optional tools are capabilities to add, not installation errors. JSON output has `ok` and `checks`, each with `id`, `status`, and `detail`. Hook behavior on your Claude Code version is confirmed by `lean-browser-use doctor`.
+Doctor checks installed file hashes, registered hook paths, executable shims, synthetic hook responses, and leased processes still running (see [cleanup](cleanup.md)). Edited files are reported. Its capability table explains what Python, `crwl`, Docker, Claude Code, and local transcripts enable; missing optional tools are capabilities to add, not installation errors. JSON output has `ok` and `checks`, each with `id`, `status`, and `detail`. Hook behavior on your Claude Code version is confirmed by `lean-browser-use doctor`.
 
 ## Measure and remove
 

@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here, following [Keep a Changelog](https://keepachangelog.com).
 
+## [Unreleased]
+
+### Added
+
+- `cleanup` command: dry run by default, `--apply` ends only leased automation processes, children first, with SIGTERM, a 3 second wait, then SIGKILL for the same process. It prints one summary line.
+- `spawn` command: starts a process detached and records a lease (process id, start time, command line, session).
+- Cleanup hooks for SubagentStop, Stop and SessionEnd, registered by the installer and removed by `uninstall`; each exits 0 on every path.
+- `doctor` check that reports leftover leased processes and exits 1 when any exist.
+- Runner agent and cleanup reference end with the exact cleanup command.
+
+### Changed
+
+- `uninstall` removes hook events it leaves empty instead of keeping empty lists.
+
 ## [0.1.0] - 2026-10-25
 
 ### Added
