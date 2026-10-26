@@ -32,6 +32,7 @@ The installer merges [hooks.settings.json](../hooks/hooks.settings.json), replac
 | PostToolUse | Chrome extension `select_browser`, `switch_browser`, and `tabs_close_mcp` (clears the pick; close run tabs once at the end); the in-app pane keeps its pick | `pick-guard.sh` |
 | PostToolUse | Browser and native tools | `retry-guard.sh` |
 | PostToolUse | Browser and native tools | `batch-nudge.sh`, timeout 10 s |
+| SubagentStop (runner), Stop, SessionEnd | The session's leased processes | `cleanup.sh`, timeout 20 s; see [cleanup](cleanup.md) |
 
 State is keyed by session for picking, and by agent run plus tab for retries. `$LBU_STATE_DIR` overrides the state directory; the default is under the Claude config directory's `lean-browser-use/state`. State files use mode 0600 and the directory uses 0700. Retry state is pruned after 24 h.
 
