@@ -13,3 +13,25 @@
 /* Product evidence and playback controls extend the shared site design. */
 .route-core.selected{border-color:var(--green);box-shadow:0 0 14px #3df07a18}.table-scroll{max-width:100%;overflow:auto}.proof-table{width:100%;border-collapse:collapse;font-size:10px}.proof-table th,.proof-table td{padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}.proof-table th{font-weight:400;color:var(--white);background:#112017}.code pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.code code{font:inherit}.trailer-caption{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:10px}.trailer-caption .note{margin:0}.trailer-toggle{background:#102319;color:var(--green);border:1px solid #3d7750;padding:6px 11px;font-size:10px;white-space:nowrap}.requirements{grid-template-columns:repeat(2,minmax(0,1fr))}.faq details{margin:10px 0}.faq p{font-size:11px}.source-section:first-child .source-note{margin-top:0}@media(max-width:600px){.requirements{grid-template-columns:1fr}.trailer-caption{align-items:flex-start}.trailer-toggle{font-size:9px}.routing-head{flex-wrap:wrap}}
 .product-summary{font-size:11px;color:var(--muted);max-width:900px;margin-bottom:24px}.product-summary p{margin:0}
+
+/* Shared border light keeps text inside a clear inset. */
+.card{position:relative}
+.three article.card,.tool.card{border:1px solid var(--line);background:var(--panel);padding:18px}
+.routing.card{padding:22px}
+.install.card{padding:15px}
+.hero-actions{flex-wrap:wrap;gap:12px}
+.hero-actions a.card{border:1px solid var(--line);padding:8px 12px}
+.copy.card{padding:8px 10px}
+.task-tabs button.card,.trailer-toggle.card{padding:8px 12px}
+.route-core.card,.route-options .card{padding:10px}
+.proof-card{padding:18px;border:1px solid var(--line);background:var(--panel)}
+.card-trace{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);overflow:visible;pointer-events:none;opacity:0;fill:none;stroke:var(--green);stroke-width:2.5;filter:drop-shadow(0 0 4px var(--green)) drop-shadow(0 0 9px var(--green));z-index:2}
+.card-trace rect{width:calc(100% - 1px);height:calc(100% - 1px)}
+.card-trace .ray-tail{stroke-dasharray:6 94;opacity:.45}
+.card-trace .ray-mid{stroke-dasharray:3 97;opacity:.85}
+.card-trace .ray-tip{stroke-dasharray:1 99;stroke:#D6FFE4;stroke-width:3}
+.card:hover .card-trace,.card:focus-within .card-trace{opacity:1}
+@keyframes card-ray{to{stroke-dashoffset:100}}
+.card:hover .card-trace rect,.card:focus-within .card-trace rect{animation:card-ray 5s linear infinite}
+@media (prefers-reduced-motion: reduce){.card-trace rect{animation:none!important}}
+@media(forced-colors:active){.card .card-trace{display:none}}

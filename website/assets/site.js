@@ -7,9 +7,10 @@ export function setupCopy(doc = document, clipboard = navigator.clipboard, later
     const status = doc.getElementById('copy-status');
     try {
       await clipboard.writeText(command.textContent);
-      button.textContent = '✓';
+      const label = button.querySelector?.('[data-button-label]') || button;
+      label.textContent = '✓';
       status.textContent = status.dataset.success;
-      later(() => { button.textContent = '⧉'; }, 1800);
+      later(() => { label.textContent = '⧉'; }, 1800);
     } catch {
       status.textContent = status.dataset.fallback;
     }

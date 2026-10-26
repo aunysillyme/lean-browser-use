@@ -316,3 +316,6 @@ red('headline source differs from pinned README', dir => edit(dir, 'index.html',
 red('install command differs from pin', dir => edit(dir, 'index.html', html => html.replace('<code id="install-command">npx lean-browser-use</code>', '<code id="install-command">npx other-package</code>')), /pinned install command/, { live: true });
 red('meta description differs from pin', dir => edit(dir, 'index.html', html => html.replace(/(<meta name="description" content=")[^"]+/, '$1Changed description')), /pinned meta description/, { live: true });
 red('headline differs from pinned lead', dir => edit(dir, 'index.html', html => html.replace('Cut browser use cost by about 25%.<br>', 'Change the browser use cost.<br>')), /pinned headline/, { live: true });
+
+red('card trace missing aria-hidden', dir => append(dir, doc,
+  '<svg class="card-trace" focusable="false"><rect class="ray-tip"/></svg>'), /card trace must be aria-hidden/);

@@ -7,7 +7,8 @@ export function setupTrailer(video, button, environment = window, documentRef = 
     const playing = !video.paused;
     button.setAttribute('aria-pressed', String(playing));
     button.setAttribute('aria-label', playing ? 'Pause trailer' : 'Play trailer');
-    button.textContent = playing ? 'Pause trailer' : 'Play trailer';
+    const label = button.querySelector?.('[data-button-label]') || button;
+    label.textContent = playing ? 'Pause trailer' : 'Play trailer';
   };
   const play = () => {
     video.muted = true;
