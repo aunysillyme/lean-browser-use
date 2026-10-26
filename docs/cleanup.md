@@ -70,6 +70,8 @@ The installer registers three additive entries, all removed by `uninstall`:
 | Stop | The session's leases at the end of a turn, unless a subagent is still running. |
 | SessionEnd | The session's leases when the session ends. |
 
+Runners that work in parallel inside one session share its scope: when one stops, the hook ends the session's leases. Give each its own `--run NAME` and clean with `cleanup --run NAME` when their helpers must outlive one another.
+
 Each hook reads `session_id` (and `agent_type` for SubagentStop) from the hook payload, ends that session's leases, and exits 0 on every path, so a session is never blocked. A malformed payload does nothing. `doctor` runs the hook against a malformed payload to prove this.
 
 ## Check for leftovers

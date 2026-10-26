@@ -38,8 +38,8 @@ export async function spawnCommand(args) {
   if (!verdict.ok) throw refusal(`Refused: ${verdict.reason}.`);
   const child = spawn(command[0], command.slice(1), { detached: true, stdio: 'ignore' });
   try { await once(child, 'spawn'); } catch { throw refusal(`Could not start ${command[0]}.`); }
-  // The child is ours until we unref it, so SIGKILL reaches exactly this process.
-  const stop = message => { child.kill('SIGKILL'); throw refusal(message); };
+    // The child leads its own process group, so the group holds exactly it and what it started.
+  const stop = message => { try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill('SIGKILL'); } throw refusal(message); };
   try {
     const row = await settledRow(child.pid);
     if (!row) { console.error('The command exited right away; no lease was written.'); return 1; }

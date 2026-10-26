@@ -47,9 +47,12 @@ export function doctor(options = {}) {
   }
   try {
     const leased = readLeases().leases.length;
-    const live = leased ? scan().items.filter(item => item.state === 'live') : [];
+    const items = leased ? scan().items : [];
+    const live = items.filter(item => item.state === 'live');
+    const refused = items.filter(item => item.state === 'refused');
     const list = live.map(({ lease, tree }) => `${lease.kind === 'chrome' ? 'chrome' : lease.argv[0].split('/').at(-1)} pid ${lease.pid} (${tree.kill.length + 1} processes, age ${age(Math.max(0, Math.round((Date.now() - Date.parse(lease.created)) / 1000) || 0))})`);
-    add('leftover-processes', live.length ? 'error' : 'ok', live.length ? `Leftover leased processes: ${list.join('; ')}. Run: npx lean-browser-use cleanup --apply` : 'No leased processes are running.');
+    if (refused.length) add('leftover-processes', 'error', `${refused.length} leased process(es) are running but cannot be proven safe to end: ${refused.map(r => `pid ${r.lease.pid} (${r.reason})`).join('; ')}`);
+    else add('leftover-processes', live.length ? 'error' : 'ok', live.length ? `Leftover leased processes: ${list.join('; ')}. Run: npx lean-browser-use cleanup --apply` : 'No leased processes are running.');
   } catch { add('leftover-processes', 'error', 'The process list could not be read, so leftover processes could not be checked.'); }
   for (const [tool, gives] of [['python3', 'Reader and search commands'], ['crwl', 'Page text extraction'], ['docker', 'Search container'], ['claude', 'Agent runner and optional reader compile']]) {
     const available = (process.env.PATH || '').split(path.delimiter).some(dir => { try { fs.accessSync(path.join(dir, tool), fs.constants.X_OK); return true; } catch { return false; } });
