@@ -226,6 +226,7 @@ test('RED hero has approved headline and visible keywords, with the prohibited h
 
 test('RED unverified release stays pending and a verified local release shows its version', t => {
   const dir = fixture(t);
+  rmSync(join(dir, 'website/release.json'), { force: true });
   const pending = value => assert.match(text(value), /v0\.1\.1 not released yet/);
   const initial = read(built(dir), 'index.html');
   assert.throws(() => pending(initial.replace('not released yet', 'released')));

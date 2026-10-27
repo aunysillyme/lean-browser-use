@@ -179,7 +179,7 @@ red('private issue id', dir => append(dir, doc, `<p>AU${'N'}-123</p>`), /private
 red('personal path', dir => append(dir, doc, `<p>/Us${'ers'}/sample/file</p>`), /personal path/);
 red('private storage path', dir => append(dir, doc, '<p>Vau' + 'lts/notes/file</p>'), /private storage path/);
 red('default index differs from saved mock', dir => append(dir, 'index.html', '<p>Extra copy</p>'), /default landing differs/);
-red('unverified release version', dir => edit(dir, 'index.html', html => html.replace('not released yet', 'released')), /Fresh from the repo must say not released yet/);
+red('release version differs from package', dir => edit(dir, 'index.html', html => html.replace(/<strong>v\d+\.\d+\.\d+<\/strong>/, '<strong>v9.9.9</strong>')), /package version differs from display/);
 red('unexpected output file', dir => write(dir, 'extra.txt', 'Extra'), /unexpected output file/);
 red('missing default noindex', dir => edit(dir, doc, html => html.replace('<meta name="robots" content="noindex">', '')), /missing noindex/);
 red('default discovery alternate', dir => append(dir, doc, '<link rel="alternate" type="text/markdown" href="/index.md">'), /markdown alternate in default mode/);
