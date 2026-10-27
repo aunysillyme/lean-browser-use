@@ -1,6 +1,6 @@
 # lean-browser-use
 
-[![npm version](https://img.shields.io/npm/v/lean-browser-use)](https://www.npmjs.com/package/lean-browser-use)
+[![npm version](https://img.shields.io/npm/v/lean-browser-use)](https://www.npmjs.com/package/lean-browser-use) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aunysillyme/lean-browser-use/badge)](https://scorecard.dev/viewer/?uri=github.com/aunysillyme/lean-browser-use)
 [![CI](https://github.com/aunysillyme/lean-browser-use/actions/workflows/check.yml/badge.svg)](https://github.com/aunysillyme/lean-browser-use/actions/workflows/check.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-supported-green)](package.json)
