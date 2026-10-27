@@ -1,6 +1,26 @@
 # Cleanup: nothing keeps running
 
-After a browser run, the processes the package started are ended and nothing stays running in the background. The package does this with leases: a lease is a small file that `lean-browser-use spawn` writes for each process it starts. Cleanup acts on leases and on nothing else.
+Cleanup has two owners: the runner and the main session. Follow the steps below after every browser job, including a failed or stopped run. The cleanup command handles leased processes; tabs, other shell tasks and scratch files also need their owner's checks.
+
+## Cleanup steps
+
+Record ownership in the brief: existing user tabs, tabs opened for the job, process IDs, scratch paths and the evidence handoff path. Keep existing user tabs and the user's browser profile open.
+
+The runner completes steps 1-5 at the end of every run, on success, failure or a reached bound. Save evidence at the handoff path first. Main completes steps 6-9 after the runner reports, before calling the task done.
+
+1. **Runner: close run tabs.** Close every tab this run created, plus any tab the brief says main opened for this run. Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick, so close run tabs once at the end, never mid-task. Keep tabs the user already had open.
+2. Close the in-app Browser pane if this run opened it and nothing else uses it. Closing its last tab closes the pane. Closing a tab in the in-app Browser pane keeps its pick.
+3. Stop anything this run started from the shell outside `spawn`, including background commands, scripts and watchers. Delete run-owned scratch files, keeping evidence at the handoff path for main.
+4. Use `tabs_context` or `tabs_context_mcp` to confirm no run-owned tab remains. Check processes started outside `spawn`, for example with `pgrep` scoped to what the run started, and confirm they have ended. The next step checks leased processes. If no process was started, report the initial and final resource snapshots. A cleanup claim needs these checks; report an unavailable check as `UNVERIFIED` with the remaining tab or process IDs and paths.
+5. Run `npx --yes lean-browser-use cleanup --apply` as the last command. Copy its `cleanup:` line into the report, alongside the tab and process checks and any pending IDs.
+6. **Main session: close remaining job tabs.** Close any tab main opened for this job that the runner did not close, including a tab used to pick or identify the browser profile. Keep existing user tabs open.
+7. Stop every background task, monitor or watcher main started for this job, including any local preview or dev server.
+8. Run `npx lean-browser-use doctor`. Exit 1 can indicate leftover leased processes: run `npx lean-browser-use cleanup --apply` and re-check with `doctor`. Resolve any other reported health failures before calling the task done; retain unavailable checks as `UNVERIFIED`.
+9. Verify the runner's saved evidence and cleanup report, then delete the handoff scratch. Keep it available until verification is complete.
+
+## Process leases
+
+A lease is a small file that `lean-browser-use spawn` writes for each process it starts. The cleanup command acts on leases and on nothing else. Use `spawn` for every browser or helper process the run needs.
 
 ## Start a process with a lease
 

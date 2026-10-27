@@ -70,10 +70,12 @@ See [installation and activation](docs/install.md) for target directories and op
 
 ## Cleanup: nothing keeps running
 
-Every process the runner starts goes through `npx lean-browser-use spawn`, which records a lease. When the run ends, the runner executes:
+Follow the [cleanup steps](docs/cleanup.md#cleanup-steps): the runner saves evidence, closes run-owned tabs and panes, stops its shell tasks, removes scratch, checks what remains and runs leased-process cleanup. Main then closes its remaining job tabs, stops its background tasks and servers, runs `doctor`, verifies the runner's evidence and removes the handoff scratch.
+
+Every process the runner starts goes through `npx lean-browser-use spawn`, which records a lease. The runner's last command is:
 
 ```sh
-npx lean-browser-use cleanup --apply
+npx --yes lean-browser-use cleanup --apply
 ```
 
 It ends only leased automation processes, children first, with SIGTERM and a 3 second wait before SIGKILL for the same process. Registered hooks repeat the cleanup when a runner stops, a turn ends or the session ends, and `doctor` reports any leftover.

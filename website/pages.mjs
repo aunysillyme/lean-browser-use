@@ -26,7 +26,7 @@ export const pages = [
   page('proof', '/docs/proof/', ['proof/results.json', 'docs/benchmark.md']),
   page('changelog', '/docs/changelog/', ['CHANGELOG.md']),
   page('install', '/docs/install/', ['docs/install.md']),
-  page('guarantees', '/docs/guarantees/', ['docs/guards.md', 'docs/PROVENANCE.md', 'CREDITS.md'], ['pick', 'retry', 'batch']),
+  page('guarantees', '/docs/guarantees/', ['docs/cleanup.md', 'docs/guards.md', 'docs/PROVENANCE.md', 'CREDITS.md'], ['pick', 'retry', 'batch']),
 ];
 
 export default pages;

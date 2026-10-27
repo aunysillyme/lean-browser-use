@@ -4,8 +4,12 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-27
+
 ### Added
 
+- Full after-use cleanup steps for the runner and main session, including tabs, Browser panes, shell tasks, scratch files and verification.
+- Cleanup guide on the website, with links from the README, runner agent, skill reference and `llms.txt`.
 - `cleanup` command: dry run by default, `--apply` ends only leased automation processes, children first, with SIGTERM, a 3 second wait, then SIGKILL for the same process. It prints one summary line.
 - `spawn` command: starts a process detached and records a lease (process id, start time, command line, session).
 - Cleanup hooks for SubagentStop, Stop and SessionEnd, registered by the installer and removed by `uninstall`; each exits 0 on every path.
@@ -32,4 +36,5 @@ All notable changes to this project are documented here, following [Keep a Chang
 - Optional compile-once page reader and SearXNG companion.
 - Offline checks, package measurements, provenance, and contribution guides.
 
+[0.1.1]: https://github.com/aunysillyme/lean-browser-use/releases/tag/v0.1.1
 [0.1.0]: https://github.com/aunysillyme/lean-browser-use/releases/tag/v0.1.0

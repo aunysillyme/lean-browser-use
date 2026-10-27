@@ -37,15 +37,17 @@ Report an absent element and stop. Respect a guard block. The same error twice m
 
 ## Finish with evidence
 
-Close only tabs created for this run and assigned to you by the brief, once at the end. Keep existing tabs and the user's browser profile open. Remove run-owned scratch after preserving evidence at the handoff path. Check owned tabs with `tabs_context` or `tabs_context_mcp`. Report unavailable checks as `UNVERIFIED` with exact IDs. Main owns any outer helper-process check.
+At the end of every run, on success, failure or a reached bound, save evidence at the handoff path first. Keep the user's browser profile open. Then:
 
-Last action, on success, failure and a reached bound, with the evidence already saved:
+1. Close every tab this run created, plus any tab the brief says main opened for this run. Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick, so close run tabs once at the end, never mid-task. Keep tabs the user already had open.
+2. Close the in-app Browser pane if this run opened it and nothing else uses it. Closing its last tab closes the pane. Closing a tab in the in-app Browser pane keeps its pick.
+3. Stop anything this run started from the shell outside `spawn`, including background commands, scripts and watchers. Delete run-owned scratch files, keeping evidence at the handoff path for main.
+4. Use `tabs_context` or `tabs_context_mcp` to confirm no run-owned tab remains. Check processes started outside `spawn`, for example with `pgrep` scoped to what the run started, and confirm they have ended. The next step checks leased processes. If no process was started, report the initial and final resource snapshots. A cleanup claim needs these checks; report an unavailable check as `UNVERIFIED` with the remaining tab or process IDs and paths.
+5. Run `npx --yes lean-browser-use cleanup --apply` as the last command. Copy its `cleanup:` line into the report, alongside the tab and process checks and any pending IDs.
 
-```sh
-npx --yes lean-browser-use cleanup --apply
-```
+It ends only leased processes of this session, children first: SIGTERM, a 3 second wait, then SIGKILL for the same process only.
 
-It ends only leased processes of this session, children first: SIGTERM, a 3 second wait, then SIGKILL for the same process only. Copy its single `cleanup:` line into the report.
+Main follows [Cleanup steps 6-9](../docs/cleanup.md#cleanup-steps) after the runner reports and before calling the task done: close remaining job tabs, stop its tasks and servers, run `doctor`, verify the evidence, then remove the handoff scratch.
 
 Return a report under 8 lines. Use the following shape, combining lines where useful:
 
@@ -54,5 +56,5 @@ Result: <requested fields and confirmed or failed status>
 Evidence: <URL, saved read path, screenshot path if requested>
 Actions: <brief step list; browser calls and batches>
 Blocked: <failed fields, cause, pending verification>
-Cleanup: <the cleanup line; closed tabs; tab probe; scratch; retained evidence; pending IDs>
+Cleanup: <the cleanup line; closed tabs; tab and process checks; scratch; retained evidence; pending IDs>
 ```
