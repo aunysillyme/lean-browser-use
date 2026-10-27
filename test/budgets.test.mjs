@@ -8,7 +8,7 @@ import { walk, captured } from '../src/util.mjs';
 
 test('package metadata and zero dependencies', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  assert.equal(pkg.name, 'lean-browser-use'); assert.equal(pkg.version, '0.1.0'); assert.equal(pkg.type, 'module'); assert.equal(pkg.license, 'MIT'); assert.equal(pkg.engines.node, '>=20');
+  assert.equal(pkg.name, 'lean-browser-use'); assert.equal(pkg.version, '0.1.1'); assert.equal(pkg.type, 'module'); assert.equal(pkg.license, 'MIT'); assert.equal(pkg.engines.node, '>=20');
   assert.equal(pkg.description, 'Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command');
   assert.deepEqual(pkg.bugs, { url: 'https://github.com/aunysillyme/lean-browser-use/issues' });
   assert.ok(pkg.description.length <= 160);
