@@ -92,7 +92,7 @@ test('with-reader copies executable commands and malformed settings are preserve
 });
 test('CLI usage and version', () => {
   for (const args of [['unknown'], ['--unknown'], ['--claude-dir'], ['doctor', '--with-reader']]) assert.equal(cli(args).status, 2);
-  assert.equal(cli(['--version']).stdout.trim(), '0.1.0'); assert.equal(cli(['--help']).status, 0);
+  assert.equal(cli(['--version']).stdout.trim(), '0.1.1'); assert.equal(cli(['--help']).status, 0);
 });
 
 test('uninstall removes an empty config root created by a no-hooks install', t => {
