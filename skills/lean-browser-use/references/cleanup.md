@@ -2,16 +2,24 @@
 
 Record resource ownership in the brief before acting: existing tabs, run-created tabs, process IDs, scratch paths, and the evidence handoff path. Existing user resources stay open. Never run a command that closes the user's whole browser profile.
 
-At the end, close only tabs this run created or that the brief explicitly assigns to it. Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick, so close run tabs once at the end. Closing a tab in the in-app Browser pane keeps its pick. Close a Browser pane only when this run opened it and it is unused by other work.
+Start every process the run needs with `npx --yes lean-browser-use spawn -- <command>`: the wrapper records a lease (process id, start time, exact command).
 
-Start every process the run needs with `npx --yes lean-browser-use spawn -- <command>`: the wrapper records a lease (process id, start time, exact command). Run `npx --yes lean-browser-use cleanup --apply` as the last action. It ends only leased processes of the current session, children first: SIGTERM, a 3 second wait, then SIGKILL for the same process only. It never touches a Chrome without automation flags or one using the real profile directory. Delete only run-owned scratch files. Keep evidence at the main-owned handoff path until main finishes verification, then let main remove it.
+## Runner steps
 
-After closing, use `tabs_context` or `tabs_context_mcp` to confirm the owned tabs are absent. Pair it with the process check. If the run started no process, report the initial and final resource snapshots explicitly. If a check is unavailable, report `UNVERIFIED` and give main the remaining IDs and paths.
+At the end of every run, on success, failure or a reached bound, save evidence at the handoff path first. Then:
+
+1. Close every tab this run created, plus any tab the brief says main opened for this run. Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick, so close run tabs once at the end, never mid-task. Keep tabs the user already had open.
+2. Close the in-app Browser pane if this run opened it and nothing else uses it. Closing its last tab closes the pane. Closing a tab in the in-app Browser pane keeps its pick.
+3. Stop anything this run started from the shell outside `spawn`, including background commands, scripts and watchers. Delete run-owned scratch files, keeping evidence at the handoff path for main.
+4. Use `tabs_context` or `tabs_context_mcp` to confirm no run-owned tab remains. Check processes started outside `spawn`, for example with `pgrep` scoped to what the run started, and confirm they have ended. The next step checks leased processes. If no process was started, report the initial and final resource snapshots. A cleanup claim needs these checks; report an unavailable check as `UNVERIFIED` with the remaining tab or process IDs and paths.
+5. Run `npx --yes lean-browser-use cleanup --apply` as the last command. Copy its `cleanup:` line into the report, alongside the tab and process checks and any pending IDs.
+
+The command ends only leased processes of the current session, children first: SIGTERM, a 3 second wait, then SIGKILL for the same process only. It never touches a Chrome without automation flags or one using the real profile directory.
 
 End the report with:
 
 ```text
-Cleanup: <the cleanup line; closed tab IDs; tabs_context result; scratch removed; retained evidence; pending IDs>
+Cleanup: <the cleanup line; closed tab IDs; tab and process checks; scratch removed; retained evidence; pending IDs>
 ```
 
-Main checks any outer helper process after it exits. A cleanup claim without a probe is still pending.
+Main follows [Cleanup steps 6-9](../../../docs/cleanup.md#cleanup-steps) after the runner reports and before calling the task done: close remaining job tabs, stop its tasks and servers, run `doctor`, verify the evidence, then remove the handoff scratch. A cleanup claim without a probe is still pending.
