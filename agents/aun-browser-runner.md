@@ -40,6 +40,7 @@ Report an absent element and stop. Respect a guard block. The same error twice m
 At the end of every run, on success, failure or a reached bound, save evidence at the handoff path first. Keep the user's browser profile open. Then:
 
 1. Close every tab this run created, plus any tab the brief says main opened for this run. Closing a tab with the Chrome extension's `tabs_close_mcp` clears the pick, so close run tabs once at the end, never mid-task. Keep tabs the user already had open.
+   Closing the run's tabs ends the control. Hold a tab the user must act on with `npx --yes lean-browser-use keep --reason "<why>"` and name it in the report. Otherwise the stop gate blocks once to request closure.
 2. Close the in-app Browser pane if this run opened it and nothing else uses it. Closing its last tab closes the pane. Closing a tab in the in-app Browser pane keeps its pick.
 3. Stop anything this run started from the shell outside `spawn`, including background commands, scripts and watchers. Delete run-owned scratch files, keeping evidence at the handoff path for main.
 4. Use `tabs_context` or `tabs_context_mcp` to confirm no run-owned tab remains. Check processes started outside `spawn`, for example with `pgrep` scoped to what the run started, and confirm they have ended. The next step checks leased processes. If no process was started, report the initial and final resource snapshots. A cleanup claim needs these checks; report an unavailable check as `UNVERIFIED` with the remaining tab or process IDs and paths.

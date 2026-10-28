@@ -5,8 +5,11 @@ import { root, configDir, safePath, noSymlinks, manifestPath, loadManifest } fro
 import { exists, walk, readJSON, sha256, atomicWrite, refusal, shellQuote } from './util.mjs';
 
 export const ownedHook = hook => typeof hook?.command === 'string' && hook.command.includes('/lean-browser-use/hooks/');
-export function registrations(cfg) {
+export function registrations(cfg, { stopGate = true } = {}) {
   const data = readJSON(path.join(root, 'hooks/hooks.settings.json'));
+  if (!stopGate) for (const event of Object.keys(data.hooks)) {
+    data.hooks[event] = data.hooks[event].filter(entry => !entry.hooks.some(hook => /\/(touch|stop-gate)\.sh/.test(hook.command)));
+  }
   for (const entries of Object.values(data.hooks)) for (const entry of entries) for (const hook of entry.hooks) {
     const filename = hook.command.match(/\$\{HOOKS_DIR\}\/([^"']+)/)?.[1];
     if (!filename) throw refusal('Invalid hook template.');
@@ -61,7 +64,14 @@ export async function install(options = {}) {
   const previous = exists(manifestPath(cfg)) ? loadManifest(cfg) : null;
   const files = sourceFiles(options);
   const settings = readSettings(cfg);
-  const wanted = registrations(cfg);
+  const omitted = options.noStopGate && !options.noHooks ? ['touch.sh', 'stop-gate.sh'].map(name => shellQuote(path.join(cfg, 'lean-browser-use/hooks', name))) : [];
+  for (const event of Object.keys(settings.hooks || {})) if (omitted.length) {
+    settings.hooks[event] = settings.hooks[event].flatMap(entry => {
+      const hooks = entry.hooks.filter(hook => !omitted.includes(hook.command));
+      return hooks.length === entry.hooks.length ? [entry] : hooks.length ? [{ ...entry, hooks }] : [];
+    });
+  }
+  const wanted = registrations(cfg, { stopGate: !options.noStopGate });
   const entries = options.noHooks ? [] : mergeHooks(settings, wanted);
   const backup = path.join(cfg, 'settings.json.lean-browser-use.bak');
   const settingsFile = path.join(cfg, 'settings.json');
@@ -106,8 +116,9 @@ export async function install(options = {}) {
     version: readJSON(path.join(root, 'package.json')).version,
     installedAt: new Date().toISOString(),
     files: [...retained, ...files.map(({ path: file, sha256: hash }) => ({ path: file, sha256: hash }))],
-    directories: [...dirs], settingsEntries: [...(previous?.settingsEntries || []), ...entries],
+    directories: [...dirs], settingsEntries: [...(previous?.settingsEntries || []).filter(entry => !omitted.includes(entry.hook.command)), ...entries],
     backupWritten: !!(previous?.backupWritten || backupNeeded), manualHooks: !!options.noHooks,
+    stopGate: !options.noStopGate,
     configDirectoryCreated: previous?.configDirectoryCreated ?? !configExisted,
     sharedFiles: [settingsFile, backup].filter(f => exists(f)).map(f => ({ path: path.basename(f), sha256: sha256(fs.readFileSync(f)) }))
   };

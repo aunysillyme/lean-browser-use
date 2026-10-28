@@ -4,6 +4,20 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-28
+
+### Added
+
+- PostToolUse touch hook records browser actions and successful closes per session and subagent.
+- Stop and runner SubagentStop gate requests closure once per dirty stretch, with the exact close tool.
+- `keep --reason` command holds browser surfaces for the user, including subagent surfaces.
+- `doctor` open-surfaces check reports dirty browser surfaces older than ten minutes.
+- `--no-stop-gate` install flag disables touch and stop-gate registration. The gate is on by default.
+
+### Changed
+
+- Cleanup guide and runner steps explain that closing the run's tabs ends browser control.
+
 ## [0.1.1] - 2026-10-27
 
 ### Added
@@ -36,5 +50,6 @@ All notable changes to this project are documented here, following [Keep a Chang
 - Optional compile-once page reader and SearXNG companion.
 - Offline checks, package measurements, provenance, and contribution guides.
 
+[0.1.2]: https://github.com/aunysillyme/lean-browser-use/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aunysillyme/lean-browser-use/releases/tag/v0.1.1
 [0.1.0]: https://github.com/aunysillyme/lean-browser-use/releases/tag/v0.1.0
