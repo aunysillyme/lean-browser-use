@@ -24,4 +24,4 @@ A runner's DONE is a claim. Main re-reads saved values or independently fetches 
 
 The method grew from browser workflow experiments with separate executors, batched reads, and compile-once extraction. The package turns those practices into reusable briefs, a runner, freshly written public guards, and a local transcript meter. The experiments belong to the author's environment; this repository publishes package measurements in [the proof file](../proof/results.json).
 
-Run `lean-browser-use measure` to get your own context comparison. The package receipts describe this build; your transcripts provide evidence for your own workflow. [Credits](../CREDITS.md) identifies the upstream techniques and tools.
+Run `npx lean-browser-use measure` to get your own context comparison. The package receipts describe this build; your transcripts provide evidence for your own workflow. [Credits](../CREDITS.md) identifies the upstream techniques and tools.
