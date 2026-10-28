@@ -72,6 +72,8 @@ See [installation and activation](docs/install.md) for target directories and op
 
 Follow the [cleanup steps](docs/cleanup.md#cleanup-steps): the runner saves evidence, closes run-owned tabs and panes, stops its shell tasks, removes scratch, checks what remains and runs leased-process cleanup. Main then closes its remaining job tabs, stops its background tasks and servers, runs `doctor`, verifies the runner's evidence and removes the handoff scratch.
 
+The stop gate blocks once to request closure of run-owned tabs; use `npx lean-browser-use keep --reason "<why>"` to hold a tab for the user and say what stays open and why.
+
 Every process the runner starts goes through `npx lean-browser-use spawn`, which records a lease. The runner's last command is:
 
 ```sh

@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { configDir, safePath, loadManifest } from './paths.mjs';
+import { configDir, safePath, noSymlinks, loadManifest } from './paths.mjs';
 import { exists, sha256, captured } from './util.mjs';
 import { readSettings, ownedHook, registrations } from './install.mjs';
 import { scan, age, readLeases } from '../hooks/lease.mjs';
+import { readState } from '../hooks/common.mjs';
 
 export function doctor(options = {}) {
   const cfg = configDir(options);
@@ -23,7 +24,8 @@ export function doctor(options = {}) {
   if (manifest) {
     try {
       const settings = readSettings(cfg);
-      const expected = manifest.manualHooks ? manifest.settingsEntries : Object.entries(registrations(cfg)).flatMap(([event, entries]) => entries.flatMap(entry => entry.hooks.map(hook => ({ event, matcher: entry.matcher, hook }))));
+      const wantedRegistrations = registrations(cfg, { stopGate: manifest.stopGate !== false });
+      const expected = manifest.manualHooks ? manifest.settingsEntries : Object.entries(wantedRegistrations).flatMap(([event, entries]) => entries.flatMap(entry => entry.hooks.map(hook => ({ event, matcher: entry.matcher, hook }))));
       for (const entry of expected) {
         const found = (settings.hooks?.[entry.event] || []).some(e => e.matcher === entry.matcher && e.hooks.some(h => h.command === entry.hook.command));
         add(`registration:${entry.event}:${entry.matcher || '*'}`, found ? 'ok' : 'error', found ? 'Registered.' : 'Hook registration missing.');
@@ -36,15 +38,32 @@ export function doctor(options = {}) {
       }
       if (manifest.manualHooks && !manifest.settingsEntries.length) add('manual-hooks', 'optional', 'Paste the printed hook snippet to activate guards.');
     } catch { add('settings', 'error', 'Settings could not be checked.'); }
-    for (const name of ['pick-guard', 'retry-guard', 'batch-nudge', 'cleanup']) {
+    for (const name of ['pick-guard', 'retry-guard', 'batch-nudge', 'cleanup', 'touch', 'stop-gate']) {
       try {
         const file = safePath(cfg, `lean-browser-use/hooks/${name}.sh`);
         fs.accessSync(file, fs.constants.X_OK);
         const result = captured(file, [], { input: '{malformed', timeout: 3000, env: { ...process.env, CLAUDE_CONFIG_DIR: cfg } });
-        add(`hook:${name}`, result.status === 0 && !result.error && !result.stderr ? 'ok' : 'error', result.status === 0 && !result.error && !result.stderr ? 'Executable; malformed payload fails open.' : 'Hook failed its synthetic check.');
+        const ok = result.status === 0 && !result.error && !result.stderr && !result.stdout;
+        add(`hook:${name}`, ok ? 'ok' : 'error', ok ? 'Executable; malformed payload fails open.' : 'Hook failed its synthetic check.');
       } catch { add(`hook:${name}`, 'error', 'Hook missing or not executable.'); }
     }
   }
+  try {
+    const dir = noSymlinks(path.join(process.env.LBU_STATE_DIR || path.join(cfg, 'lean-browser-use/state'), 'use'));
+    const sessions = new Set(), surfaces = new Set();
+    for (const name of exists(dir) ? fs.readdirSync(dir) : []) {
+      if (!/^[a-f0-9]{24}$/.test(name)) continue;
+      const file = noSymlinks(path.join(dir, name));
+      if (!fs.lstatSync(file).isFile()) continue;
+      const state = readState(file);
+      for (const [surface, use] of Object.entries(state.surfaces || {})) {
+        if (['chrome', 'pane'].includes(surface) && use?.lastAction > (use.lastClose || 0) && !use.kept && Date.now() - use.lastAction > 600000) {
+          sessions.add(state.session || name); surfaces.add(surface);
+        }
+      }
+    }
+    add('open-surfaces', sessions.size ? 'error' : 'ok', sessions.size ? `Browser tabs left open by ${sessions.size} session(s): ${[...surfaces].sort().join(', ')}. Close them, or run npx lean-browser-use keep --reason "<why>" --session ID` : 'No stale open browser surfaces recorded.');
+  } catch { add('open-surfaces', 'error', 'Browser use state could not be checked.'); }
   try {
     const leased = readLeases().leases.length;
     const items = leased ? scan().items : [];

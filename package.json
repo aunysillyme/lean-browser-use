@@ -1,6 +1,6 @@
 {
   "name": "lean-browser-use",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command",
   "type": "module",
   "license": "MIT",

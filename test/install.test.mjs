@@ -26,7 +26,7 @@ test('install merge, idempotence, backup once, uninstall shared settings', t => 
   assert.equal(fs.readFileSync(`${file}.lean-browser-use.bak`, 'utf8'), backup);
   const manifest = json(path.join(cfg, 'lean-browser-use/manifest.json'));
   assert.ok(manifest.files.every(f => /^[a-f0-9]{64}$/.test(f.sha256)));
-  assert.equal(manifest.settingsEntries.length, 8);
+  assert.equal(manifest.settingsEntries.length, 11);
   assert.equal(cli(['uninstall', '--claude-dir', cfg]).status, 0);
   assert.ok(fs.existsSync(path.join(cfg, 'agents')));
   assert.equal(json(file).theme, 'dark'); assert.ok(fs.readFileSync(file, 'utf8').includes('user-hook'));
@@ -92,7 +92,7 @@ test('with-reader copies executable commands and malformed settings are preserve
 });
 test('CLI usage and version', () => {
   for (const args of [['unknown'], ['--unknown'], ['--claude-dir'], ['doctor', '--with-reader']]) assert.equal(cli(args).status, 2);
-  assert.equal(cli(['--version']).stdout.trim(), '0.1.1'); assert.equal(cli(['--help']).status, 0);
+  assert.equal(cli(['--version']).stdout.trim(), '0.1.2'); assert.equal(cli(['--help']).status, 0);
 });
 
 test('uninstall removes an empty config root created by a no-hooks install', t => {

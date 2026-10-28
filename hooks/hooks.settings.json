@@ -52,6 +52,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "mcp__claude-in-chrome__.*|mcp__Claude_Browser__.*|mcp__Control_Chrome__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/touch.sh\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "SubagentStop": [
@@ -64,6 +74,16 @@
             "timeout": 20
           }
         ]
+      },
+      {
+        "matcher": "aun-browser-runner",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/stop-gate.sh\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "Stop": [
@@ -73,6 +93,15 @@
             "type": "command",
             "command": "\"${HOOKS_DIR}/cleanup.sh\"",
             "timeout": 20
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${HOOKS_DIR}/stop-gate.sh\"",
+            "timeout": 10
           }
         ]
       }
