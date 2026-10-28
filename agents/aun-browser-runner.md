@@ -47,7 +47,7 @@ At the end of every run, on success, failure or a reached bound, save evidence a
 
 It ends only leased processes of this session, children first: SIGTERM, a 3 second wait, then SIGKILL for the same process only.
 
-Main follows [Cleanup steps 6-9](../docs/cleanup.md#cleanup-steps) after the runner reports and before calling the task done: close remaining job tabs, stop its tasks and servers, run `doctor`, verify the evidence, then remove the handoff scratch.
+Main follows [Cleanup steps 6-9](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/cleanup.md#cleanup-steps) after the runner reports and before calling the task done: close remaining job tabs, stop its tasks and servers, run `doctor`, verify the evidence, then remove the handoff scratch.
 
 Return a report under 8 lines. Use the following shape, combining lines where useful:
 
