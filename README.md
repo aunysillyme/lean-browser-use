@@ -91,7 +91,7 @@ Your normal Chrome windows, your profile and any process without a lease are nev
 ## Measure your own saving
 
 ```sh
-lean-browser-use measure
+npx lean-browser-use measure
 ```
 
 The table compares main and runner groups: steps, median, p90, total input-context tokens, and reread share.

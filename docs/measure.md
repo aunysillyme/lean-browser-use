@@ -3,8 +3,8 @@
 Run the meter on your own Claude Code transcripts:
 
 ```sh
-lean-browser-use measure
-lean-browser-use measure --dir ./transcripts --since 2026-10-25 --json
+npx lean-browser-use measure
+npx lean-browser-use measure --dir ./transcripts --since 2026-10-25 --json
 ```
 
 The default directory is the selected Claude config directory's `projects` folder. The meter walks JSONL files recursively, including subagent transcripts. `--dir` selects another tree, `--since YYYY-MM-DD` filters line timestamps, and `--json` returns the same measurements in structured form.

@@ -22,4 +22,4 @@ End the report with:
 Cleanup: <the cleanup line; closed tab IDs; tab and process checks; scratch removed; retained evidence; pending IDs>
 ```
 
-Main follows [Cleanup steps 6-9](../../../docs/cleanup.md#cleanup-steps) after the runner reports and before calling the task done: close remaining job tabs, stop its tasks and servers, run `doctor`, verify the evidence, then remove the handoff scratch. A cleanup claim without a probe is still pending.
+Main follows [Cleanup steps 6-9](https://github.com/aunysillyme/lean-browser-use/blob/main/docs/cleanup.md#cleanup-steps) after the runner reports and before calling the task done: close remaining job tabs, stop its tasks and servers, run `doctor`, verify the evidence, then remove the handoff scratch. A cleanup claim without a probe is still pending.
