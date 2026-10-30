@@ -10,10 +10,57 @@ const requireFact = (ok, message) => { if (!ok) throw Error(message); };
 const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function visibleText(html) {
-  return compact(html.replace(/<!--[^]*?-->/g, ' ').replace(/<(script|style)\b[^]*?<\/\1>/gi, ' ')
-    .replace(/<[^>]*>/g, tag => /^<\/?(?:a|code|strong|em|span|time)\b/i.test(tag) ? '' : ' ').replace(/</g, ' ').replace(/&(?:amp|lt|gt|quot|#39);/g, entity => ({
-      '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'",
-    })[entity]));
+  // Preserve boundaries when removing comments, so they cannot join tag names.
+  let text = '', cursor = 0;
+  while (true) {
+    const start = html.indexOf('<!--', cursor);
+    if (start < 0) break;
+    const end = html.indexOf('-->', start + 4);
+    if (end < 0) break;
+    text += html.slice(cursor, start) + ' ';
+    cursor = end + 3;
+  }
+  text += html.slice(cursor);
+
+  // Search closing tags only when one remains, avoiding repeated scans of an
+  // unterminated script or style. Separators prevent new markup forming.
+  const closing = /<\/(script|style)>/gi;
+  const closes = { script: [], style: [] };
+  let match;
+  while ((match = closing.exec(text))) closes[match[1].toLowerCase()].push(match.index);
+  const nextClose = { script: 0, style: 0 };
+  const opening = /<(script|style)\b/gi;
+  let stripped = '';
+  cursor = 0;
+  while ((match = opening.exec(text))) {
+    const tag = match[1].toLowerCase();
+    while (closes[tag][nextClose[tag]] < opening.lastIndex) nextClose[tag]++;
+    const end = closes[tag][nextClose[tag]];
+    if (end === undefined) continue;
+    stripped += text.slice(cursor, match.index) + ' ';
+    cursor = end + tag.length + 3;
+    opening.lastIndex = cursor;
+  }
+  stripped += text.slice(cursor);
+
+  // A single forward pass matches <...> without repeatedly rescanning an
+  // unterminated tag; inline tags do not add spaces between words.
+  text = '';
+  cursor = 0;
+  while (true) {
+    const start = stripped.indexOf('<', cursor);
+    if (start < 0) break;
+    text += stripped.slice(cursor, start);
+    const end = stripped.indexOf('>', start + 1);
+    if (end < 0) { text += stripped.slice(start).replace(/</g, ' '); cursor = stripped.length; break; }
+    const tag = stripped.slice(start, end + 1);
+    text += /^<\/?(?:a|code|strong|em|span|time)\b/i.test(tag) ? '' : ' ';
+    cursor = end + 1;
+  }
+  text += stripped.slice(cursor);
+  return compact(text.replace(/&(?:amp|lt|gt|quot|#39);/g, entity => ({
+    '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'",
+  })[entity]));
 }
 
 function markdownText(text) {

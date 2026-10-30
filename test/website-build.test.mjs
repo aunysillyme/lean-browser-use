@@ -127,6 +127,25 @@ function toolPolicy(dir, tools) {
   }
 }
 
+test('visible text handles long unterminated tags in bounded time', () => {
+  const code = `import { visibleText } from './website/facts.mjs';
+    const input = '<'.repeat(500_000) + ' plain text';
+    if (visibleText(input) !== 'plain text') process.exit(1);
+    const openings = '<script '.repeat(100_000) + ' orphan';
+    if (!visibleText(openings).endsWith('orphan')) process.exit(2);`;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', code], {
+    cwd: root, encoding: 'utf8', timeout: 10000,
+  });
+  assert.equal(result.status, 0, result.error?.message || result.stderr);
+});
+
+test('visible text preserves case insensitive tags, inline spacing and decoded entities', () => {
+  assert.equal(visibleText('<p>one <strong>two</strong><em>three</em></p><STYLE>hidden</STYLE><SCRIPT>secret</SCRIPT> four &amp; &lt;tag&gt;'),
+    'one twothree four & <tag>');
+  assert.equal(visibleText('<scr<!--gap-->ipt>visible</script>'), 'visible');
+  assert.equal(visibleText('a<!-- first --><!<!-- second -->-- tail -->b'), 'a b');
+});
+
 test('removing comments does not manufacture active markup or erase surrounding text', () => {
   const input = '<scr<!--comment-->ipt>visible</script> tail';
   assert.match(visibleText(input), /visible/);

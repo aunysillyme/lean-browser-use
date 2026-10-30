@@ -183,8 +183,12 @@ def test_sample_script_markup_matches_legacy_text_rules(html, expected):
 def test_failing_samples_find_source_with_attributes_on_end_tag():
     spec = {"type": "embedded_json", "source": "__TARGET__"}
     script = '<script>window.__TARGET__={"value":1};</script attr="x">'
-    assert reader.page_data(script)[0] == {}
-    assert reader.failing_row_samples(spec, [{}], ['row[0].value'], script)[0]['outer_html'] == script
+    # HTMLParser accepts end-tag attributes starting in Python 3.14; verify
+    # normalization directly rather than relying on version-specific parsing.
+    with mock.patch('reader_extract.page_data', wraps=reader.page_data) as page_data:
+        sample = reader.failing_row_samples(spec, [{}], ['row[0].value'], script)[0]
+    page_data.assert_called_once_with('<script>window.__TARGET__={"value":1};</script>')
+    assert sample['outer_html'] == script
 
 
 @checks.mark.parametrize("end", [

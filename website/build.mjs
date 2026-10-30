@@ -331,7 +331,25 @@ function markdownTwin(html, page) {
     .replace(/<\/(?:p|div|section|article|details|tr|li|figure|summary)>/g, '\n\n').replace(/<\/(?:th|td)>/g, ' | ')
     .replace(/<[^>]+>/g, ' ');
   const markdown = decode(body).replace(/</g, '&lt;').replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-  return `Canonical: ${origin}${page.route}\n\n${markdown.replace(/\u0000CODE(\d+)\u0000/g, (_, index) => codeBlocks[Number(index)])}\n`;
+  // Restore code placeholders with literal delimiter searches; code contents are
+  // inserted only after all HTML/entity processing has finished.
+  const delimiter = '\u0000';
+  let restored = '', cursor = 0;
+  while (cursor < markdown.length) {
+    const start = markdown.indexOf(delimiter, cursor);
+    if (start < 0) break;
+    const end = markdown.indexOf(delimiter, start + 1);
+    if (end < 0) break;
+    const token = markdown.slice(start + 1, end).match(/^CODE(\d+)$/);
+    if (token) {
+      restored += markdown.slice(cursor, start) + codeBlocks[Number(token[1])];
+      cursor = end + 1;
+    } else {
+      restored += markdown.slice(cursor, start + 1);
+      cursor = start + 1;
+    }
+  }
+  return `Canonical: ${origin}${page.route}\n\n${restored + markdown.slice(cursor)}\n`;
 }
 
 function decode(text) {
