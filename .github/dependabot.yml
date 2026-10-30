@@ -5,6 +5,6 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: npm
-    directory: /.github/release-tooling
+    directory: /release-tooling
     schedule:
       interval: weekly
