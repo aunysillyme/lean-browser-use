@@ -239,6 +239,86 @@ def validate_candidate(candidate, example):
     return {key: value for key, value in candidate.items() if key in allowed}
 
 
+def _sample_scripts(html):
+    """Scan sample text in linear time; this is not an HTML sanitizer.
+
+    Opening-tag matching deliberately retains the legacy text behavior, even
+    in comments. End tags use HTML's ASCII name and delimiter rules. A private
+    normalized copy lets page_data inspect bodies ending in tags it cannot parse.
+    """
+    start_tag = re.compile(r"<script\b", re.IGNORECASE)
+    end_tag = re.compile(r"</script(?=[\t\n\f\r />])", re.IGNORECASE | re.ASCII)
+    whitespace = "\t\n\f\r "
+    pos = 0
+    while True:
+        start = start_tag.search(html, pos)
+        if start is None:
+            return
+        content_start = html.find(">", start.end())
+        if content_start < 0:
+            return
+        end = end_tag.search(html, content_start + 1)
+        if end is None:
+            return
+
+        # HTML attribute states matter even on an end tag: a '>' inside a
+        # quoted value does not close the tag, but a stray quote in an
+        # attribute name or unquoted value does not begin a quoted value.
+        state = "before_name"
+        quote = None
+        i = end.end()
+        while i < len(html):
+            char = html[i]
+            if state == "quoted":
+                if char == quote:
+                    state = "after_quoted"
+            elif char == ">":
+                break
+            elif state == "before_name":
+                if char not in whitespace + "/":
+                    state = "name"
+            elif state == "name":
+                if char in whitespace:
+                    state = "after_name"
+                elif char == "=":
+                    state = "before_value"
+                elif char == "/":
+                    state = "before_name"
+            elif state == "after_name":
+                if char == "=":
+                    state = "before_value"
+                elif char not in whitespace + "/":
+                    state = "name"
+                elif char == "/":
+                    state = "before_name"
+            elif state == "before_value":
+                if char in "\"'":
+                    state, quote = "quoted", char
+                elif char not in whitespace:
+                    state = "unquoted"
+            elif state == "unquoted":
+                if char in whitespace:
+                    state = "before_name"
+            else:  # after_quoted
+                if char in whitespace or char == "/":
+                    state = "before_name"
+                else:
+                    state = "name"
+            i += 1
+        if i == len(html):
+            return
+        script = html[start.start():i + 1]
+        normalized = html[start.start():end.start()] + "</script>"
+        yield script, normalized
+        pos = i + 1
+
+
+def sample_script_markup(html):
+    """Yield original script samples (not sanitized HTML)."""
+    for script, _ in _sample_scripts(html):
+        yield script
+
+
 def failing_row_samples(spec, rows, errors, html):
     indices = list(dict.fromkeys(int(match) for error in errors
                    for match in re.findall(r"row\[(\d+)\]", error)))[:3]
@@ -251,9 +331,9 @@ def failing_row_samples(spec, rows, errors, html):
         except ReaderError:
             pass
     elif indices:
-        for match in re.finditer(r"<script\b[^>]*>.*?</script\s*>", html, re.DOTALL | re.IGNORECASE):
-            if spec["source"] in page_data(match.group())[0]:
-                markup = {str(index): match.group()[:600] for index in indices}
+        for script, normalized in _sample_scripts(html):
+            if spec["source"] in page_data(normalized)[0]:
+                markup = {str(index): script[:600] for index in indices}
                 break
     return [{"index": index, "values": json.dumps(rows[index], ensure_ascii=False)[:600],
              "outer_html": markup.get(str(index), "")[:600]} for index in indices]

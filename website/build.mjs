@@ -72,12 +72,12 @@ function uniqueId(text, ids) {
 // Source HTML is data. Only tags constructed by this renderer reach the page.
 export function renderMarkdown(markdown, { source = 'README.md', ids = new Set(), routes = sourceRoutes() } = {}) {
   const references = new Map();
-  markdown = markdown.replace(/^---\n[^]*?\n---\n/, '').replace(/<!--[^]*?-->/g, '');
+  markdown = markdown.replace(/^---\n[^]*?\n---\n/, '').replace(/<!--[^]*?-->/g, ' ');
   markdown = markdown.replace(/^\[([^\]]+)\]:\s*(\S+).*$/gm, (_, label, href) => { references.set(label.toLowerCase(), href); return ''; });
   function inline(value, tokens = []) {
     const save = html => { tokens.push(html); return `\u0000${tokens.length - 1}\u0000`; };
     value = value.replace(/`([^`]+)`/g, (_, code) => save(`<code>${escape(code)}</code>`));
-    value = value.replace(/<(script|style|iframe|object|svg)\b[^>]*>[^]*?<\/\1\s*>/gi, '').replace(/<\/?[a-z][^>]*>/gi, '');
+    value = value.replace(/<(script|style|iframe|object|svg)\b[^>]*>[^]*?<\/\1\s*>/gi, ' ').replace(/<\/?[a-z][^>]*>/gi, ' ');
     value = value.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, href) => {
       const src = rewriteUrl(href, source, { image: true, routes });
       return save(src ? `<img src="${escape(src)}" alt="${escape(alt)}" loading="lazy">` : '');
@@ -322,13 +322,34 @@ function validateRendered(documents, facts) {
 function markdownTwin(html, page) {
   let body = html.match(/<main\b[^>]*>([^]*?)<\/main>/)?.[1] || '';
   body = body.replace(/<details class="mobile-nav">[^]*?<\/details>/g, '').replace(/<footer\b[^>]*>[^]*?<\/footer>/g, '').replace(/<nav\b[^>]*>[^]*?<\/nav>/g, '');
+  const codeBlocks = [];
+  const saveCode = code => { codeBlocks.push(code); return `\u0000CODE${codeBlocks.length - 1}\u0000`; };
   body = body.replace(/<h([1-6])\b[^>]*>([^]*?)<\/h\1>/g, (_, depth, text) => `\n\n${'#'.repeat(Number(depth))} ${visibleText(text)}\n\n`)
     .replace(/<a href="([^"]+)"[^>]*>([^]*?)<\/a>/g, (_, href, text) => `[${visibleText(text)}](${href.startsWith('/') ? origin : ''}${href.replace(/&amp;/g, '&')})`)
-    .replace(/<pre><code>([^]*?)<\/code><\/pre>/g, (_, code) => `\n\n\`\`\`\n${decode(code)}\n\`\`\`\n\n`)
-    .replace(/<code>([^]*?)<\/code>/g, (_, code) => `\`${decode(code)}\``)
+    .replace(/<pre><code>([^]*?)<\/code><\/pre>/g, (_, code) => saveCode(`\n\n\`\`\`\n${decode(code)}\n\`\`\`\n\n`))
+    .replace(/<code>([^]*?)<\/code>/g, (_, code) => saveCode(`\`${decode(code)}\``))
     .replace(/<\/(?:p|div|section|article|details|tr|li|figure|summary)>/g, '\n\n').replace(/<\/(?:th|td)>/g, ' | ')
-    .replace(/<[^>]+>/g, '');
-  return `Canonical: ${origin}${page.route}\n\n${decode(body).replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n').trim()}\n`;
+    .replace(/<[^>]+>/g, ' ');
+  const markdown = decode(body).replace(/</g, '&lt;').replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  // Restore code placeholders with literal delimiter searches; code contents are
+  // inserted only after all HTML/entity processing has finished.
+  const delimiter = '\u0000';
+  let restored = '', cursor = 0;
+  while (cursor < markdown.length) {
+    const start = markdown.indexOf(delimiter, cursor);
+    if (start < 0) break;
+    const end = markdown.indexOf(delimiter, start + 1);
+    if (end < 0) break;
+    const token = markdown.slice(start + 1, end).match(/^CODE(\d+)$/);
+    if (token) {
+      restored += markdown.slice(cursor, start) + codeBlocks[Number(token[1])];
+      cursor = end + 1;
+    } else {
+      restored += markdown.slice(cursor, start + 1);
+      cursor = start + 1;
+    }
+  }
+  return `Canonical: ${origin}${page.route}\n\n${restored + markdown.slice(cursor)}\n`;
 }
 
 function decode(text) {

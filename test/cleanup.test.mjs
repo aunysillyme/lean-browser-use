@@ -121,13 +121,16 @@ test('a process that ignores SIGTERM gets SIGKILL after three seconds', t => {
 });
 
 test('children end with their leased parent and another Chrome under the child stays', async t => {
-  const L = lab(t); const out = path.join(L.dir, 'pids.json'); const real = path.join(L.home, 'Library/Application Support/Google/Chrome');
+  const L = lab(t); const out = path.join(L.dir, 'pids.json'); const real = path.join(L.home, "Library/Application Support/Google/Chrome/quote'profile");
   const script = path.join(L.dir, 'helper.cjs');
+  const config = path.join(L.dir, 'helper.json');
+  fs.writeFileSync(config, JSON.stringify([path.join(L.bin, 'chrome'), `--user-data-dir=${real}`, out]));
   fs.writeFileSync(script, `const {spawn}=require('node:child_process');const fs=require('node:fs');
+const [chrome,profile,out]=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const a=spawn(process.execPath,['-e','setTimeout(()=>{},120000)'],{stdio:'ignore'});
-const b=spawn(${JSON.stringify(path.join(L.bin, 'chrome'))},['-e','setTimeout(()=>{},120000)','--','--user-data-dir=${real}'],{stdio:'ignore'});
-fs.writeFileSync(${JSON.stringify(out)},JSON.stringify([a.pid,b.pid]));setTimeout(()=>{},120000);`);
-  const parent = L.leased('S1', [path.join(L.bin, 'node-helper'), script]);
+const b=spawn(chrome,['-e','setTimeout(()=>{},120000)','--',profile],{stdio:'ignore'});
+fs.writeFileSync(out,JSON.stringify([a.pid,b.pid]));setTimeout(()=>{},120000);`);
+  const parent = L.leased('S1', [path.join(L.bin, 'node-helper'), script, config]);
   assert.ok(await waitFor(() => fs.existsSync(out)));
   const [child, userChrome] = JSON.parse(fs.readFileSync(out, 'utf8')); L.pids.add(child); L.pids.add(userChrome);
   assert.ok(alive(child) && alive(userChrome));

@@ -1,0 +1,7 @@
+{
+  "name": "lean-browser-use-release-tooling",
+  "private": true,
+  "devDependencies": {
+    "npm": "12.1.0"
+  }
+}
