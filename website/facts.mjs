@@ -10,9 +10,8 @@ const requireFact = (ok, message) => { if (!ok) throw Error(message); };
 const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function visibleText(html) {
-  return compact(html.replace(/<!--[^]*?-->/g, '').replace(/<(script|style)\b[^]*?<\/\1>/gi, '')
-    .replace(/<\/?(?:a|code|strong|em|span|time)\b[^>]*>/gi, '')
-    .replace(/<[^>]*>/g, ' ').replace(/&(?:amp|lt|gt|quot|#39);/g, entity => ({
+  return compact(html.replace(/<!--[^]*?-->/g, ' ').replace(/<(script|style)\b[^]*?<\/\1>/gi, ' ')
+    .replace(/<[^>]*>/g, tag => /^<\/?(?:a|code|strong|em|span|time)\b/i.test(tag) ? '' : ' ').replace(/</g, ' ').replace(/&(?:amp|lt|gt|quot|#39);/g, entity => ({
       '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'",
     })[entity]));
 }

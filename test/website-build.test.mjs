@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { renderMarkdown } from '../website/build.mjs';
-import { featuredProof } from '../website/facts.mjs';
+import { featuredProof, visibleText } from '../website/facts.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const origin = 'https://lean-browser-use.aunysillyme.dev';
@@ -15,7 +15,7 @@ const routes = ['/', '/docs/overview/', '/docs/how-it-works/', '/docs/guides/', 
 // Placeholder commit used to generate the saved mock, independent of repository history.
 const testCommit = '0000000000000000000000000000000000000000';
 const read = (dir, file) => readFileSync(join(dir, file), 'utf8');
-const text = html => html.replace(/<(script|style)\b[^]*?<\/\1>/gi, '').replace(/<[^>]*>/g, ' ')
+const text = html => html.replace(/<(script|style)\b[^]*?<\/\1>/gi, ' ').replace(/<[^>]*>/g, ' ')
   .replace(/&(?:amp|lt|gt|quot|#39);/g, value => ({ '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" })[value])
   .replace(/\s+/g, ' ').trim();
 const pageFile = route => route === '/' ? 'index.html' : route.slice(1) + 'index.html';
@@ -127,6 +127,32 @@ function toolPolicy(dir, tools) {
   }
 }
 
+test('removing comments does not manufacture active markup or erase surrounding text', () => {
+  const input = '<scr<!--comment-->ipt>visible</script> tail';
+  assert.match(visibleText(input), /visible/);
+  assert.match(renderMarkdown(input), /visible/);
+  assert.doesNotMatch(renderMarkdown(input), /<script\b/i);
+  assert.equal(visibleText('<script>hidden<!--comment--></script> visible'), 'visible');
+  assert.equal(visibleText('<script>hidden</script><script>also hidden</script>safe'), 'safe');
+  const splitScript = '<scr<script>hidden</script>ipt>visible</script>';
+  assert.match(renderMarkdown(splitScript), /visible/);
+  assert.doesNotMatch(renderMarkdown(splitScript), /<script\b|hidden/i);
+  assert.match(visibleText(splitScript), /visible/);
+  assert.match(text(splitScript), /visible/);
+  const splitComment = '<!<!--gap-->-- secret --> tail';
+  assert.doesNotMatch(renderMarkdown(splitComment), /<!--/);
+  assert.match(renderMarkdown(splitComment), /secret/);
+});
+
+test('live markdown twins keep source-encoded HTML inert', t => {
+  const dir = fixture(t);
+  write(dir, 'docs/how-it-works.md', read(dir, 'docs/how-it-works.md') + '\n\nEncoded &lt;script&gt;alert(7)&lt;/script&gt; and code `<script>alert(8)</script>` example.\n');
+  const output = built(dir, { live: true });
+  const twin = read(output, 'docs/how-it-works/index.md');
+  assert.match(twin, /Encoded &lt;script&gt;alert\(7\)&lt;\/script&gt;/i);
+  assert.match(twin, /`<script>alert\(8\)<\/script>`/i);
+});
+
 test('refused image-only badge links render no paragraph or URL text; text links remain', () => {
   const badges = '[![Version](https://img.shields.io/npm/v/example)](https://www.npmjs.com/package/example) ' +
     '[![Checks](https://example.org/badge.svg)](https://github.com/example/project)';
@@ -203,10 +229,14 @@ test('RED source sanitization removes executable script and inline event handler
   write(dir, 'docs/how-it-works.md', read(dir, 'docs/how-it-works.md') + '\n\n' + payload + '\n');
   const html = read(built(dir), 'docs/how-it-works/index.html');
   const check = value => {
-    for (const script of value.matchAll(/<script\b[^>]*>([^]*?)<\/script>/gi)) assert.ok(!script[1].includes('sourcePayload'));
+    // Reject the unique payload anywhere, including scripts with unusual end tags.
+    assert.ok(!value.includes('sourcePayload'));
     assert.doesNotMatch(value, /<[^>]+\son[a-z]+\s*=/i);
     assert.ok(text(value).includes('Safe source text'));
   };
+  for (const closingTag of ['</script >', '</ScRiPt data-extra>', '</script/>']) {
+    assert.throws(() => check(html + `<script>window.sourcePayload = true${closingTag}`), closingTag);
+  }
   assert.throws(() => check(html + payload));
   check(html);
 });

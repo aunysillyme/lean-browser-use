@@ -124,6 +124,121 @@ def test_embedded_detection_and_json_parse():
     assert "alert" not in trimmed and "<h1>Visible</h1>" in trimmed
 
 
+def test_page_data_preserves_svg_self_closing_script_behavior():
+    assert reader.page_data('<svg><script/></svg><p>visible</p>') == ({}, '<p>visible</p>')
+
+
+def test_page_data_does_not_close_script_on_unicode_casefold():
+    html = '<script>window.__X__={"a":1};</scrİpt><p>visible</p>'
+    assert reader.page_data(html) == ({}, '')
+
+
+def test_failing_samples_match_legacy_regex_in_comments():
+    spec = {"type": "embedded_json", "source": "__TARGET__"}
+    script = '<script>window.__TARGET__={"value":1};</script>'
+    html = '<!--' + script + '-->'
+    assert reader.failing_row_samples(spec, [{}], ['row[0].value'], html)[0]['outer_html'] == script
+
+
+@checks.mark.parametrize("script", [
+    '<script>window.__TARGET__={"value":1};</script>',
+    '<ScRiPt data-x="a > b">window.__TARGET__={"value":1};</sCrIpT \n>',
+    '<script>window.__TARGET__={"value":1};</scripture></script>',
+    '<script>window.__TARGET__={"value":1};<script>nested</script>',
+])
+def test_failing_samples_find_exact_original_text(script):
+    spec = {"type": "embedded_json", "source": "__TARGET__"}
+    sample = reader.failing_row_samples(spec, [{}], ["row[0].value"], 'before' + script + 'after')[0]
+    assert sample["outer_html"] == script
+
+
+def test_failing_samples_skip_nonmatching_scripts_and_truncate():
+    spec = {"type": "embedded_json", "source": "__TARGET__"}
+    first = '<script>window.__OTHER__={"value":1};</script>'
+    script = '<script>window.__TARGET__={"value":1};' + 'x' * 1000 + '</script>'
+    samples = reader.failing_row_samples(spec, [{}, {}, {}], ['row[2].value', 'row[0].value', 'row[2].other'], first + script)
+    assert [sample["index"] for sample in samples] == [2, 0]
+    assert all(sample["outer_html"] == script[:600] for sample in samples)
+
+
+def test_failing_samples_unterminated_scripts_do_not_emit():
+    spec = {"type": "embedded_json", "source": "__TARGET__"}
+    html = '<script>window.__TARGET__={"value":1};' + '<script>' * 10000
+    assert reader.failing_row_samples(spec, [{}], ['row[0].value'], html)[0]['outer_html'] == ''
+
+
+@checks.mark.parametrize("html,expected", [
+    ('<scrİpt>data</scrİpt>', []),
+    ('<scripture>data</script>', []),
+    ('<script><script>data</script>', ['<script><script>data</script>']),
+    ('<script>one</script><script>two</script>',
+     ['<script>one</script>', '<script>two</script>']),
+    ('<script foo <script>data</script>', ['<script foo <script>data</script>']),
+    ('<script>unterminated', []),
+])
+def test_sample_script_markup_matches_legacy_text_rules(html, expected):
+    assert list(reader.sample_script_markup(html)) == expected
+
+
+def test_failing_samples_find_source_with_attributes_on_end_tag():
+    spec = {"type": "embedded_json", "source": "__TARGET__"}
+    script = '<script>window.__TARGET__={"value":1};</script attr="x">'
+    assert reader.page_data(script)[0] == {}
+    assert reader.failing_row_samples(spec, [{}], ['row[0].value'], script)[0]['outer_html'] == script
+
+
+@checks.mark.parametrize("end", [
+    '</sCrIpT>', '</script >', '</script\t\n\f\r>', '</script/>',
+    '</script / ignored>', '</script attr="x">',
+    '</script attr="a > b" other=ok>', "</SCRIPT attr='a > b'>",
+    '</script attr=un"quoted>', '</script odd"name=unquoted>',
+    '</script attr="x"next="y > z">', '</script =x>',
+])
+def test_script_samples_handle_end_tag_attributes_and_malformed_values(end):
+    spec = {"type": "embedded_json", "source": "__TARGET__"}
+    script = '<script>window.__TARGET__={"value":1};' + end
+    assert list(reader.sample_script_markup(script + 'after')) == [script]
+    assert reader.failing_row_samples(spec, [{}], ['row[0].value'], script + 'after')[0]['outer_html'] == script
+
+
+@checks.mark.parametrize("false_end", [
+    '</scripture>', '</script-x>', '</script=foo>', '</script\u00a0>',
+    '</scrİpt>', '</scrıpt>', '</script\v>',
+])
+def test_script_samples_ignore_false_end_tag_prefixes(false_end):
+    script = '<script>window.__TARGET__={"value":1};' + false_end + '</script>'
+    spec = {"type": "embedded_json", "source": "__TARGET__"}
+    assert list(reader.sample_script_markup(script)) == [script]
+    assert reader.failing_row_samples(spec, [{}], ['row[0].value'], script)[0]['outer_html'] == script
+
+
+def test_script_sample_unterminated_quoted_end_tag_does_not_emit():
+    script = '<script>window.__TARGET__={"value":1};</script a="unterminated >'
+    assert list(reader.sample_script_markup(script)) == []
+    assert reader.failing_row_samples({"type": "embedded_json", "source": "__TARGET__"},
+                                      [{}], ['row[0].value'], script)[0]['outer_html'] == ''
+
+
+def test_script_sample_bounded_scanning_and_output():
+    spec = {"type": "embedded_json", "source": "__TARGET__"}
+    prefix = '<script>window.__TARGET__={"value":1};'
+    script = prefix + '</scripture>' * 100000 + '</script attr="x > y">'
+    assert list(reader.sample_script_markup(script)) == [script]
+    assert reader.failing_row_samples(spec, [{}], ['row[0].value'], script)[0]['outer_html'] == script[:600]
+    assert list(reader.sample_script_markup(prefix + '</scripture>' * 100000)) == []
+
+
+def test_script_samples_source_test_uses_opening_tag_and_body():
+    first = '<script id="__NEXT_DATA__" type="application/json">{"value":1}</script data="a > b">'
+    second = '<script>window.__TARGET__={"value":2};</script / >'
+    samples = reader.failing_row_samples({"type": "embedded_json", "source": "__TARGET__"},
+                                         [{}], ['row[0].value'], first + second)
+    assert samples[0]['outer_html'] == second
+    samples = reader.failing_row_samples({"type": "embedded_json", "source": "__NEXT_DATA__"},
+                                         [{}], ['row[0].value'], first + second)
+    assert samples[0]['outer_html'] == first
+
+
 def test_embedded_list_rows_and_escaped_paths():
     spec = {"type": "embedded_json", "source": "__NEXT_DATA__", "rows": "props.rows",
             "paths": {"field": r"nested.key\.with\.dots.0"}}

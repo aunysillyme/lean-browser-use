@@ -180,7 +180,28 @@ test('release workflow requires approval, pinned actions and matching versions',
   ]);
   assert.equal([...text.matchAll(/uses:/g)].length, actions.length);
   assert.match(text, /node-version: 24\n          registry-url: https:\/\/registry\.npmjs\.org/);
-  assert.match(text, /npm install -g npm@12\.1\.0\n          npm --version/);
+  const install = text.match(/- name: Install release npm\n        run: \|\n([\s\S]*?)(?=      - name: tag)/);
+  assert.ok(install, 'Release npm must be installed before version checks and publishing');
+  assert.match(install[1], /^          set -eu\n          npm ci --prefix \.github\/release-tooling --ignore-scripts --include=dev\n/m);
+  assert.ok(install[1].includes('npm_bin="$GITHUB_WORKSPACE/.github/release-tooling/node_modules/.bin"'));
+  assert.ok(install[1].includes("require('./.github/release-tooling/package.json').devDependencies.npm"));
+  assert.ok(install[1].includes('actual="$("$npm_bin/npm" --version)"'));
+  assert.ok(install[1].includes('test "$actual" = "$expected" ||'));
+  assert.ok(install[1].includes('echo "$npm_bin" >> "$GITHUB_PATH"'));
+  assert.doesNotMatch(text, /npm install -g/);
+  const tooling = JSON.parse(read('.github/release-tooling/package.json'));
+  const lock = JSON.parse(read('.github/release-tooling/package-lock.json'));
+  assert.equal(tooling.private, true);
+  assert.deepEqual(tooling.devDependencies, { npm: '12.1.0' });
+  assert.equal(lock.lockfileVersion, 3);
+  assert.deepEqual(lock.packages[''].devDependencies, tooling.devDependencies);
+  const lockedNpm = lock.packages['node_modules/npm'];
+  assert.equal(lockedNpm.version, tooling.devDependencies.npm);
+  assert.equal(lockedNpm.resolved, `https://registry.npmjs.org/npm/-/npm-${lockedNpm.version}.tgz`);
+  assert.equal(lockedNpm.integrity, 'sha512-Fyhu62pNx70YCs/5+dEmJQTFVmSKwvo5CA0qvBkGDRpob42MJ6G2RQ2tdxeKM4nYnIZDqkYAxEgqtoejn9QGtQ==');
+  for (const [name, entry] of Object.entries(lock.packages)) {
+    if (name && !entry.inBundle) assert.match(entry.integrity, /^sha512-[A-Za-z0-9+/]{86}==$/, name);
+  }
   const versionStep = text.match(/- name: tag and package\.json must name the same version\n        run: \|\n([\s\S]*?)(?=      -)/);
   assert.ok(versionStep, 'Tag/version check must precede tests and publishing');
   assert.ok(versionStep[1].includes('tag="${GITHUB_REF_NAME#v}"'));
@@ -232,8 +253,11 @@ test('repository settings prepare the public flip and release environment', () =
   assert.ok(rows.length >= 8);
   for (const row of rows) assert.ok(row.endsWith('| to be read back after the flip |'), row);
   const npm = text.slice(text.indexOf('## npm Trusted Publisher'), text.indexOf('## Registry parity'));
-  assert.ok(npm.includes('https://docs.npmjs.com/cli/v11/commands/npm-trust'));
-  assert.ok(npm.includes('https://docs.npmjs.com/trusted-publishers'));
+  const npmLinks = [...npm.matchAll(/\]\(([^)]+)\)/g)].map(match => match[1]);
+  for (const expected of ['https://docs.npmjs.com/cli/v11/commands/npm-trust', 'https://docs.npmjs.com/trusted-publishers']) {
+    assert.ok(npmLinks.includes(expected), expected);
+    assert.ok(!npmLinks.includes(`https://example.org/?next=${expected}`));
+  }
   assert.equal([...npm.matchAll(/read 2026-10-25/g)].length, 2);
   assert.match(npm, /package must already exist on the npm registry\nbefore configuring a Trusted Publisher/);
   assert.match(npm, /validate it and bind it to the repository identity/);

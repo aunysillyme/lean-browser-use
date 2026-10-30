@@ -30,10 +30,17 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
       # Trusted publishing needs npm 11.5.1+ and Node 22.14.0+ (npm docs read 2026-10-25).
-      - name: npm 12.1.0 (reviewed trusted publishing version; needs Node 24.15.0+)
+      # Install the reviewed npm version from its integrity-checked lockfile, outside the package.
+      - name: Install release npm
         run: |
-          npm install -g npm@12.1.0
-          npm --version
+          set -eu
+          npm ci --prefix .github/release-tooling --ignore-scripts --include=dev
+          npm_bin="$GITHUB_WORKSPACE/.github/release-tooling/node_modules/.bin"
+          expected="$(node -p "require('./.github/release-tooling/package.json').devDependencies.npm")"
+          actual="$("$npm_bin/npm" --version)"
+          test "$actual" = "$expected" || { echo "expected npm $expected, got $actual"; exit 1; }
+          echo "npm $actual"
+          echo "$npm_bin" >> "$GITHUB_PATH"
       - name: tag and package.json must name the same version
         run: |
           tag="${GITHUB_REF_NAME#v}"
