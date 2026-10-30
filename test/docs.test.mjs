@@ -175,7 +175,8 @@ test('release workflow requires approval, pinned actions and matching versions',
   const actions = [...text.matchAll(/uses: ([^\s]+) # v[^\n]+/g)].map(match => match[1]);
   assert.deepEqual(actions, [
     'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1',
-    'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1'
+    'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1',
+    'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
   ]);
   assert.equal([...text.matchAll(/uses:/g)].length, actions.length);
   assert.match(text, /node-version: 24\n          registry-url: https:\/\/registry\.npmjs\.org/);
@@ -195,12 +196,25 @@ test('release workflow requires approval, pinned actions and matching versions',
 
 test('release workflow skips a version already on the registry before publishing', () => {
   const text = read('.github/workflows/release.yml');
-  const step = text.match(/      - name: Publish unless this version is already on the registry\n        run: \|\n([\s\S]*?)$/);
+  const step = text.match(/      - name: Publish unless this version is already on the registry\n        run: \|\n([\s\S]*?)(?=\n  github-release:\n)/);
   assert.ok(step, 'Registry skip step must exist');
   assert.match(step[1], /^          set -eu\n/);
   assert.ok(step[1].includes('name="$(node -p "require(\'./package.json\').name")"'));
   assert.ok(step[1].includes('version="$(node -p "require(\'./package.json\').version")"'));
   assert.match(step[1], /          if npm view "\$name@\$version" version --prefer-online > \/dev\/null 2>&1; then\n            echo "\$name@\$version is already on the registry; nothing to publish\."\n            exit 0\n          fi\n          npm publish --provenance --access public\n$/);
+});
+
+test('release page job runs after publish, alone may write contents, and skips an existing release', () => {
+  const text = read('.github/workflows/release.yml');
+  const job = text.slice(text.indexOf('\n  github-release:\n'));
+  assert.match(job, /^    needs: publish$/m);
+  assert.match(job, /^      contents: write$/m);
+  assert.equal([...text.matchAll(/contents: write/g)].length, 1);
+  const check = job.indexOf('gh release view "$TAG"');
+  const create = job.indexOf('gh release create "$TAG" --verify-tag --title "$name $version" --notes-file "$notes"');
+  assert.ok(check > 0 && create > check, 'the existing-release check must come before the create command');
+  assert.match(job.slice(check, create), /already exists; nothing to create\."\n            exit 0/);
+  assert.match(job, /CHANGELOG\.md has no section for \$version/);
 });
 
 test('repository settings prepare the public flip and release environment', () => {
