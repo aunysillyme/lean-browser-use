@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import { root, cli } from './helpers.mjs';
 import { walk } from '../src/util.mjs';
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
@@ -182,26 +185,32 @@ test('release workflow requires approval, pinned actions and matching versions',
   assert.match(text, /node-version: 24\n          registry-url: https:\/\/registry\.npmjs\.org/);
   const install = text.match(/- name: Install release npm\n        run: \|\n([\s\S]*?)(?=      - name: tag)/);
   assert.ok(install, 'Release npm must be installed before version checks and publishing');
-  assert.match(install[1], /^          set -eu\n          npm ci --prefix \.github\/release-tooling --ignore-scripts --include=dev\n/m);
-  assert.ok(install[1].includes('npm_bin="$GITHUB_WORKSPACE/.github/release-tooling/node_modules/.bin"'));
-  assert.ok(install[1].includes("require('./.github/release-tooling/package.json').devDependencies.npm"));
+  assert.match(install[1], /^          set -eu\n          npm ci --prefix release-tooling --ignore-scripts --include=dev\n/m);
+  assert.ok(install[1].includes('npm_bin="$GITHUB_WORKSPACE/release-tooling/node_modules/.bin"'));
+  assert.ok(install[1].includes("require('./release-tooling/package.json').devDependencies.npm"));
   assert.ok(install[1].includes('actual="$("$npm_bin/npm" --version)"'));
   assert.ok(install[1].includes('test "$actual" = "$expected" ||'));
   assert.ok(install[1].includes('echo "$npm_bin" >> "$GITHUB_PATH"'));
   assert.doesNotMatch(text, /npm install -g/);
-  const tooling = JSON.parse(read('.github/release-tooling/package.json'));
-  const lock = JSON.parse(read('.github/release-tooling/package-lock.json'));
+  const tooling = JSON.parse(read('release-tooling/package.json'));
+  const lock = JSON.parse(read('release-tooling/package-lock.json'));
   assert.equal(tooling.private, true);
-  assert.deepEqual(tooling.devDependencies, { npm: '12.1.0' });
+  assert.deepEqual(Object.keys(tooling.devDependencies), ['npm']);
+  assert.match(tooling.devDependencies.npm, /^\d+\.\d+\.\d+$/);
   assert.equal(lock.lockfileVersion, 3);
   assert.deepEqual(lock.packages[''].devDependencies, tooling.devDependencies);
   const lockedNpm = lock.packages['node_modules/npm'];
   assert.equal(lockedNpm.version, tooling.devDependencies.npm);
   assert.equal(lockedNpm.resolved, `https://registry.npmjs.org/npm/-/npm-${lockedNpm.version}.tgz`);
-  assert.equal(lockedNpm.integrity, 'sha512-Fyhu62pNx70YCs/5+dEmJQTFVmSKwvo5CA0qvBkGDRpob42MJ6G2RQ2tdxeKM4nYnIZDqkYAxEgqtoejn9QGtQ==');
   for (const [name, entry] of Object.entries(lock.packages)) {
-    if (name && !entry.inBundle) assert.match(entry.integrity, /^sha512-[A-Za-z0-9+/]{86}==$/, name);
+    if (name && !entry.inBundle) {
+      assert.match(entry.integrity, /^sha512-[A-Za-z0-9+/]{86}==$/, name);
+      const digest = entry.integrity.slice('sha512-'.length);
+      assert.equal(Buffer.from(digest, 'base64').length, 64, name);
+      assert.equal(Buffer.from(digest, 'base64').toString('base64'), digest, name);
+    }
   }
+  assert.match(read('.github/dependabot.yml'), /  - package-ecosystem: npm\n    directory: \/release-tooling\n/);
   const versionStep = text.match(/- name: tag and package\.json must name the same version\n        run: \|\n([\s\S]*?)(?=      -)/);
   assert.ok(versionStep, 'Tag/version check must precede tests and publishing');
   assert.ok(versionStep[1].includes('tag="${GITHUB_REF_NAME#v}"'));
@@ -213,6 +222,40 @@ test('release workflow requires approval, pinned actions and matching versions',
     assert.equal(result.status, expected, result.stderr);
   }
   assert.match(text, /      - run: npm test\n      - run: npm run check\n      - name: Publish unless this version is already on the registry\n/);
+});
+
+test('release npm installation rejects a mismatched integrity', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-integrity-'));
+  try {
+    const tooling = JSON.parse(read('release-tooling/package.json'));
+    const lock = JSON.parse(read('release-tooling/package-lock.json'));
+    const fixture = path.join(dir, 'fixture');
+    fs.mkdirSync(fixture);
+    fs.writeFileSync(path.join(fixture, 'package.json'), JSON.stringify({ name: 'npm', version: tooling.devDependencies.npm }));
+    const pack = spawnSync('npm', ['pack', '--json', '--pack-destination', dir], { cwd: fixture, encoding: 'utf8' });
+    assert.equal(pack.status, 0, pack.stderr);
+    const packResult = JSON.parse(pack.stdout);
+    const archive = Array.isArray(packResult) ? packResult[0] : packResult.npm;
+    assert.ok(archive?.filename, 'npm pack must report its tarball');
+    const tarball = path.join(dir, archive.filename);
+    const install = path.join(dir, 'install');
+    fs.mkdirSync(install);
+    const lockedNpm = lock.packages['node_modules/npm'];
+    lockedNpm.resolved = pathToFileURL(tarball).href;
+    lockedNpm.integrity = `sha512-${createHash('sha512').update(fs.readFileSync(tarball)).digest('base64')}`;
+    fs.writeFileSync(path.join(install, 'package.json'), JSON.stringify(tooling));
+    fs.writeFileSync(path.join(install, 'package-lock.json'), JSON.stringify(lock));
+    const ci = cache => spawnSync('npm', ['ci', '--offline', '--no-audit', '--ignore-scripts', '--include=dev', '--cache', path.join(dir, cache)], { cwd: install, encoding: 'utf8' });
+    const valid = ci('valid-cache');
+    assert.equal(valid.status, 0, valid.stderr);
+    lockedNpm.integrity = `sha512-${Buffer.alloc(64).toString('base64')}`;
+    fs.writeFileSync(path.join(install, 'package-lock.json'), JSON.stringify(lock));
+    const result = ci('invalid-cache');
+    assert.notEqual(result.status, 0, 'npm ci must reject a mismatched tarball');
+    assert.match(result.stderr, /EINTEGRITY/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('release workflow skips a version already on the registry before publishing', () => {

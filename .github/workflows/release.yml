@@ -34,9 +34,9 @@ jobs:
       - name: Install release npm
         run: |
           set -eu
-          npm ci --prefix .github/release-tooling --ignore-scripts --include=dev
-          npm_bin="$GITHUB_WORKSPACE/.github/release-tooling/node_modules/.bin"
-          expected="$(node -p "require('./.github/release-tooling/package.json').devDependencies.npm")"
+          npm ci --prefix release-tooling --ignore-scripts --include=dev
+          npm_bin="$GITHUB_WORKSPACE/release-tooling/node_modules/.bin"
+          expected="$(node -p "require('./release-tooling/package.json').devDependencies.npm")"
           actual="$("$npm_bin/npm" --version)"
           test "$actual" = "$expected" || { echo "expected npm $expected, got $actual"; exit 1; }
           echo "npm $actual"
