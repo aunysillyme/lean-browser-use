@@ -28,16 +28,17 @@ test('gate refuses hashed terms in content and names without printing the term',
   assert.match(lines.join('\n'), /content.txt:1:private-term:/);
   assert.ok(!lines.join('\n').includes(single)); assert.ok(!lines.join('\n').includes(phrase));
 });
+// Construct local fixture objects so tests never stage or commit work.
+function gitObject(dir, type, body) {
+  const bytes = Buffer.concat([Buffer.from(`${type} ${Buffer.byteLength(body)}\0`), Buffer.from(body)]);
+  const id = createHash('sha1').update(bytes).digest('hex');
+  const folder = path.join(dir, '.git/objects', id.slice(0, 2)); fs.mkdirSync(folder, { recursive: true });
+  fs.writeFileSync(path.join(folder, id.slice(2)), deflateSync(bytes)); return id;
+}
 test('history and tag gate in an isolated fixture repository', t => {
   const dir = temp(t);
   assert.equal(spawnSync('git', ['init', '-q', dir]).status, 0);
-  // Construct local fixture objects so the test never stages or commits work.
-  function object(type, body) {
-    const bytes = Buffer.concat([Buffer.from(`${type} ${Buffer.byteLength(body)}\0`), Buffer.from(body)]);
-    const id = createHash('sha1').update(bytes).digest('hex');
-    const folder = path.join(dir, '.git/objects', id.slice(0, 2)); fs.mkdirSync(folder, { recursive: true });
-    fs.writeFileSync(path.join(folder, id.slice(2)), deflateSync(bytes)); return id;
-  }
+  const object = (type, body) => gitObject(dir, type, body);
   const tree = object('tree', '');
   const identity = 'Fixture <fixture' + '@' + 'example.com> 1 +0000';
   const commit = object('commit', `tree ${tree}\nauthor ${identity}\ncommitter ${identity}\n\n${phrase}\n`);
@@ -81,12 +82,7 @@ test('Hermes co-author trailer passes without exempting other emails', () => {
 test('git history accepts Hermes trailer but rejects other email addresses', t => {
   const dir = temp(t);
   assert.equal(spawnSync('git', ['init', '-q', dir]).status, 0);
-  function object(type, body) {
-    const bytes = Buffer.concat([Buffer.from(`${type} ${Buffer.byteLength(body)}\0`), Buffer.from(body)]);
-    const id = createHash('sha1').update(bytes).digest('hex');
-    const folder = path.join(dir, '.git/objects', id.slice(0, 2)); fs.mkdirSync(folder, { recursive: true });
-    fs.writeFileSync(path.join(folder, id.slice(2)), deflateSync(bytes)); return id;
-  }
+  const object = (type, body) => gitObject(dir, type, body);
   const tree = object('tree', '');
   const identity = 'Fixture <fixture' + '@' + 'example.com> 1 +0000';
   const parent = object('commit', `tree ${tree}\nauthor ${identity}\ncommitter ${identity}\n\nInitial\n`);
