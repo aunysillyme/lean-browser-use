@@ -28,16 +28,17 @@ test('gate refuses hashed terms in content and names without printing the term',
   assert.match(lines.join('\n'), /content.txt:1:private-term:/);
   assert.ok(!lines.join('\n').includes(single)); assert.ok(!lines.join('\n').includes(phrase));
 });
+// Construct local fixture objects so tests never stage or commit work.
+function gitObject(dir, type, body) {
+  const bytes = Buffer.concat([Buffer.from(`${type} ${Buffer.byteLength(body)}\0`), Buffer.from(body)]);
+  const id = createHash('sha1').update(bytes).digest('hex');
+  const folder = path.join(dir, '.git/objects', id.slice(0, 2)); fs.mkdirSync(folder, { recursive: true });
+  fs.writeFileSync(path.join(folder, id.slice(2)), deflateSync(bytes)); return id;
+}
 test('history and tag gate in an isolated fixture repository', t => {
   const dir = temp(t);
   assert.equal(spawnSync('git', ['init', '-q', dir]).status, 0);
-  // Construct local fixture objects so the test never stages or commits work.
-  function object(type, body) {
-    const bytes = Buffer.concat([Buffer.from(`${type} ${Buffer.byteLength(body)}\0`), Buffer.from(body)]);
-    const id = createHash('sha1').update(bytes).digest('hex');
-    const folder = path.join(dir, '.git/objects', id.slice(0, 2)); fs.mkdirSync(folder, { recursive: true });
-    fs.writeFileSync(path.join(folder, id.slice(2)), deflateSync(bytes)); return id;
-  }
+  const object = (type, body) => gitObject(dir, type, body);
   const tree = object('tree', '');
   const identity = 'Fixture <fixture' + '@' + 'example.com> 1 +0000';
   const commit = object('commit', `tree ${tree}\nauthor ${identity}\ncommitter ${identity}\n\n${phrase}\n`);
@@ -64,6 +65,37 @@ test('documented safe placeholders and co-author trailers pass', () => {
     assert.equal(scanText('Co-authored-by: Assistant <noreply' + '@' + domain + '>').length, 0);
     assert.ok(scanText('noreply' + '@' + domain).length);
   }
+});
+test('Hermes co-author trailer passes without exempting other emails', () => {
+  const address = 'hermes-agent' + '@' + 'users.noreply.github.com';
+  const trailer = `Co-authored-by: Hermes Agent <${address}>`;
+  assert.deepEqual(scanText(trailer), []);
+  for (const text of [
+    address,
+    `Contact: ${address}`,
+    `Co-authored-by: Someone Else <${address}>`,
+    `Co-authored-by: Hermes Agent <other` + '@' + `users.noreply.github.com>`,
+    `${trailer} other` + '@' + 'example.com',
+    `Co-authored-by: Hermes Agent <${address}.evil.example>`
+  ]) assert.ok(scanText(text).some(hit => hit.class === 'email'), text);
+});
+test('git history accepts Hermes trailer but rejects other email addresses', t => {
+  const dir = temp(t);
+  assert.equal(spawnSync('git', ['init', '-q', dir]).status, 0);
+  const object = (type, body) => gitObject(dir, type, body);
+  const tree = object('tree', '');
+  const identity = 'Fixture <fixture' + '@' + 'example.com> 1 +0000';
+  const parent = object('commit', `tree ${tree}\nauthor ${identity}\ncommitter ${identity}\n\nInitial\n`);
+  const trailer = 'Co-authored-by: Hermes Agent <hermes-agent' + '@' + 'users.noreply.github.com>';
+  const merge = object('commit', `tree ${tree}\nparent ${parent}\nauthor ${identity}\ncommitter ${identity}\n\nMerged change\n\n${trailer}\n`);
+  const ref = path.join(dir, '.git/refs/heads/main');
+  fs.writeFileSync(ref, `${merge}\n`);
+  assert.equal(gate(dir, { output: () => {} }), 0);
+  const bad = object('commit', `tree ${tree}\nparent ${merge}\nauthor ${identity}\ncommitter ${identity}\n\nContact person` + '@' + 'example.com\n');
+  fs.writeFileSync(ref, `${bad}\n`);
+  const out = [];
+  assert.equal(gate(dir, { output: line => out.push(line) }), 1);
+  assert.ok(out.includes(`commit:${bad.slice(0, 8)}:email`));
 });
 test('plain and extra term lists and hash generation', t => {
   const dir = temp(t); const source = path.join(dir, 'list'); const target = path.join(dir, 'hashes');
