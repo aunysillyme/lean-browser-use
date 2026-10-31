@@ -179,6 +179,25 @@ red('private issue id', dir => append(dir, doc, `<p>AU${'N'}-123</p>`), /private
 red('personal path', dir => append(dir, doc, `<p>/Us${'ers'}/sample/file</p>`), /personal path/);
 red('private storage path', dir => append(dir, doc, '<p>Vau' + 'lts/notes/file</p>'), /private storage path/);
 red('default index differs from saved mock', dir => append(dir, 'index.html', '<p>Extra copy</p>'), /default landing differs/);
+for (const [name, pattern] of [
+  ['popup', /(<div class="projects-popup" data-projects-popup>)([^]*?)(<\/ul><\/div><\/div>)/],
+  ['siblings', /(<nav class="side-links" aria-label="Related repositories">)([^]*?)(<\/nav>)/],
+]) {
+  red(`default ${name} differs from saved mock`, dir => edit(dir, 'index.html', html =>
+    html.replace(pattern, '$1$2<!-- changed -->$3')), /default landing differs/);
+}
+for (const href of ['https://example.org/project', 'https://github.com/elsewhere/project',
+  'https://agent-personalizer.aunysillyme.dev.evil.example/']) {
+  red(`invalid sibling URL ${href}`, dir => edit(dir, doc, html => html.replace(
+    /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")[^"]+/, `$1${href}`)), /invalid related repository URL/);
+}
+test('matching sibling project page URL is allowed', t => {
+  const dir = fixture(t);
+  edit(dir, doc, html => html.replace(
+    /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")https:\/\/github\.com\/aunysillyme\/([^"/]+)(")/,
+    '$1https://$2.aunysillyme.dev$3'));
+  assert.deepEqual(run(dir), []);
+});
 red('release version differs from package', dir => edit(dir, 'index.html', html => html.replace(/<strong>v\d+\.\d+\.\d+<\/strong>/, '<strong>v9.9.9</strong>')), /package version differs from display/);
 red('unexpected output file', dir => write(dir, 'extra.txt', 'Extra'), /unexpected output file/);
 red('missing default noindex', dir => edit(dir, doc, html => html.replace('<meta name="robots" content="noindex">', '')), /missing noindex/);

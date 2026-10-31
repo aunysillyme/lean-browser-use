@@ -30,11 +30,12 @@
       if (event.pointerType === 'mouse' && matchMedia('(hover: hover)').matches && !pinned) {
         cancelClose();
         timer = setTimeout(() => {
-          if (!panel.contains(document.activeElement)) setOpen(false);
+          if (document.hasFocus() && !panel.contains(document.activeElement)) setOpen(false);
         }, 180);
       }
     });
     trigger.addEventListener('click', (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       if (event.detail > 0 && hoverOpened && !pinned && !panel.hidden) {
         pinned = true;
@@ -63,13 +64,14 @@
       }
     });
     root.addEventListener('focusout', (event) => {
-      if (!root.contains(event.relatedTarget) && !(event.relatedTarget === null && pointerDownInside)) setOpen(false);
+      if (event.relatedTarget !== null && !root.contains(event.relatedTarget)) setOpen(false);
     });
     document.addEventListener('pointerdown', (event) => {
       pointerDownInside = root.contains(event.target);
       if (!pointerDownInside) setOpen(false);
     });
-    document.addEventListener('pointerup', () => { pointerDownInside = false; });
-    document.addEventListener('pointercancel', () => { pointerDownInside = false; });
+    window.addEventListener('pointerup', () => { pointerDownInside = false; }, true);
+    window.addEventListener('pointercancel', () => { pointerDownInside = false; }, true);
+    window.addEventListener('blur', () => { pointerDownInside = false; cancelClose(); });
   });
 })();

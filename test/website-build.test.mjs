@@ -7,7 +7,6 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { renderMarkdown } from '../website/build.mjs';
 import { featuredProof, visibleText } from '../website/facts.mjs';
-import { withoutProjectSet } from '../website/check.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const origin = 'https://lean-browser-use.aunysillyme.dev';
@@ -323,7 +322,7 @@ test('RED deterministic builds differ only in build time and default landing equ
   assert.equal(info.packageVersion, JSON.parse(read(dir, 'package.json')).version);
   assert.equal(info.mode, 'default');
   assert.equal(info.pageCount, routes.length);
-  assert.equal(withoutProjectSet(read(first, 'index.html')), withoutProjectSet(read(dir, 'website/mock/index.html')));
+  assert.equal(read(first, 'index.html'), read(dir, 'website/mock/index.html'));
 });
 
 test('RED build imports keep the zero dependency boundary', () => {

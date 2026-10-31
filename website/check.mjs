@@ -28,9 +28,6 @@ const same = (a, b) => isDeepStrictEqual(a, b);
 const withoutSourceCommit = bytes => bytes.toString('latin1').replace(
   /(<footer class="bottom">[^]*?<span>Source <a href="https:\/\/github\.com\/aunysillyme\/lean-browser-use\/commit\/)[a-fA-F\d]{40}(">)[a-fA-F\d]{7}(<\/a><\/span><\/footer>)/g,
   '$1SOURCE_COMMIT$2SOURCE_COMMIT$3');
-export const withoutProjectSet = html => html
-  .replace(/<div class="projects-popup" data-projects-popup>[^]*?<\/ul><\/div><\/div>/, 'PROJECTS_POPUP')
-  .replace(/(<nav class="side-links" aria-label="Related repositories">)[^]*?(<\/nav>)/, '$1PROJECTS_SIBLINGS$2');
 const own = (object, key) => Object.hasOwn(object, key);
 const projectUrls = new Set(['https://github.com/aunysillyme/lean-browser-use', 'https://www.npmjs.com/package/lean-browser-use']);
 const safeAnchor = url => {
@@ -231,6 +228,15 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
             check(permitted && ['http:', 'https:'].includes(url.protocol), file, `external resource: ${node.name}[${attr}]`);
           }
           if (node.name === 'a' && attr === 'href') check(safeAnchor(url), file, 'unsafe external anchor');
+          let ancestor = node.parent;
+          while (ancestor && !(ancestor.name === 'nav' && ancestor.attrs['aria-label'] === 'Related repositories')) ancestor = ancestor.parent;
+          if (node.name === 'a' && attr === 'href' && ancestor) {
+            const name = text(node.inner).replace(/\s*↗\s*$/, '').trim();
+            check(url.protocol === 'https:' && !url.username && !url.password && !url.port
+              && (url.hostname === 'github.com' && /^\/aunysillyme\/[^/]+(?:\/.*)?$/.test(url.pathname)
+                || url.hostname === `${name}.aunysillyme.dev` && url.pathname === '/')
+              && !url.search && !url.hash, file, 'invalid related repository URL');
+          }
         }
       }
       if (['video', 'source'].includes(node.name)) {
@@ -299,7 +305,7 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
       check(fresh && text(fresh.inner).includes(`v${facts.version}`) && (!verified || release.version === facts.version), file, 'package version differs from display');
       check(fresh && text(fresh.inner).includes('Fresh from the repo') && (verified || /not released yet/i.test(text(fresh.inner))), file, 'Fresh from the repo must say not released yet');
       check(!/your agent keeps working/i.test(text(hero)), file, 'forbidden hero headline');
-      if (!live) check(withoutProjectSet(withoutSourceCommit(bytes.get(file))) === withoutProjectSet(withoutSourceCommit(readFileSync(join(root, 'website/mock/index.html')))), file, 'default landing differs from saved mock');
+      if (!live) check(withoutSourceCommit(bytes.get(file)) === withoutSourceCommit(readFileSync(join(root, 'website/mock/index.html'))), file, 'default landing differs from saved mock');
     } else if (file !== '404.html') {
       const crumb = tags('nav').find(node => node.attrs['aria-label'] === 'Breadcrumb');
       const visible = crumb ? parseHtml(crumb.inner).filter(node => node.name === 'a' || node.name === 'span' && node.attrs['aria-hidden'] !== 'true').map(node => text(node.inner)) : [];
