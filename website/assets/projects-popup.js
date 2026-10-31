@@ -49,7 +49,9 @@
     trigger.addEventListener('keydown', (event) => {
       if (event.key === ' ') {
         event.preventDefault();
-        setOpen(panel.hidden);
+        const open = panel.hidden;
+        setOpen(open);
+        if (open) pinned = true;
       } else if (event.key === 'ArrowDown') {
         event.preventDefault();
         setOpen(true);
@@ -59,8 +61,9 @@
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !panel.hidden) {
         event.preventDefault();
+        const restoreFocus = root.contains(document.activeElement);
         setOpen(false);
-        trigger.focus();
+        if (restoreFocus) trigger.focus();
       }
     });
     root.addEventListener('focusout', (event) => {
@@ -70,7 +73,7 @@
       pointerDownInside = root.contains(event.target);
       if (!pointerDownInside) setOpen(false);
     });
-    window.addEventListener('pointerup', () => { pointerDownInside = false; }, true);
+    window.addEventListener('click', () => { pointerDownInside = false; }, true);
     window.addEventListener('pointercancel', () => { pointerDownInside = false; }, true);
     window.addEventListener('blur', () => { pointerDownInside = false; setOpen(false); });
   });

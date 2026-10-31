@@ -6,9 +6,11 @@ export const escapeHtml = (s) => String(s).replaceAll('&', '&amp;').replaceAll('
 
 export function renderProjectsPopup({ rows, current = '', id, fallbackHref }) {
   if (!id || !fallbackHref || !Array.isArray(rows)) throw new TypeError('rows, id and fallbackHref are required');
+  if (!rows.length) throw new TypeError('At least one project is required');
   const names = rows.map(({ name }) => typeof name === 'string' ? name.toLowerCase() : name);
   const currentName = typeof current === 'string' ? current.toLowerCase() : current;
   if (currentName && names.filter((name) => name === currentName).length > 1) throw new TypeError(`Multiple current projects: ${current}`);
+  if (currentName && !names.includes(currentName)) throw new TypeError(`Unknown current project: ${current}`);
   if (new Set(names).size !== names.length) throw new TypeError('Duplicate project names');
   const items = rows.map(({ name, line }, index) => {
     if (typeof name !== 'string' || name.length > 63 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) throw new TypeError(`Invalid project name: ${name}`);
