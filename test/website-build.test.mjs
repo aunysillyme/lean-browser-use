@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { renderMarkdown } from '../website/build.mjs';
 import { featuredProof, visibleText } from '../website/facts.mjs';
+import { withoutProjectSet } from '../website/check.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const origin = 'https://lean-browser-use.aunysillyme.dev';
@@ -37,7 +38,7 @@ function files(dir, prefix = '') {
 function fixture(t) {
   const dir = mkdtempSync(join(tmpdir(), 'website-build-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
-  const inputs = ['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'CREDITS.md'];
+  const inputs = ['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'CREDITS.md', '.repo-build/set.json'];
   inputs.push(...JSON.parse(read(root, 'website/tools.json')).flatMap(tool => tool.source));
   for (const folder of ['docs', 'skills', 'reader', 'searxng', 'src', 'bin', 'hooks', 'agents', 'briefs', 'proof', 'website']) {
     inputs.push(...files(join(root, folder)).filter(file => !file.split('/').some(part =>
@@ -68,6 +69,22 @@ function built(dir, options) {
 function htmlPages(dir) {
   return routes.map(route => [route, read(dir, pageFile(route))]);
 }
+
+test('project popup and landing siblings follow the set on every page', t => {
+  const dir = fixture(t);
+  const set = JSON.parse(read(dir, '.repo-build/set.json'));
+  set.rows.push({ name: 'example-project', url: 'https://github.com/aunysillyme/example-project', line: 'Example project: details' });
+  write(dir, '.repo-build/set.json', JSON.stringify(set));
+  const output = built(dir);
+  for (const [route, html] of htmlPages(output)) {
+    assert.match(html, /data-projects-trigger href="https:\/\/aunysillyme\.dev\/#projects"/);
+    assert.match(html, /href="https:\/\/example-project\.aunysillyme\.dev"/);
+    assert.match(html, /href="https:\/\/lean-browser-use\.aunysillyme\.dev" aria-current="page"/);
+    assert.match(html, /<script defer src="\/assets\/projects-popup\.js"><\/script>/);
+    assert.ok(html.includes('>npm ↗</a>'), route);
+  }
+  assert.match(read(output, 'index.html'), /href="https:\/\/github\.com\/aunysillyme\/example-project"/);
+});
 
 function modePolicy(dir, live) {
   const allFiles = files(dir);
@@ -306,7 +323,7 @@ test('RED deterministic builds differ only in build time and default landing equ
   assert.equal(info.packageVersion, JSON.parse(read(dir, 'package.json')).version);
   assert.equal(info.mode, 'default');
   assert.equal(info.pageCount, routes.length);
-  assert.equal(read(first, 'index.html'), read(dir, 'website/mock/index.html'));
+  assert.equal(withoutProjectSet(read(first, 'index.html')), withoutProjectSet(read(dir, 'website/mock/index.html')));
 });
 
 test('RED build imports keep the zero dependency boundary', () => {

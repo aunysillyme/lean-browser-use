@@ -6,6 +6,7 @@ import { buildJsonLd, buildFaqJsonLd, loadSourceFacts, featuredProof, visibleTex
 import { pages } from './pages.mjs';
 import { content } from './content.mjs';
 import { readPins, copyPinFailures } from './copy.mjs';
+import { renderProjectsPopup } from './projects-popup-render.mjs';
 
 const origin = 'https://lean-browser-use.aunysillyme.dev';
 const repository = 'https://github.com/aunysillyme/lean-browser-use';
@@ -15,6 +16,17 @@ const json = (root, file) => JSON.parse(read(root, file));
 const requireValue = (ok, message) => { if (!ok) throw Error(message); };
 export const escape = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const slug = text => visibleText(text).toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').trim().replace(/\s+/g, '-') || 'section';
+
+// The pinned project set is the one source for the header popup and the sidebar siblings.
+function readSet(root) {
+  const { rows } = json(root, '.repo-build/set.json');
+  requireValue(Array.isArray(rows) && rows.length > 0, 'Project set rows missing in .repo-build/set.json');
+  return rows;
+}
+
+function projectsPopup(root) {
+  return renderProjectsPopup({ rows: readSet(root), current: content.brand, id: 'projects-popup', fallbackHref: 'https://aunysillyme.dev/#projects' });
+}
 
 function section(markdown, heading) {
   const start = markdown.indexOf(`## ${heading}\n`);
@@ -233,10 +245,9 @@ function navigation(page) {
 }
 
 function sidebar(root, page) {
-  const set = section(read(root, 'README.md'), 'Part of a set');
-  const siblings = [...set.matchAll(/\[([^\]]+)\]\((https:\/\/github\.com\/aunysillyme\/[^)]+)\)/g)];
+  const siblings = readSet(root).filter(row => row.name !== content.brand);
   if (page.route !== '/') return `<p class="side-label">DOCUMENTATION</p><nav class="side-links" aria-label="Documentation">${navigation(page)}</nav><div class="side-bottom">Questions or feedback?<a class="issue-button" href="${repository}/issues/new/choose" target="_blank" rel="noopener noreferrer">File an issue ↗</a></div>`;
-  return `<p class="side-label">${page.route === '/' ? escape(content.brand.toUpperCase()) : content.docsLabel}</p><nav class="side-links" aria-label="Documentation">${navigation(page)}</nav><p class="side-label">THE REST OF THE SET</p><nav class="side-links" aria-label="Related repositories">${siblings.map(([, label, url]) => `<a href="${escape(url)}" target="_blank" rel="noopener noreferrer">${escape(label)} ↗</a>`).join('')}<\/nav><div class="side-bottom"><div>Questions or feedback?</div><a class="issue-button" href="${repository}/issues/new/choose" target="_blank" rel="noopener noreferrer" aria-label="File an issue for ${escape(content.brand)} on GitHub">File an issue ↗</a><span>Open source · MIT license</span></div>`;
+  return `<p class="side-label">${page.route === '/' ? escape(content.brand.toUpperCase()) : content.docsLabel}</p><nav class="side-links" aria-label="Documentation">${navigation(page)}</nav><p class="side-label">THE REST OF THE SET</p><nav class="side-links" aria-label="Related repositories">${siblings.map(row => `<a href="${escape(row.url)}" target="_blank" rel="noopener noreferrer">${escape(row.name)} ↗</a>`).join('')}<\/nav><div class="side-bottom"><div>Questions or feedback?</div><a class="issue-button" href="${repository}/issues/new/choose" target="_blank" rel="noopener noreferrer" aria-label="File an issue for ${escape(content.brand)} on GitHub">File an issue ↗</a><span>Open source · MIT license</span></div>`;
 }
 
 function head(page, facts, live, notFound = false) {
@@ -273,7 +284,9 @@ ${!live || notFound ? '<meta name="robots" content="noindex">' : `<link rel="des
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="${fontStylesheet}" rel="stylesheet">
 <link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/projects-popup.css">
 <script type="module" src="/assets/site.js"></script>
+<script defer src="/assets/projects-popup.js"></script>
 ${blocks.map(block => `<script type="application/ld+json">${JSON.stringify(block, null, 2).replace(/</g, '\\u003c')}</script>`).join('\n')}`;
 }
 
@@ -292,7 +305,7 @@ function documentBody(page, body, commit, buildTime) {
 
 function template(root, page, body, facts, live, commit, notFound = false) {
   const file = page.route === '/' && !notFound ? 'landing.template.html' : 'doc.template.html';
-  const header = page.route === '/' ? `<a class="skip" href="#main">${escape(content.skip)}</a><header class="top"><a class="brand" href="https://aunysillyme.dev/" target="_blank" rel="noopener noreferrer"><img src="/assets/avatar.png" alt="AunySillyMe"><span>AunySillyMe.dev</span><span class="slash">/</span><b>${escape(content.brand)}</b></a><nav class="topnav" aria-label="${escape(content.projectLinks)}"><span class="pill"><i class="dot"></i><span data-version>v${escape(facts.version)}</span></span><a href="${repository}" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="${facts.npm}" target="_blank" rel="noopener noreferrer">npm ↗</a></nav></header>` : `<a class="skip" href="#main">${escape(content.skip)}</a><header class="top"><a class="brand" href="/"><img src="/assets/avatar.png" alt="AunySillyMe"><span>${escape(content.brand)}</span></a><nav class="topnav" aria-label="Project links"><a href="/">Home</a><a href="${repository}" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav></header>`;
+  const header = page.route === '/' ? `<a class="skip" href="#main">${escape(content.skip)}</a><header class="top"><a class="brand" href="https://aunysillyme.dev/" target="_blank" rel="noopener noreferrer"><img src="/assets/avatar.png" alt="AunySillyMe"><span>AunySillyMe.dev</span><span class="slash">/</span><b>${escape(content.brand)}</b></a><nav class="topnav" aria-label="${escape(content.projectLinks)}"><span class="pill"><i class="dot"></i><span data-version>v${escape(facts.version)}</span></span>${projectsPopup(root)}<a href="${repository}" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="${facts.npm}" target="_blank" rel="noopener noreferrer">npm ↗</a></nav></header>` : `<a class="skip" href="#main">${escape(content.skip)}</a><header class="top"><a class="brand" href="/"><img src="/assets/avatar.png" alt="AunySillyMe"><span>${escape(content.brand)}</span></a><nav class="topnav" aria-label="Project links"><a href="/">Home</a>${projectsPopup(root)}<a href="${repository}" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="${facts.npm}" target="_blank" rel="noopener noreferrer">npm ↗</a></nav></header>`;
   const mobileNav = `<details class="mobile-nav"><summary>${escape(page.route === '/' ? content.onThisPage : 'Documentation')}</summary><nav aria-label="Mobile documentation">${navigation(page)}</nav></details>`;
   const values = { head: head(page, facts, live, notFound), header, sidebar: sidebar(root, page), mobileNav, body, footer: footer(commit, page) };
   return read(root, `website/${file}`).replace(/\{\{(\w+)\}\}/g, (_, key) => {
