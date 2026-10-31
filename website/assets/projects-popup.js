@@ -73,6 +73,7 @@
       pointerDownInside = root.contains(event.target);
       if (!pointerDownInside) setOpen(false);
     });
+    document.addEventListener('keydown', () => { pointerDownInside = false; }, true);
     window.addEventListener('click', () => { pointerDownInside = false; }, true);
     window.addEventListener('pointercancel', () => { pointerDownInside = false; }, true);
     window.addEventListener('blur', () => { pointerDownInside = false; setOpen(false); });
