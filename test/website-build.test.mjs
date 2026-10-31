@@ -6,13 +6,14 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { renderMarkdown } from '../website/build.mjs';
+import { withoutSourceCommit } from '../website/check.mjs';
 import { featuredProof, visibleText } from '../website/facts.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const origin = 'https://lean-browser-use.aunysillyme.dev';
 const routes = ['/', '/docs/overview/', '/docs/how-it-works/', '/docs/guides/', '/docs/commands/',
   '/docs/proof/', '/docs/changelog/', '/docs/install/', '/docs/guarantees/'];
-// Placeholder commit used to generate the saved mock, independent of repository history.
+// Placeholder commit keeps fixture builds independent of repository history.
 const testCommit = '0000000000000000000000000000000000000000';
 const read = (dir, file) => readFileSync(join(dir, file), 'utf8');
 const text = html => html.replace(/<(script|style)\b[^]*?<\/\1>/gi, ' ').replace(/<[^>]*>/g, ' ')
@@ -322,7 +323,12 @@ test('RED deterministic builds differ only in build time and default landing equ
   assert.equal(info.packageVersion, JSON.parse(read(dir, 'package.json')).version);
   assert.equal(info.mode, 'default');
   assert.equal(info.pageCount, routes.length);
-  assert.equal(read(first, 'index.html'), read(dir, 'website/mock/index.html'));
+  const landing = readFileSync(join(first, 'index.html'));
+  const mock = readFileSync(join(dir, 'website/mock/index.html'));
+  assert.equal(withoutSourceCommit(landing), withoutSourceCommit(mock));
+  const differentCommit = landing.toString('latin1').replaceAll(testCommit, '1'.repeat(40)).replace('>0000000</a></span></footer>', '>1111111</a></span></footer>');
+  assert.equal(withoutSourceCommit(landing), withoutSourceCommit(Buffer.from(differentCommit, 'latin1')));
+  assert.notEqual(withoutSourceCommit(landing), withoutSourceCommit(Buffer.from(differentCommit + 'changed', 'latin1')));
 });
 
 test('RED build imports keep the zero dependency boundary', () => {

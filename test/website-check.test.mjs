@@ -188,15 +188,22 @@ for (const [name, pattern] of [
 }
 for (const href of ['https://example.org/project', 'https://github.com/elsewhere/project',
   'https://agent-personalizer.aunysillyme.dev.evil.example/']) {
-  red(`invalid sibling URL ${href}`, dir => edit(dir, doc, html => html.replace(
-    /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")[^"]+/, `$1${href}`)), /invalid related repository URL/);
+  red(`invalid sibling URL ${href}`, dir => edit(dir, 'index.html', html => html.replace(
+    /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")[^"]+/, `$1${href}`)), /invalid related repository URL/, { live: true });
 }
 test('matching sibling project page URL is allowed', t => {
-  const dir = fixture(t);
-  edit(dir, doc, html => html.replace(
+  const dir = fixture(t, true);
+  edit(dir, 'index.html', html => html.replace(
     /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")https:\/\/github\.com\/aunysillyme\/([^"/]+)(")/,
     '$1https://$2.aunysillyme.dev$3'));
-  assert.deepEqual(run(dir), []);
+  assert.deepEqual(run(dir, { live: true }), []);
+});
+test('capitalized sibling link text accepts its lowercase project host', t => {
+  const dir = fixture(t, true);
+  edit(dir, 'index.html', html => html.replace(
+    /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")https:\/\/github\.com\/aunysillyme\/([^"/]+)("[^>]*>)([^<]+)(<\/a>)/,
+    (_, prefix, name, middle, label, close) => `${prefix}https://${name}.aunysillyme.dev${middle}${label.toUpperCase()}${close}`));
+  assert.deepEqual(run(dir, { live: true }), []);
 });
 red('release version differs from package', dir => edit(dir, 'index.html', html => html.replace(/<strong>v\d+\.\d+\.\d+<\/strong>/, '<strong>v9.9.9</strong>')), /package version differs from display/);
 red('unexpected output file', dir => write(dir, 'extra.txt', 'Extra'), /unexpected output file/);
@@ -222,10 +229,10 @@ test('RED private hash match uses only a temporary hash file, then accepts remov
 });
 
 test('exact mode inventory derives from pages and accepts both builder outputs', () => {
-  assert.equal(expectedFiles().length, pages.length + 14);
-  assert.equal(expectedFiles(true).length, pages.length * 2 + 17);
-  assert.equal(expectedFiles().length, 23);
-  assert.equal(expectedFiles(true).length, 35);
+  assert.equal(expectedFiles().length, pages.length + 16);
+  assert.equal(expectedFiles(true).length, pages.length * 2 + 19);
+  assert.equal(expectedFiles().length, 25);
+  assert.equal(expectedFiles(true).length, 37);
   for (const live of [false, true]) assert.deepEqual(run(sources[live ? 'live' : 'default'], { live }), []);
 });
 
