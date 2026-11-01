@@ -4,6 +4,21 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-31
+
+### Fixed
+
+- Docs, agent and skill text run the CLI as `npx lean-browser-use <verb>`, since `npx` installs nothing on PATH.
+- Installed files no longer link to docs that are not installed.
+- The privacy gate accepts Dependabot's sign-off trailer; every other email stays blocked.
+- The privacy gate accepts the Hermes Agent co-author trailer.
+
+### Changed
+
+- Code scanning findings hardened and release tooling pinned; Dependabot keeps release tooling updated.
+- The release workflow creates the GitHub release page.
+- Test jobs run on instabox-medium runners.
+
 ## [0.1.2] - 2026-10-28
 
 ### Added
@@ -50,6 +65,7 @@ All notable changes to this project are documented here, following [Keep a Chang
 - Optional compile-once page reader and SearXNG companion.
 - Offline checks, package measurements, provenance, and contribution guides.
 
+[0.1.3]: https://github.com/aunysillyme/lean-browser-use/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/aunysillyme/lean-browser-use/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aunysillyme/lean-browser-use/releases/tag/v0.1.1
 [0.1.0]: https://github.com/aunysillyme/lean-browser-use/releases/tag/v0.1.0

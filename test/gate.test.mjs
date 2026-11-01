@@ -97,6 +97,32 @@ test('git history accepts Hermes trailer but rejects other email addresses', t =
   assert.equal(gate(dir, { output: line => out.push(line) }), 1);
   assert.ok(out.includes(`commit:${bad.slice(0, 8)}:email`));
 });
+test('Dependabot sign-off trailer passes without exempting other emails', () => {
+  const address = 'support' + '@' + 'github.com';
+  const trailer = `Signed-off-by: dependabot[bot] <${address}>`;
+  assert.deepEqual(scanText(trailer), []);
+  assert.deepEqual(scanText(`sIgNeD-oFf-By: dependabot[bot] <${address}>`), []);
+  for (const text of [
+    `contact ${address} for help`,
+    ` dependabot[bot] <${address}>`,
+    `Signed-off-by: Someone Else <${address}>`,
+    `Signed-off-by: Someone Else <someone` + '@' + `example.com>`,
+    `${trailer} extra`,
+    ` ${trailer}`,
+    `Signed-off-by: Dependabot[bot] <${address}>`
+  ]) assert.ok(scanText(text).some(hit => hit.class === 'email'), text);
+});
+test('git history accepts Dependabot sign-off trailer', t => {
+  const dir = temp(t);
+  assert.equal(spawnSync('git', ['init', '-q', dir]).status, 0);
+  const object = (type, body) => gitObject(dir, type, body);
+  const tree = object('tree', '');
+  const identity = 'Fixture <fixture' + '@' + 'example.com> 1 +0000';
+  const trailer = 'Signed-off-by: dependabot[bot] <support' + '@' + 'github.com>';
+  const commit = object('commit', `tree ${tree}\nauthor ${identity}\ncommitter ${identity}\n\nDependency update\n\n${trailer}\n`);
+  fs.writeFileSync(path.join(dir, '.git/refs/heads/main'), `${commit}\n`);
+  assert.equal(gate(dir, { output: () => {} }), 0);
+});
 test('plain and extra term lists and hash generation', t => {
   const dir = temp(t); const source = path.join(dir, 'list'); const target = path.join(dir, 'hashes');
   fs.writeFileSync(source, `# comment\n${phrase}\n${single}\n${single}\n`);
