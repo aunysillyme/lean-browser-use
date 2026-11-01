@@ -332,7 +332,13 @@ red('em dash in copy', dir => append(dir, doc, `<p>Text${String.fromCharCode(0x2
 test('pinned Google Fonts and local media pass the resource policy', t => {
   const dir = fixture(t);
   const html = read(dir, 'index.html');
-  assert.match(html, /fonts\.googleapis\.com\/css2\?family=Cormorant\+Garamond/);
+  assert.ok(html.includes('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap'));
+  const css = read(dir, 'assets/site.css');
+  for (const oldFont of ['Cormor' + 'ant', 'Geor' + 'gia', '--se' + 'rif']) {
+    assert.ok(!html.includes(oldFont) && !css.includes(oldFont), oldFont);
+  }
+  assert.match(css, /\.hero h1 em\{display:block;font-size:\.6em;line-height:1\.3;letter-spacing:-\.01em;margin-top:\.5em;font-weight:400;font-style:normal;color:var\(--green\)\}/);
+  assert.match(css, /\.hero h1\{font-size:36px;overflow-wrap:anywhere\}/);
   assert.match(html, /<video autoplay muted loop playsinline preload="auto"/);
   for (const file of ['trailer.webm', 'trailer.mp4', 'trailer-poster.jpg']) assert.ok(existsSync(join(dir, 'assets', file)));
   append(dir, doc, '<video poster="/assets/trailer-poster.jpg"><source src="/assets/trailer.mp4" type="video/mp4"></video>');
