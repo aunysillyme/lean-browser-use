@@ -25,7 +25,7 @@ const decode = text => text.replace(/&(?:amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/g
 const text = value => decode(visibleText(value));
 const same = (a, b) => isDeepStrictEqual(a, b);
 // Latin-1 preserves every byte outside the footer's source commit fields.
-const withoutSourceCommit = bytes => bytes.toString('latin1').replace(
+export const withoutSourceCommit = bytes => bytes.toString('latin1').replace(
   /(<footer class="bottom">[^]*?<span>Source <a href="https:\/\/github\.com\/aunysillyme\/lean-browser-use\/commit\/)[a-fA-F\d]{40}(">)[a-fA-F\d]{7}(<\/a><\/span><\/footer>)/g,
   '$1SOURCE_COMMIT$2SOURCE_COMMIT$3');
 const own = (object, key) => Object.hasOwn(object, key);
@@ -232,6 +232,15 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
             check(permitted && ['http:', 'https:'].includes(url.protocol), file, `external resource: ${node.name}[${attr}]`);
           }
           if (node.name === 'a' && attr === 'href') check(safeAnchor(url), file, 'unsafe external anchor');
+          let ancestor = node.parent;
+          while (ancestor && !(ancestor.name === 'nav' && ancestor.attrs['aria-label'] === 'Related repositories')) ancestor = ancestor.parent;
+          if (node.name === 'a' && attr === 'href' && ancestor) {
+            const name = text(node.inner).replace(/\s*↗\s*$/, '').trim();
+            check(url.protocol === 'https:' && !url.username && !url.password && !url.port
+              && (url.hostname === 'github.com' && /^\/aunysillyme\/[^/]+(?:\/.*)?$/.test(url.pathname)
+                || url.hostname === `${name.toLowerCase()}.aunysillyme.dev` && url.pathname === '/')
+              && !url.search && !url.hash, file, 'invalid related repository URL');
+          }
         }
       }
       if (['video', 'source'].includes(node.name)) {
