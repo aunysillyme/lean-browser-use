@@ -6,9 +6,17 @@ The static site ports the sibling package's builder, checker and layout. It rend
 landing page and documentation from this repository. Editable copy lives in `content.mjs`,
 the source and route map in `pages.mjs`, exact tool evidence in `tools.json`, and page shells
 in the templates. The design system, avatar and navigation come from model-orchestrator. Google Fonts
-loads Cormorant Garamond and JetBrains Mono from the two pinned font hosts. All other
+loads JetBrains Mono from the two pinned font hosts. All other
 resources are local. Navigation copies the install command, marks sections and closes
-the mobile accordion after a selection. The four flow buttons illustrate the method. The site has no analytics.
+the mobile accordion after a selection. The four flow buttons illustrate the method.
+Every HTML page declares the Is Agentic site type as `app` and loads Vercel Speed Insights
+through its same-origin script endpoint. The local deferred initializer queues calls before
+the collector loads; CSP permits same-origin connections for performance events.
+The [static HTML integration](https://vercel.com/docs/speed-insights/quickstart) needs no npm package.
+The [Is Agentic declaration](https://is-agentic.com/docs) selects the report's site-type view.
+Enable Speed Insights on the Vercel
+project and deploy to collect real-user performance data; local builds do not serve the
+Vercel endpoint. Verify collection in the project's Speed Insights dashboard after visits.
 
 ## Trigger and deployment mode
 
@@ -126,7 +134,7 @@ verify the fact, build, checker, copy, interaction and landing contracts. Publis
 
 Design source: [model-orchestrator website](https://github.com/aunysillyme/model-orchestrator/tree/main/website).
 The shared CSS and navigation are reused under its MIT license. Product copy and proof
-come from this repository; the reference analytics and remote media are excluded.
+come from this repository; performance collection uses Vercel Speed Insights.
 
 ## Copy pins
 

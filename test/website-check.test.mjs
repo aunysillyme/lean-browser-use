@@ -140,6 +140,8 @@ red('100 x 100 PNG', dir => {
 }, /expected a 1200 x 630 PNG/, { live: true });
 red('sitemap with ten URLs', dir => edit(dir, 'sitemap.xml', xml => xml.replace('</urlset>', '<url><loc>https://lean-browser-use.aunysillyme.dev/extra/</loc></url></urlset>')), /sitemap must list exactly/, { live: true });
 red('external script tag', dir => append(dir, doc, '<script src="https://example.org/test.js"></script>'), /external resource: script/);
+red('unknown Vercel script endpoint', dir => append(dir, doc, '<script src="/_vercel/other/script.js"></script>'), /unresolved file/);
+red('Vercel endpoint used as image', dir => append(dir, doc, '<img src="/_vercel/speed-insights/script.js" alt="Test">'), /unresolved file/);
 red('gtag snippet', dir => append(dir, doc, '<script>gtag("config", "test");</script>'), /analytics or tag-manager/);
 red('external image', dir => append(dir, doc, '<img src="https://example.org/test.png" alt="Test">'), /external resource: img/);
 red('external stylesheet', dir => append(dir, doc, '<link rel="stylesheet" href="https://example.org/test.css">'), /external resource: link/);
@@ -179,6 +181,32 @@ red('private issue id', dir => append(dir, doc, `<p>AU${'N'}-123</p>`), /private
 red('personal path', dir => append(dir, doc, `<p>/Us${'ers'}/sample/file</p>`), /personal path/);
 red('private storage path', dir => append(dir, doc, '<p>Vau' + 'lts/notes/file</p>'), /private storage path/);
 red('default index differs from saved mock', dir => append(dir, 'index.html', '<p>Extra copy</p>'), /default landing differs/);
+for (const [name, pattern] of [
+  ['popup', /(<div class="projects-popup" data-projects-popup>)([^]*?)(<\/ul><\/div><\/div>)/],
+  ['siblings', /(<nav class="side-links" aria-label="Related repositories">)([^]*?)(<\/nav>)/],
+]) {
+  red(`default ${name} differs from saved mock`, dir => edit(dir, 'index.html', html =>
+    html.replace(pattern, '$1$2<!-- changed -->$3')), /default landing differs/);
+}
+for (const href of ['https://example.org/project', 'https://github.com/elsewhere/project',
+  'https://agent-personalizer.aunysillyme.dev.evil.example/']) {
+  red(`invalid sibling URL ${href}`, dir => edit(dir, 'index.html', html => html.replace(
+    /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")[^"]+/, `$1${href}`)), /invalid related repository URL/, { live: true });
+}
+test('matching sibling project page URL is allowed', t => {
+  const dir = fixture(t, true);
+  edit(dir, 'index.html', html => html.replace(
+    /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")https:\/\/github\.com\/aunysillyme\/([^"/]+)(")/,
+    '$1https://$2.aunysillyme.dev$3'));
+  assert.deepEqual(run(dir, { live: true }), []);
+});
+test('capitalized sibling link text accepts its lowercase project host', t => {
+  const dir = fixture(t, true);
+  edit(dir, 'index.html', html => html.replace(
+    /(<nav class="side-links" aria-label="Related repositories">[^]*?<a href=")https:\/\/github\.com\/aunysillyme\/([^"/]+)("[^>]*>)([^<]+)(<\/a>)/,
+    (_, prefix, name, middle, label, close) => `${prefix}https://${name}.aunysillyme.dev${middle}${label.toUpperCase()}${close}`));
+  assert.deepEqual(run(dir, { live: true }), []);
+});
 red('release version differs from package', dir => edit(dir, 'index.html', html => html.replace(/<strong>v\d+\.\d+\.\d+<\/strong>/, '<strong>v9.9.9</strong>')), /package version differs from display/);
 red('unexpected output file', dir => write(dir, 'extra.txt', 'Extra'), /unexpected output file/);
 red('missing default noindex', dir => edit(dir, doc, html => html.replace('<meta name="robots" content="noindex">', '')), /missing noindex/);
@@ -203,10 +231,10 @@ test('RED private hash match uses only a temporary hash file, then accepts remov
 });
 
 test('exact mode inventory derives from pages and accepts both builder outputs', () => {
-  assert.equal(expectedFiles().length, pages.length + 14);
-  assert.equal(expectedFiles(true).length, pages.length * 2 + 17);
-  assert.equal(expectedFiles().length, 23);
-  assert.equal(expectedFiles(true).length, 35);
+  assert.equal(expectedFiles().length, pages.length + 17);
+  assert.equal(expectedFiles(true).length, pages.length * 2 + 20);
+  assert.equal(expectedFiles().length, 26);
+  assert.equal(expectedFiles(true).length, 38);
   for (const live of [false, true]) assert.deepEqual(run(sources[live ? 'live' : 'default'], { live }), []);
 });
 
@@ -290,7 +318,7 @@ test('RED every allowed JSON-LD type rejects an invented property', t => {
 
 red('hero about 25 percent without a dollar qualifier', dir => edit(dir, 'index.html', html => html.replace(/<h1\b[^>]*>[^]*?<\/h1>/, '<h1>Cut browser use by about 25%.<br><em>A fresh runner, bulk reads, three guards.</em></h1>')), /dollar qualifier/);
 
-red('broadened CSP', dir => edit(dir, doc, html => html.replace("connect-src 'none'", 'connect-src *')), /resource CSP differs/);
+red('broadened CSP', dir => edit(dir, doc, html => html.replace("connect-src 'self'", 'connect-src *')), /resource CSP differs/);
 red('Google font lookalike host', dir => append(dir, doc, '<link rel="stylesheet" href="https://fonts.googleapis.com.example.org/css2">'), /external resource: link/);
 red('Google host used for a script', dir => append(dir, doc, '<script src="https://fonts.googleapis.com/test.js"></script>'), /external resource: script/);
 red('Google host used for media', dir => append(dir, doc, '<video src="https://fonts.gstatic.com/test.mp4"></video>'), /external resource: video/);
@@ -304,7 +332,13 @@ red('em dash in copy', dir => append(dir, doc, `<p>Text${String.fromCharCode(0x2
 test('pinned Google Fonts and local media pass the resource policy', t => {
   const dir = fixture(t);
   const html = read(dir, 'index.html');
-  assert.match(html, /fonts\.googleapis\.com\/css2\?family=Cormorant\+Garamond/);
+  assert.ok(html.includes('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap'));
+  const css = read(dir, 'assets/site.css');
+  for (const oldFont of ['Cormor' + 'ant', 'Geor' + 'gia', '--se' + 'rif']) {
+    assert.ok(!html.includes(oldFont) && !css.includes(oldFont), oldFont);
+  }
+  assert.match(css, /\.hero h1 em\{display:block;font-size:\.6em;line-height:1\.3;letter-spacing:-\.01em;margin-top:\.5em;font-weight:400;font-style:normal;color:var\(--green\)\}/);
+  assert.match(css, /\.hero h1\{font-size:36px;overflow-wrap:anywhere\}/);
   assert.match(html, /<video autoplay muted loop playsinline preload="auto"/);
   for (const file of ['trailer.webm', 'trailer.mp4', 'trailer-poster.jpg']) assert.ok(existsSync(join(dir, 'assets', file)));
   append(dir, doc, '<video poster="/assets/trailer-poster.jpg"><source src="/assets/trailer.mp4" type="video/mp4"></video>');
