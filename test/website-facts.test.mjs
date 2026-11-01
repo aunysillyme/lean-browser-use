@@ -243,7 +243,7 @@ test('mock sections, README introduction, requirements, links and credits are pr
 
 test('mock metadata and responsive layout allow only local resources and the pinned font stylesheet', () => {
   for (const tag of ['<meta name="robots" content="noindex">', `<link rel="canonical" href="${facts.url}">`]) assert.ok(html.includes(tag), tag);
-  for (const match of html.matchAll(/<(?:img|script|iframe|video|audio|source)\b[^>]*\bsrc="([^"]+)"|<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"/gi)) assert.ok((match[1] || match[2]).startsWith('/assets/') || match[2] === fontStylesheet);
+  for (const match of html.matchAll(/<(?:img|script|iframe|video|audio|source)\b[^>]*\bsrc="([^"]+)"|<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"/gi)) assert.ok((match[1] || match[2]).startsWith('/assets/') || match[1] === '/_vercel/speed-insights/script.js' || match[2] === fontStylesheet);
   const css = read('website/assets/site.css');
   assert.match(css, /@media/);
   assert.match(css, /minmax\(0,\s*1fr\)/);
