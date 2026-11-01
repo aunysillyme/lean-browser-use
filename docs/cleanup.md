@@ -15,7 +15,7 @@ The runner completes steps 1-5 at the end of every run, on success, failure or a
 5. Run `npx --yes lean-browser-use cleanup --apply` as the last command. Copy its `cleanup:` line into the report, alongside the tab and process checks and any pending IDs.
 6. **Main session: close remaining job tabs.** Close any tab main opened for this job that the runner did not close, including a tab used to pick or identify the browser profile. Closing the run's tabs ends the browser control. The extension's control banner goes with the last run tab; closing the last pane tab closes the pane. Keep existing user tabs open.
 7. Stop every background task, monitor or watcher main started for this job, including any local preview or dev server.
-8. Run `npx lean-browser-use doctor`. Exit 1 can indicate leftover leased processes: run `npx lean-browser-use cleanup --apply` and re-check with `doctor`. Resolve any other reported health failures before calling the task done; retain unavailable checks as `UNVERIFIED`.
+8. Run `npx lean-browser-use doctor`. Exit 1 can indicate leftover leased processes: run `npx lean-browser-use cleanup --apply` and re-check with `npx lean-browser-use doctor`. Resolve any other reported health failures before calling the task done; retain unavailable checks as `UNVERIFIED`.
 9. Verify the runner's saved evidence and cleanup report, then delete the handoff scratch. Keep it available until verification is complete.
 
 ## The stop gate

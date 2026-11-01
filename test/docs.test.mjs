@@ -324,3 +324,12 @@ test('historical saving figures stay outside the public tree', () => {
   const banned = new RegExp('99' + '\\.81%');
   for (const file of walk(root).filter(f => !path.relative(root, f).split(path.sep).some(p => ['.git', '.repo-build', 'node_modules', '__pycache__', '.agents', '.codex', '.aws'].includes(p)) && !/\.(tgz|pyc)$/.test(f))) assert.ok(!banned.test(fs.readFileSync(file, 'utf8')), path.relative(root, file));
 });
+test('user-facing commands run through npx, since npx installs nothing on PATH', () => {
+  const files = ['README.md', 'llms.txt', ...['docs', 'skills', 'agents', 'briefs'].flatMap(d => walkMarkdown(path.join(root, d)))];
+  const bare = /(?:`|^\s*)lean-browser-use (?:install|uninstall|doctor|measure|cleanup|keep)\b/m;
+  const offenders = files.filter(f => fs.readFileSync(path.resolve(root, f), 'utf8').split('\n').some(line => bare.test(line)));
+  assert.deepEqual(offenders, []);
+});
+function walkMarkdown(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walkMarkdown(path.join(dir, e.name)) : e.name.endsWith('.md') ? [path.relative(root, path.join(dir, e.name))] : []);
+}
