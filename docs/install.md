@@ -56,7 +56,7 @@ npx lean-browser-use doctor
 npx lean-browser-use doctor --claude-dir ./sandbox-config --json
 ```
 
-Doctor checks installed file hashes, registered hook paths, executable shims, synthetic hook responses, and leased processes still running (see [cleanup](cleanup.md)). Edited files are reported. Its capability table explains what Python, `crwl`, Docker, Claude Code, and local transcripts enable; missing optional tools are capabilities to add, not installation errors. JSON output has `ok` and `checks`, each with `id`, `status`, and `detail`. Hook behavior on your Claude Code version is confirmed by `lean-browser-use doctor`.
+Doctor checks installed file hashes, registered hook paths, executable shims, synthetic hook responses, and leased processes still running (see [cleanup](cleanup.md)). Edited files are reported. Its capability table explains what Python, `crwl`, Docker, Claude Code, and local transcripts enable; missing optional tools are capabilities to add, not installation errors. JSON output has `ok` and `checks`, each with `id`, `status`, and `detail`. Hook behavior on your Claude Code version is confirmed by `npx lean-browser-use doctor`.
 
 ## Measure and remove
 

@@ -92,7 +92,7 @@ test('with-reader copies executable commands and malformed settings are preserve
 });
 test('CLI usage and version', () => {
   for (const args of [['unknown'], ['--unknown'], ['--claude-dir'], ['doctor', '--with-reader']]) assert.equal(cli(args).status, 2);
-  assert.equal(cli(['--version']).stdout.trim(), '0.1.2'); assert.equal(cli(['--help']).status, 0);
+  assert.equal(cli(['--version']).stdout.trim(), '0.1.3'); assert.equal(cli(['--help']).status, 0);
 });
 
 test('uninstall removes an empty config root created by a no-hooks install', t => {
@@ -153,4 +153,19 @@ test('managed tree symlinks refuse install, doctor and uninstall', async t => {
       assert.ok(fs.existsSync(path.join(cfg, 'agents/aun-browser-runner.md')));
     }
   });
+});
+test('relative links in installed files resolve inside the installed layout', t => {
+  const cfg = installed(t, ['--with-reader']); if (!cfg) return;
+  const manifest = json(path.join(cfg, 'lean-browser-use/manifest.json'));
+  const broken = [];
+  for (const { path: rel } of manifest.files.filter(f => f.path.endsWith('.md'))) {
+    const file = path.join(cfg, rel);
+    for (const match of fs.readFileSync(file, 'utf8').matchAll(/\]\(([^)\s]+)\)/g)) {
+      const link = match[1].replace(/^<|>$/g, '').split('#')[0];
+      if (!link || /^[a-z]+:/i.test(link)) continue;
+      const target = path.resolve(path.dirname(file), decodeURIComponent(link));
+      if (!target.startsWith(cfg + path.sep) || !fs.existsSync(target)) broken.push(`${rel}: ${link}`);
+    }
+  }
+  assert.deepEqual(broken, []);
 });

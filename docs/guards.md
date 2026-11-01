@@ -52,4 +52,4 @@ Run `node --test test/` for allow, block, reset, fail-open, and RED-proof fixtur
 
 ## Fail-open behavior
 
-Each shim locates its sibling script and passes through only the intentional blocking exit. Missing Node, missing script files, malformed input, or state failures allow the call. This keeps a broken guard deployment from blocking the browser itself. Fail-open protects availability; it does not prove the guard is healthy. Use `lean-browser-use doctor` after installation and inspect failures before relying on enforcement.
+Each shim locates its sibling script and passes through only the intentional blocking exit. Missing Node, missing script files, malformed input, or state failures allow the call. This keeps a broken guard deployment from blocking the browser itself. Fail-open protects availability; it does not prove the guard is healthy. Use `npx lean-browser-use doctor` after installation and inspect failures before relying on enforcement.
