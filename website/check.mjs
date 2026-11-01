@@ -221,7 +221,11 @@ export function checkSite({ root = rootDir, dist = join(root, 'website/dist'), l
         for (const value of values) {
           let url;
           try { url = new URL(value, origin + route); } catch { fail(file, `invalid URL: ${value}`); continue; }
-          if (url.origin === origin) resolveLink(file, value, { anchor: node.name !== 'link' });
+          if (url.origin === origin) {
+            if (!(node.name === 'script' && attr === 'src' && value === '/_vercel/speed-insights/script.js')) {
+              resolveLink(file, value, { anchor: node.name !== 'link' });
+            }
+          }
           else {
             const rel = (node.attrs.rel || '').split(/\s+/);
             const permitted = attr === 'href' && (fontLink(node) || node.name === 'a' || node.name === 'link' && rel.some(value => ['canonical', 'describedby', 'alternate'].includes(value)));
