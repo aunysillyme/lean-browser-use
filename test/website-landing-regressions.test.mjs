@@ -52,7 +52,14 @@ test('every landing card and action starts with a decorative three-part ray', t 
       assert.ok(card.inner.startsWith(trace), name);
     }
   }
-  for (const node of nodes.filter(node => node.name === 'aside' || node.name === 'header')) assert.ok(!node.inner.includes('card-trace'));
+  for (const node of nodes.filter(node => node.name === 'aside')) assert.ok(!node.inner.includes('card-trace'));
+  const header = nodes.find(node => node.name === 'header');
+  const headerRays = nodes.filter(node => hasClass(node, 'card-trace') && node.offset > header.offset && node.offset < header.end);
+  const popupLinks = nodes.filter(node => hasClass(node, 'projects-popup__link'));
+  assert.ok(popupLinks.length > 0);
+  assert.equal(headerRays.length, popupLinks.length);
+  for (const link of popupLinks) assert.ok(link.inner.startsWith(trace));
+  for (const ray of headerRays) assert.ok(hasClass(ray.parent, 'projects-popup__link'));
   const inner = [
     ['hero actions', node => node.name === 'a' && hasClass(node.parent, 'hero-actions'), 4],
     ['copy button', node => hasClass(node, 'copy'), 1],

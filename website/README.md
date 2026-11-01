@@ -6,7 +6,7 @@ The static site ports the sibling package's builder, checker and layout. It rend
 landing page and documentation from this repository. Editable copy lives in `content.mjs`,
 the source and route map in `pages.mjs`, exact tool evidence in `tools.json`, and page shells
 in the templates. The design system, avatar and navigation come from model-orchestrator. Google Fonts
-loads Cormorant Garamond and JetBrains Mono from the two pinned font hosts. All other
+loads JetBrains Mono from the two pinned font hosts. All other
 resources are local. Navigation copies the install command, marks sections and closes
 the mobile accordion after a selection. The four flow buttons illustrate the method.
 Every HTML page declares the Is Agentic site type as `app` and loads Vercel Speed Insights
