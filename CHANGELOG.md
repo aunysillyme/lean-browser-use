@@ -4,6 +4,10 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+### Fixed
+
+- The runner agent no longer lists `shortcuts_list` and `shortcuts_execute`, which Claude Code 2.1.319 removed from Claude in Chrome.
+
 ## [0.1.4] - 2026-11-10
 
 ### Changed
