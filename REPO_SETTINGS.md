@@ -1,8 +1,6 @@
 # Repository settings
 
-This is the setup plan for the owner-approved public flip and first release.
-Apply these commands after the owner's yes, then record the read-back values.
-The commands below are prepared for review; their results remain UNVERIFIED.
+The listed security and Actions settings were read back on 2026-11-10. Other settings remain unverified here. The commands below are retained as setup references.
 
 ## Metadata
 
@@ -21,12 +19,15 @@ Use GitHub's default repository link preview.
 
 | Setting | Target | Read-back |
 | --- | --- | --- |
-| Visibility | Public after the owner's yes | to be read back after the flip |
-| Private vulnerability reporting | Enabled | to be read back after the flip |
-| Secret scanning and push protection | Enabled | to be read back after the flip |
-| Dependabot alerts and security updates | Enabled | to be read back after the flip |
-| CodeQL default setup | Configured for supported languages | to be read back after the flip |
-| Main branch protection | Force pushes and deletion blocked, required check `check`, admins exempt | to be read back after the flip |
+| Visibility | Public | Public |
+| Private vulnerability reporting | Enabled | Enabled |
+| Secret scanning and push protection | Enabled | Enabled |
+| Dependabot alerts and security updates | Enabled | Enabled |
+| CodeQL default setup | Configured for supported languages | Configured |
+| Main branch protection | Force pushes and deletion blocked, admins exempt | Force pushes and deletion blocked, admins exempt |
+| Release tag ruleset | `Protect release tags` active on `refs/tags/v*`, blocks updates and deletion | Active, updates and deletion blocked |
+| Actions policy | Full-SHA pins required; Actions cannot approve pull requests | Full-SHA pins required; approval disabled |
+| Default workflow token | Read-only | Read-only |
 | Sponsorships | Enabled with the package funding link | to be read back after the flip |
 | Topics | Equal to the selected GitHub topics in package.json keywords | to be read back after the flip |
 | Description and homepage | Equal to package.json | to be read back after the flip |
@@ -154,7 +155,7 @@ before configuring a Trusted Publisher. The
 read 2026-10-25, requires the first successful publish within 2 days of creating the
 trust configuration to validate it and bind it to the repository identity. It
 requires npm 11.5.1 or later and Node 22.14.0 or later. The workflow installs
-npm 12.1.0 with Node 24.
+the lockfile-pinned npm version with Node 24.
 
 After creating and protecting the `release` environment, follow this order:
 

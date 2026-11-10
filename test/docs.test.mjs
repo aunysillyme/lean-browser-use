@@ -171,20 +171,25 @@ test('release workflow requires approval, pinned actions and matching versions',
   assert.match(text, /^name: release$/m);
   assert.match(text, /^    tags: \['v\*'\]$/m);
   assert.match(text, /^  contents: read$/m);
-  assert.match(text, /^  id-token: write$/m);
+  assert.equal([...text.matchAll(/^      id-token: write$/gm)].length, 1);
+  assert.match(text, /^  publish:[\s\S]*?^      id-token: write$/m);
   assert.match(text, /^concurrency:\n  group: release-\$\{\{ github.ref \}\}\n  cancel-in-progress: false$/m);
-  assert.match(text, /^  publish:\n    runs-on: ubuntu-latest\n    environment: release$/m);
+  assert.match(text, /^  publish:\n    needs: build\n    runs-on: ubuntu-latest\n    environment: release$/m);
   assert.doesNotMatch(text, /\b(?:NODE_AUTH_TOKEN|NPM_TOKEN)\b/);
   const actions = [...text.matchAll(/uses: ([^\s]+) # v[^\n]+/g)].map(match => match[1]);
   assert.deepEqual(actions, [
     'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1',
     'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1',
+    'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9',
+    'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1',
+    'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1',
+    'actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333',
     'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
   ]);
   assert.equal([...text.matchAll(/uses:/g)].length, actions.length);
   assert.match(text, /node-version: 24\n          registry-url: https:\/\/registry\.npmjs\.org/);
-  const install = text.match(/- name: Install release npm\n        run: \|\n([\s\S]*?)(?=      - name: tag)/);
-  assert.ok(install, 'Release npm must be installed before version checks and publishing');
+  const install = text.match(/- name: Install release npm\n        run: \|\n([\s\S]*?)(?=      - uses: actions\/download-artifact)/);
+  assert.ok(install, 'Release npm must be installed before publishing');
   assert.match(install[1], /^          set -eu\n          npm ci --prefix release-tooling --ignore-scripts --include=dev\n/m);
   assert.ok(install[1].includes('npm_bin="$GITHUB_WORKSPACE/release-tooling/node_modules/.bin"'));
   assert.ok(install[1].includes("require('./release-tooling/package.json').devDependencies.npm"));
@@ -221,7 +226,7 @@ test('release workflow requires approval, pinned actions and matching versions',
     const result = spawnSync('sh', ['-c', versionStep[1]], { cwd: root, env: { ...process.env, GITHUB_REF_NAME: tag }, encoding: 'utf8' });
     assert.equal(result.status, expected, result.stderr);
   }
-  assert.match(text, /      - run: npm test\n      - run: npm run check\n      - name: Publish unless this version is already on the registry\n/);
+  assert.match(text, /      - run: npm test\n      - run: npm run check\n      - name: Pack and smoke-test the tarball\n/);
 });
 
 test('release npm installation rejects a mismatched integrity', () => {
@@ -263,9 +268,11 @@ test('release workflow skips a version already on the registry before publishing
   const step = text.match(/      - name: Publish unless this version is already on the registry\n        run: \|\n([\s\S]*?)(?=\n  github-release:\n)/);
   assert.ok(step, 'Registry skip step must exist');
   assert.match(step[1], /^          set -eu\n/);
-  assert.ok(step[1].includes('name="$(node -p "require(\'./package.json\').name")"'));
-  assert.ok(step[1].includes('version="$(node -p "require(\'./package.json\').version")"'));
-  assert.match(step[1], /          if npm view "\$name@\$version" version --prefer-online > \/dev\/null 2>&1; then\n            echo "\$name@\$version is already on the registry; nothing to publish\."\n            exit 0\n          fi\n          npm publish --provenance --access public\n$/);
+  assert.ok(step[1].includes('tar -xzOf "$1" package/package.json'));
+  assert.ok(step[1].includes('JSON.parse(require("fs").readFileSync(0, "utf8")).name'));
+  assert.ok(step[1].includes('JSON.parse(require("fs").readFileSync(0, "utf8")).version'));
+  assert.match(step[1], /test "\$#" -eq 1 && test -f "\$1"/);
+  assert.match(step[1], /          if npm view "\$name@\$version" version --prefer-online > \/dev\/null 2>&1; then\n            echo "\$name@\$version is already on the registry; nothing to publish\."\n            exit 0\n          fi\n          npm publish \"\$1\" --provenance --access public\n$/);
 });
 
 test('release page job runs after publish, alone may write contents, and skips an existing release', () => {
@@ -294,7 +301,11 @@ test('repository settings prepare the public flip and release environment', () =
   for (const value of ['REPO=aunysillyme/lean-browser-use', 'gh api users/aunysillyme --jq .id', 'gh api --method PUT "repos/$REPO/environments/release"', 'gh api --method POST "repos/$REPO/environments/release/deployment-branch-policies"', "-f name='v*' -f type=tag", '"reviewers":[{"type":"User","id":$REVIEWER_ID}]', '"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}', 'Workflow filename | release.yml', 'Environment | release', 'npm view lean-browser-use dist.integrity']) assert.ok(text.includes(value), value);
   const rows = text.slice(text.indexOf('| Setting |'), text.indexOf('Set the repository')).trim().split('\n').slice(2);
   assert.ok(rows.length >= 8);
-  for (const row of rows) assert.ok(row.endsWith('| to be read back after the flip |'), row);
+  assert.match(text, /read back on 2026-11-10/);
+  for (const setting of ['Private vulnerability reporting', 'Secret scanning and push protection', 'Dependabot alerts and security updates', 'CodeQL default setup', 'Main branch protection', 'Release tag ruleset', 'Actions policy', 'Default workflow token']) {
+    const row = rows.find(line => line.startsWith(`| ${setting} |`));
+    assert.ok(row && !row.includes('to be read back'), setting);
+  }
   const npm = text.slice(text.indexOf('## npm Trusted Publisher'), text.indexOf('## Registry parity'));
   const npmLinks = [...npm.matchAll(/\]\(([^)]+)\)/g)].map(match => match[1]);
   for (const expected of ['https://docs.npmjs.com/cli/v11/commands/npm-trust', 'https://docs.npmjs.com/trusted-publishers']) {
@@ -333,3 +344,22 @@ test('user-facing commands run through npx, since npx installs nothing on PATH',
 function walkMarkdown(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walkMarkdown(path.join(dir, e.name)) : e.name.endsWith('.md') ? [path.relative(root, path.join(dir, e.name))] : []);
 }
+
+
+test('release artifact is packed once, smoke-tested, uploaded and published with scoped credentials', () => {
+  const release = read('.github/workflows/release.yml');
+  const build = release.slice(release.indexOf('  build:'), release.indexOf('  publish:'));
+  const publish = release.slice(release.indexOf('  publish:'), release.indexOf('  github-release:'));
+  assert.equal((release.match(/npm pack --silent/g) || []).length, 1);
+  assert.match(build, /fetch-depth: 0/);
+  assert.match(read('.github/workflows/check.yml'), /fetch-depth: 0/);
+  assert.ok(build.includes('npm install --ignore-scripts --no-audit --no-fund "$tarball"'));
+  assert.ok(build.includes('"$trial/node_modules/.bin/lean-browser-use" --help'));
+  assert.match(build, /name: release-package[\s\S]*if-no-files-found: error/);
+  assert.match(publish, /name: release-package[\s\S]*npm publish "\$1" --provenance --access public/);
+  assert.ok(!build.includes('id-token: write'));
+  for (const file of fs.readdirSync(path.join(root, '.github/workflows'))) {
+    const text = read(`.github/workflows/${file}`);
+    for (const checkout of text.matchAll(/uses: actions\/checkout@[^\n]+\n([\s\S]*?)(?=\n\s*- |$)/g)) assert.match(checkout[1], /persist-credentials: false/, file);
+  }
+});

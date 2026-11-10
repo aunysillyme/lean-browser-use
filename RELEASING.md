@@ -9,6 +9,7 @@ Our own tools and concepts are named with the aun- prefix; internal names never 
 ```sh
 npm test
 npm run check
+node scripts/gate.mjs
 npm run proof
 npm test
 npm run check
@@ -19,7 +20,7 @@ Review the packed file list and measurement provenance. Expired proof rows warn;
 
 ## Publish the reviewed version
 
-A pushed tag `vX.Y.Z` triggers [release.yml](.github/workflows/release.yml). The publish job waits for the owner's approval in the GitHub `release` environment. After approval, it checks that the tag without `v` equals the `package.json` version, runs tests and checks, then checks the registry. If that version is already on the registry, it logs the skip and exits successfully. Otherwise, it runs `npm publish --provenance --access public` using npm trusted publishing through GitHub's identity token.
+A pushed tag `vX.Y.Z` triggers [release.yml](.github/workflows/release.yml). The publish job waits for the owner's approval in the GitHub `release` environment. A build job checks that the tag without `v` equals the `package.json` version, runs tests and checks, packs once and smoke-tests that tarball. After approval, the publish job downloads that artifact and checks the registry. If that version is already on the registry, it logs the skip and exits successfully. Otherwise, it publishes the same tarball with provenance using npm trusted publishing through GitHub's identity token.
 
 Follow [repository settings](REPO_SETTINGS.md) to create and protect the `release` environment before the first tag. GitHub creates an unprotected environment when a job names an environment that does not exist, so publishing would proceed without waiting for approval. A Trusted Publisher needs an existing npm package, so use this first-publish order:
 

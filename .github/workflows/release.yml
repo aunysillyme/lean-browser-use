@@ -4,7 +4,7 @@
 # Configure once on npmjs.com: package settings -> Trusted publisher -> GitHub Actions,
 # owner aunysillyme, repository lean-browser-use, workflow release.yml, environment release.
 # Create the release environment with owner approval and a v* tag policy before tagging.
-# The publish job waits for that approval, then checks the tag, package version and tests.
+# The build job verifies and packs once; the publish job waits for approval.
 name: release
 
 on:
@@ -13,24 +13,63 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    environment: release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-      # Trusted publishing needs npm 11.5.1+ and Node 22.14.0+ (npm docs read 2026-10-25).
-      # Install the reviewed npm version from its integrity-checked lockfile, outside the package.
+      - name: tag and package.json must name the same version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          test "$tag" = "$pkg" || { echo "tag v$tag but package.json is $pkg"; exit 1; }
+      - run: npm test
+      - run: npm run check
+      - name: Pack and smoke-test the tarball
+        run: |
+          set -eu
+          release="$RUNNER_TEMP/release"
+          mkdir -p "$release"
+          tarball="$release/$(npm pack --silent --pack-destination "$release")"
+          trial="$(mktemp -d)"
+          trap 'rm -rf "$trial"' EXIT
+          cd "$trial"
+          npm init -y > /dev/null
+          npm install --ignore-scripts --no-audit --no-fund "$tarball"
+          "$trial/node_modules/.bin/lean-browser-use" --help
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-package
+          path: ${{ runner.temp }}/release/*.tgz
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
       - name: Install release npm
         run: |
           set -eu
@@ -41,23 +80,23 @@ jobs:
           test "$actual" = "$expected" || { echo "expected npm $expected, got $actual"; exit 1; }
           echo "npm $actual"
           echo "$npm_bin" >> "$GITHUB_PATH"
-      - name: tag and package.json must name the same version
-        run: |
-          tag="${GITHUB_REF_NAME#v}"
-          pkg="$(node -p "require('./package.json').version")"
-          test "$tag" = "$pkg" || { echo "tag v$tag but package.json is $pkg"; exit 1; }
-      - run: npm test
-      - run: npm run check
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-package
+          path: release
       - name: Publish unless this version is already on the registry
         run: |
           set -eu
-          name="$(node -p "require('./package.json').name")"
-          version="$(node -p "require('./package.json').version")"
+          set -- ./release/*.tgz
+          test "$#" -eq 1 && test -f "$1"
+          meta="$(tar -xzOf "$1" package/package.json)"
+          name="$(printf '%s' "$meta" | node -p 'JSON.parse(require("fs").readFileSync(0, "utf8")).name')"
+          version="$(printf '%s' "$meta" | node -p 'JSON.parse(require("fs").readFileSync(0, "utf8")).version')"
           if npm view "$name@$version" version --prefer-online > /dev/null 2>&1; then
             echo "$name@$version is already on the registry; nothing to publish."
             exit 0
           fi
-          npm publish --provenance --access public
+          npm publish "$1" --provenance --access public
 
   github-release:
     name: Create the GitHub release
