@@ -10,6 +10,7 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 - Hardened workflow credentials and published the verified package artifact.
 - Documented security response targets and current repository protections.
+- Test jobs run on GitHub-hosted runners.
 
 ## [0.1.3] - 2026-10-31
 
