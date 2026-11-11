@@ -4,6 +4,14 @@ All notable changes to this project are documented here, following [Keep a Chang
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-11-10
+
+### Changed
+
+- Hardened workflow credentials and published the verified package artifact.
+- Documented security response targets and current repository protections.
+- Test jobs run on GitHub-hosted runners.
+
 ## [0.1.3] - 2026-10-31
 
 ### Fixed
@@ -65,6 +73,7 @@ All notable changes to this project are documented here, following [Keep a Chang
 - Optional compile-once page reader and SearXNG companion.
 - Offline checks, package measurements, provenance, and contribution guides.
 
+[0.1.4]: https://github.com/aunysillyme/lean-browser-use/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/aunysillyme/lean-browser-use/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/aunysillyme/lean-browser-use/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aunysillyme/lean-browser-use/releases/tag/v0.1.1
