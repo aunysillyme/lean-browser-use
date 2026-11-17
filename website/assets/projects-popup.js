@@ -49,13 +49,18 @@
     trigger.addEventListener('keydown', (event) => {
       if (event.key === ' ') {
         event.preventDefault();
-        const open = panel.hidden;
-        setOpen(open);
-        if (open) pinned = true;
       } else if (event.key === 'ArrowDown') {
         event.preventDefault();
         setOpen(true);
         panel.querySelector('a')?.focus();
+      }
+    });
+    trigger.addEventListener('keyup', (event) => {
+      if (event.key === ' ') {
+        event.preventDefault();
+        const open = panel.hidden;
+        setOpen(open);
+        if (open) pinned = true;
       }
     });
     document.addEventListener('keydown', (event) => {

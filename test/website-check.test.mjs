@@ -231,10 +231,10 @@ test('RED private hash match uses only a temporary hash file, then accepts remov
 });
 
 test('exact mode inventory derives from pages and accepts both builder outputs', () => {
-  assert.equal(expectedFiles().length, pages.length + 17);
-  assert.equal(expectedFiles(true).length, pages.length * 2 + 20);
-  assert.equal(expectedFiles().length, 26);
-  assert.equal(expectedFiles(true).length, 38);
+  assert.equal(expectedFiles().length, pages.length + 18);
+  assert.equal(expectedFiles(true).length, pages.length * 2 + 23);
+  assert.equal(expectedFiles().length, 27);
+  assert.equal(expectedFiles(true).length, 41);
   for (const live of [false, true]) assert.deepEqual(run(sources[live ? 'live' : 'default'], { live }), []);
 });
 
@@ -296,7 +296,7 @@ test('RED every allowed JSON-LD type rejects an invented property', t => {
   const dir = fixture(t);
   const original = read(dir, 'index.html');
   const breadcrumb = read(dir, doc);
-  for (const type of ['SoftwareApplication', 'Offer', 'Person', 'Organization', 'FAQPage', 'Question', 'Answer', 'BreadcrumbList', 'ListItem']) {
+  for (const type of ['SoftwareApplication', 'SoftwareSourceCode', 'Offer', 'Person', 'Organization', 'FAQPage', 'Question', 'Answer', 'BreadcrumbList', 'ListItem']) {
     const file = ['BreadcrumbList', 'ListItem'].includes(type) ? doc : 'index.html';
     const source = file === doc ? breadcrumb : original;
     let planted = false;
@@ -349,7 +349,7 @@ test('pinned Google Fonts and local media pass the resource policy', t => {
 red('headline source differs from pinned README', dir => edit(dir, 'index.html', html => html.replace(/<h1\b[^>]*>/, '<h1 data-headline-source="Changed source">')), /pinned headline source/, { live: true });
 red('install command differs from pin', dir => edit(dir, 'index.html', html => html.replace('<code id="install-command">npx lean-browser-use</code>', '<code id="install-command">npx other-package</code>')), /pinned install command/, { live: true });
 red('meta description differs from pin', dir => edit(dir, 'index.html', html => html.replace(/(<meta name="description" content=")[^"]+/, '$1Changed description')), /pinned meta description/, { live: true });
-red('headline differs from pinned lead', dir => edit(dir, 'index.html', html => html.replace('Cut browser use cost by about 25%.<br>', 'Change the browser use cost.<br>')), /pinned headline/, { live: true });
+red('headline differs from pinned lead', dir => edit(dir, 'index.html', html => html.replace('Cut browser use cost 3% to 25% (about 14% across two runs).<br>', 'Change the browser use cost.<br>')), /pinned headline/, { live: true });
 
 red('card trace missing aria-hidden', dir => append(dir, doc,
   '<svg class="card-trace" focusable="false"><rect class="ray-tip"/></svg>'), /card trace must be aria-hidden/);

@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { loadFacts, buildJsonLd, buildFaqJsonLd, validateMock, validateTools, validateKeywords, visibleText, validateToolHeading, keywordCounts } from '../website/facts.mjs';
+import { loadFacts, buildJsonLd, buildSourceCodeJsonLd, buildPersonJsonLd, buildFaqJsonLd, validateMock, validateTools, validateKeywords, visibleText, validateToolHeading, keywordCounts } from '../website/facts.mjs';
 
 import { buildSite } from '../website/build.mjs';
 import { setupCopy } from '../website/assets/site.js';
@@ -133,11 +133,11 @@ test('RED SoftwareApplication excludes ratings and reviews and gates both sameAs
   assert.deepEqual(buildJsonLd(facts), {
     '@context': 'https://schema.org', '@type': 'SoftwareApplication', '@id': facts.url + '#software',
     name: facts.name, description: facts.description, applicationCategory: 'DeveloperApplication',
-    softwareRequirements: 'Node.js >=20 and Claude Code',
+    softwareRequirements: 'Node.js >=20 and Claude Code', softwareVersion: facts.version,
     license: 'https://spdx.org/licenses/MIT.html', isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, url: facts.url,
-    author: { '@type': 'Person', '@id': 'https://www.aunysillyme.com/#person', name: 'Auny', url: 'https://www.aunysillyme.com/' },
-    publisher: { '@type': 'Organization', '@id': 'https://www.aunysillyme.com/#organization', name: 'AunySillyMe', url: 'https://www.aunysillyme.com/' },
+    author: buildPersonJsonLd({ live: false }),
+    publisher: { '@type': 'Organization', '@id': 'https://www.aunysillyme.com/#organization', name: 'AunySillyMe', legalName: 'Auny LLC', url: 'https://www.aunysillyme.com/' },
   });
 });
 
@@ -146,7 +146,7 @@ test('RED static JSON-LD blocks reject a planted defect and equal both generated
   assert.notEqual(defect, html);
   assert.throws(() => validateMock(facts, defect), /JSON-LD blocks differ/);
   const blocks = [...html.matchAll(/<script type="application\/ld\+json">([^]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
-  assert.deepEqual(blocks, [buildJsonLd(facts, { live: false }), buildFaqJsonLd(facts)]);
+  assert.deepEqual(blocks, [buildJsonLd(facts, { live: false }), buildSourceCodeJsonLd(facts, { live: false }), buildFaqJsonLd(facts)]);
 });
 
 test('RED every literal evidence anchor exists, and a planted absent string fails', () => {
@@ -170,7 +170,7 @@ test('RED real command prefixes and documented flags reject planted violations',
 });
 
 test('RED keyword H1 rule rejects a planted heading and accepts both headline lines', () => {
-  assert.throws(() => validateKeywords(facts, html.replace('cost by about 25%.', 'cost differently.')), /H1/);
+  assert.throws(() => validateKeywords(facts, html.replace('cost 3% to 25% (about 14% across two runs).', 'cost differently.')), /H1/);
   assert.doesNotThrow(() => validateKeywords(facts, html));
 });
 

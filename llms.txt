@@ -1,6 +1,6 @@
 # lean-browser-use
 
-> Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command
+> Cut Claude Code browser use cost 3% to 25% (about 14% in 2 runs): fresh runner subagent, bulk reads, 3 guards and a token meter. One npx command.
 
 Install: `npx lean-browser-use`
 
@@ -37,5 +37,11 @@ Two measured runs cost 3.15% and 25.26% less with the package at list API prices
 
 ## Part of a set
 
-- [lean-browser-use: Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command](https://github.com/aunysillyme/lean-browser-use/blob/main/README.md)
+- [agent-personalizer: AI custom instructions from approved entries: a profile and rules for Claude Code, Codex, Cursor, Gemini CLI and ChatGPT, kept in sync from one source.](https://github.com/aunysillyme/agent-personalizer)
+- [model-orchestrator: Model router for AI coding agents: routes routine work to cheaper models with routing rules, 8 subagents, hooks and a CLI runner](https://github.com/aunysillyme/model-orchestrator)
+- [repo-build-skill: Skill pack that teaches your AI to build, release and launch a GitHub repo: stack pick, README, AGENTS.md, llms.txt, repo SEO and AEO, trusted publishing.](https://github.com/aunysillyme/repo-build-skill)
+- [website-build-skill: A skill pack that turns your AI into an expert website builder: current research, design, code, accessibility, speed, SEO and security, alone or as a team.](https://github.com/aunysillyme/website-build-skill)
+- [lean-browser-use: Cut Claude Code browser use cost 3% to 25% (about 14% in 2 runs): fresh runner subagent, bulk reads, 3 guards and a token meter. One npx command.](https://github.com/aunysillyme/lean-browser-use/blob/main/README.md)
 - [lean-computer-use: Background Mac computer control for AI agents: desk tools, a fresh runner subagent, retry guards and a transcript token meter, installed with one command](https://github.com/aunysillyme/lean-computer-use)
+- [decompose: Task planner and wave checker for AI coding agents: splits prompts into checkable units and parallel waves, rejecting cycles and overlapping writes](https://github.com/aunysillyme-dev/aunx-decompose)
+- [aunx-skills: Ten standalone agent skills for Claude Code, Codex, Cursor and Gemini CLI: full output keeper, number guard, docs fetch ladder, rename sweep and more](https://github.com/aunysillyme-dev/aunx-skills)

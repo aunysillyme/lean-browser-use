@@ -30,8 +30,9 @@ export function scanText(text, hashes = new Set()) {
     }
     for (const m of line.matchAll(/[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g)) {
       const hermesTrailer = m[0] === 'hermes-agent' + '@' + 'users.noreply.github.com' && /^\s*Co-authored-by:\s*Hermes Agent\s*<$/i.test(line.slice(0, m.index)) && /^>\s*$/.test(line.slice(m.index + m[0].length));
+      const geminiTrailer = m[0] === '200291788+gemini-code-assist' + '@' + 'users.noreply.github.com' && /^\s*Co-authored-by:\s*Gemini\s*<$/i.test(line.slice(0, m.index)) && /^>\s*$/.test(line.slice(m.index + m[0].length));
       const dependabotTrailer = m[0] === 'support' + '@' + 'github.com' && /^Signed-off-by:/i.test(line) && line.slice(0, m.index).replace(/^Signed-off-by:/i, '') === ' dependabot[bot] <' && line.slice(m.index + m[0].length) === '>';
-      if (!hermesTrailer && !dependabotTrailer && !(new RegExp('^\\s*Co-authored-by:', 'i').test(line) && ['noreply' + '@' + 'anthropic.com', 'noreply' + '@' + 'openai.com'].includes(m[0]))) add(n, 'email');
+      if (!hermesTrailer && !geminiTrailer && !dependabotTrailer && !(new RegExp('^\\s*Co-authored-by:', 'i').test(line) && ['noreply' + '@' + 'anthropic.com', 'noreply' + '@' + 'openai.com'].includes(m[0]))) add(n, 'email');
     }
     for (const m of line.matchAll(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)) {
       const ip = m[0], parts = ip.split('.').map(Number);

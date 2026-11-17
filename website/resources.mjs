@@ -1,3 +1,4 @@
+export const favicon = 'favicon.ico';
 export const assets = ['site.css', 'site.js', 'speed-insights.js', 'navigation.js', 'trailer.js', 'projects-popup.css', 'projects-popup.js', 'avatar.png', 'poster.png',
   'social-preview.svg', 'social-preview.png', 'trailer.mp4', 'trailer.webm', 'trailer-poster.jpg'];
 export const fontStylesheet = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap';

@@ -24,12 +24,22 @@
     {
       "name": "lean-browser-use",
       "url": "https://github.com/aunysillyme/lean-browser-use",
-      "line": "Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command"
+      "line": "Cut Claude Code browser use cost 3% to 25% (about 14% in 2 runs): fresh runner subagent, bulk reads, 3 guards and a token meter. One npx command."
     },
     {
       "name": "lean-computer-use",
       "url": "https://github.com/aunysillyme/lean-computer-use",
       "line": "Background Mac computer control for AI agents: desk tools, a fresh runner subagent, retry guards and a transcript token meter, installed with one command"
+    },
+    {
+      "name": "decompose",
+      "url": "https://github.com/aunysillyme-dev/aunx-decompose",
+      "line": "Task planner and wave checker for AI coding agents: splits prompts into checkable units and parallel waves, rejecting cycles and overlapping writes"
+    },
+    {
+      "name": "aunx-skills",
+      "url": "https://github.com/aunysillyme-dev/aunx-skills",
+      "line": "Ten standalone agent skills for Claude Code, Codex, Cursor and Gemini CLI: full output keeper, number guard, docs fetch ladder, rename sweep and more"
     }
   ]
 }

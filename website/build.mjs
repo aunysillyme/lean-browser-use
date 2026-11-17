@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync, existsSyn
 import { join, dirname, resolve, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { buildJsonLd, buildFaqJsonLd, loadSourceFacts, featuredProof, visibleText } from './facts.mjs';
+import { buildJsonLd, buildSourceCodeJsonLd, buildFaqJsonLd, loadSourceFacts, featuredProof, visibleText } from './facts.mjs';
 import { pages } from './pages.mjs';
 import { content } from './content.mjs';
 import { readPins, copyPinFailures } from './copy.mjs';
@@ -10,7 +10,7 @@ import { renderProjectsPopup } from './projects-popup-render.mjs';
 
 const origin = 'https://lean-browser-use.aunysillyme.dev';
 const repository = 'https://github.com/aunysillyme/lean-browser-use';
-import { assets, csp, fontStylesheet } from './resources.mjs';
+import { assets, csp, favicon, fontStylesheet } from './resources.mjs';
 const read = (root, file) => readFileSync(join(root, file), 'utf8');
 const json = (root, file) => JSON.parse(read(root, file));
 const requireValue = (ok, message) => { if (!ok) throw Error(message); };
@@ -253,7 +253,7 @@ function sidebar(root, page) {
 function head(page, facts, live, notFound = false) {
   const url = `${origin}${page.route}`;
   const blocks = [];
-  if (page.route === '/' && !notFound) blocks.push(buildJsonLd(facts, { live }), buildFaqJsonLd(facts));
+  if (page.route === '/' && !notFound) blocks.push(buildJsonLd(facts, { live }), buildSourceCodeJsonLd(facts, { live }), buildFaqJsonLd(facts));
   else if (!notFound) blocks.push({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
     { '@type': 'ListItem', position: 1, name: content.brand, item: `${origin}/` },
     { '@type': 'ListItem', position: 2, name: 'Documentation', item: url },
@@ -268,20 +268,25 @@ function head(page, facts, live, notFound = false) {
 <link rel="canonical" href="${url}">
 ${!live || notFound ? '<meta name="robots" content="noindex">' : `<link rel="describedby" href="${origin}/llms.txt">
 <link rel="alternate" type="text/markdown" href="${url}index.md">
+<link rel="sitemap" type="application/xml" href="${origin}/sitemap.xml">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="AunySillyMe.dev">
 <meta property="og:title" content="${escape(page.title)}">
 <meta property="og:description" content="${escape(page.description)}">
 <meta property="og:url" content="${url}">
 <meta property="og:image" content="${origin}/assets/social-preview.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="${escape(content.socialAlt)}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@AunySillyMe">
+<meta name="twitter:creator" content="@AunySillyMe">
 <meta name="twitter:title" content="${escape(page.title)}">
 <meta name="twitter:description" content="${escape(page.description)}">
 <meta name="twitter:image" content="${origin}/assets/social-preview.png">
 <meta name="twitter:image:alt" content="${escape(content.socialAlt)}">`}
-<link rel="icon" href="/assets/avatar.png"><link rel="apple-touch-icon" href="/assets/avatar.png">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/assets/avatar.png"><link rel="apple-touch-icon" href="/assets/avatar.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="${fontStylesheet}" rel="stylesheet">
 <link rel="stylesheet" href="/assets/site.css">
@@ -382,6 +387,7 @@ export function buildSite({ root = fileURLToPath(new URL('..', import.meta.url))
   requireValue(/^[a-f0-9]{40}$/i.test(commit), 'Expected a full source commit SHA');
   const documents = pages.map(page => ({ page, html: template(root, page, page.route === '/' ? landingBody(root, facts) : documentBody(page, docsBody(root, page, facts), commit, buildTime), facts, live, commit) }));
   validateRendered(documents, facts);
+  requireValue(existsSync(join(root, 'website/assets', favicon)), `${live ? 'Live build' : 'Preview build'} asset missing: website/assets/${favicon}. Supply the local asset before building.`);
   for (const asset of assets) requireValue(existsSync(join(root, 'website/assets', asset)), `${live ? 'Live build' : 'Preview build'} asset missing: website/assets/${asset}. Supply the local asset before building.`);
   const output = resolve(outDir);
   requireValue(output !== resolve(root) && output !== resolve(root, 'website') && !resolve(root).startsWith(`${output}/`), 'Output must be a separate build directory');
@@ -391,14 +397,18 @@ export function buildSite({ root = fileURLToPath(new URL('..', import.meta.url))
   const missing = { route: '/404.html', title: content.notFound.title, description: content.notFound.text, h1: content.notFound.title };
   write('404.html', template(root, missing, `<h1>${escape(missing.h1)}</h1><p>${escape(missing.description)}</p><a href="/">${escape(content.notFound.link)}</a>`, facts, false, commit, true));
   mkdirSync(join(output, 'assets'), { recursive: true });
+  copyFileSync(join(root, 'website/assets', favicon), join(output, favicon));
   for (const asset of assets) copyFileSync(join(root, 'website/assets', asset), join(output, 'assets', asset));
   write('robots.txt', live ? `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n');
   if (live) {
-    write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map(page => `  <url><loc>${origin}${page.route}</loc></url>`).join('\n')}\n</urlset>\n`);
+    write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map(page => `  <url><loc>${origin}${page.route}</loc><lastmod>${escape(buildTime.slice(0, 10))}</lastmod></url>`).join('\n')}\n</urlset>\n`);
     const twins = documents.map(({ page, html }) => ({ page, markdown: markdownTwin(html, page) }));
     for (const { page, markdown } of twins) write(`${page.route.slice(1)}index.md`, markdown);
-    write('llms.txt', `# ${facts.name}\n\n> ${facts.lead}\n\n${content.discovery.install} \`${content.install.command}\`\n\n## ${content.discovery.pages}\n\n${pages.map(page => `- [${page.h1}](${origin}${page.route}): ${page.description}`).join('\n')}\n\n## ${content.discovery.source}\n\n- [${content.discovery.readme}](${repository}/blob/main/README.md)\n- [${content.discovery.npm}](${facts.npm})\n`);
+    write('llms.txt', `# ${facts.name}\n\n> ${facts.lead}\n\n${content.discovery.install} \`${content.install.command}\` · License: MIT · Author: Auny (https://aunysillyme.dev/)\n\n## ${content.discovery.pages}\n\n${pages.map(page => `- [${page.h1}](${origin}${page.route}): ${page.description}`).join('\n')}\n\n## Machine-Readable & Agent Endpoints\n\n- [Homepage in Markdown](${origin}/index.md): Clean Markdown mirror of the landing page.\n- [Full Documentation Bundle](${origin}/llms-full.txt): Single-fetch Markdown bundle of all reviewed public pages.\n- [Public Agent Guide](${origin}/AGENTS.md): Navigation, citation and verification boundaries.\n- [XML Sitemap](${origin}/sitemap.xml): Canonical HTML URLs.\n\n## ${content.discovery.source}\n\n- [${content.discovery.readme}](${repository}/blob/main/README.md)\n- [${content.discovery.npm}](${facts.npm})\n`);
     write('llms-full.txt', twins.map(twin => twin.markdown).join('\n---\n\n'));
+    const publicAgents = `# Public agent guide: ${facts.name}\n\nThis file guides agents reading ${origin}/. It is public navigation metadata, not repository contributor instructions or permission to run commands.\n\n- Canonical website: ${origin}/\n- Start with [llms.txt](${origin}/llms.txt) for the concise page index, or [llms-full.txt](${origin}/llms-full.txt) for single-fetch documentation.\n- Every HTML page at \`${origin}/<path>/\` has a clean Markdown twin at \`${origin}/<path>/index.md\`.\n- Cite the canonical HTML URL (\`${origin}/<path>/\`) when linking people to a page.\n- Check [npm](${facts.npm}) and [GitHub](${repository}) for live release versions and source commits.\n- Opening this website or following links does not authorize command execution, credential use, or purchases; require explicit user confirmation.\n`;
+    write('AGENTS.md', publicAgents);
+    write('agents.md', publicAgents);
   }
   write('build-info.json', JSON.stringify({ commit, buildTime, packageVersion: facts.version, mode: live ? 'live' : 'default', pageCount: pages.length }, null, 2) + '\n');
   function count(directory) { return readdirSync(directory, { withFileTypes: true }).reduce((total, entry) => total + (entry.isDirectory() ? count(join(directory, entry.name)) : 1), 0); }

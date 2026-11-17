@@ -44,7 +44,7 @@ test('README opening identifies who, what and next step', () => {
 test('README first-screen order, bounded fences, receipt markers and sibling row', t => {
   if (!available(t, ['README.md'])) return;
   const text = read('README.md'); assert.match(text, /^# lean-browser-use\n/);
-  assert.ok(text.includes('**Cut browser use cost by about 25% in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**'));
+  assert.ok(text.includes('**Cut browser use cost 3% to 25% (about 14% across two runs) in Claude Code: run page work in a fresh runner, send it in bulk, and see your own saving.**'));
   assert.ok(text.trimEnd().split('\n').length < 350);
   const positions = ['**Cut browser use cost', 'npx lean-browser-use', '## What it does', '## What it saves', '## After you install', '## Part of a set', '## Measure your own saving', '## Common questions', '## Uninstall', '## Read next', 'For agents', '## Contributing', '## Credits', '## License'].map(s => {
     const i = text.indexOf(s); assert.ok(i >= 0, `Missing ${s}`); return i;
@@ -64,7 +64,7 @@ test('README first-screen order, bounded fences, receipt markers and sibling row
 });
 test('README quantities are backed by proof or captured program output', t => {
   if (!available(t, ['README.md', 'proof/results.json'])) return;
-  const outputs = [cli(['--help']).stdout, cli(['--version']).stdout, cli(['measure', '--dir', 'test/fixtures/transcripts']).stdout, read('proof/results.json')].join('\n');
+  const outputs = [cli(['--help']).stdout, cli(['--version']).stdout, cli(['measure', '--dir', 'test/fixtures/transcripts']).stdout, read('proof/results.json'), read('.repo-build/set.json')].join('\n');
   const supported = new Set([...outputs.matchAll(/\d+(?:\.\d+)?/g)].map(m => Number(m[0].replaceAll(',', ''))));
   // URLs and licence identifiers are names; check prose quantities and list numbers.
   const prose = read('README.md').replace(/\]\([^)]*\)/g, ']').replace(/(?:Apache|AGPL|CC-BY)-[\d.]+/g, 'licence');
@@ -76,7 +76,7 @@ test('README quantities are backed by proof or captured program output', t => {
   assert.doesNotMatch(read('README.md'), /about half/i);
   const best = Math.round(value('paired_cost_best_saving_percent'));
   for (const m of prose.matchAll(/cost by about (\d+)%/g)) assert.equal(Number(m[1]), best, 'README headline must follow best dollar saving proof');
-  assert.ok(prose.includes(`about ${best}%`));
+  assert.ok(prose.includes(`3% to ${best}%`));
   supported.add(best);
   const changes = [
     (value('paired_cost_usd_runner_arm') / value('paired_cost_usd_plain') - 1) * 100,

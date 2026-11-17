@@ -78,15 +78,61 @@ function table(text) {
     line.slice(1, -1).split('|').map(cell => cell.trim()));
 }
 
+export const personSameAs = [
+  'https://www.aunysillyme.com/#person',
+  'https://aunysillyme.com/',
+  'https://www.aunysillyme.com/',
+  'https://github.com/aunysillyme',
+  'https://github.com/aunysillyme-dev',
+  'https://www.npmjs.com/~aunysillyme',
+  'https://x.com/AunySillyMe',
+];
+
+export function buildPersonJsonLd({ live = false } = {}) {
+  return {
+    '@type': 'Person',
+    '@id': 'https://aunysillyme.dev/#person',
+    name: 'Auny Hossain',
+    alternateName: ['Auny', 'AunySillyMe'],
+    url: 'https://aunysillyme.dev/',
+    worksFor: {
+      '@type': 'Organization',
+      '@id': 'https://www.aunysillyme.com/#organization',
+      name: 'AunySillyMe',
+      legalName: 'Auny LLC',
+      url: 'https://aunysillyme.com/',
+    },
+    ...(live ? { sameAs: personSameAs } : {}),
+  };
+}
+
+export function buildSourceCodeJsonLd(facts, { live = false } = {}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    '@id': `${site}#source`,
+    name: facts.name,
+    description: facts.description,
+    url: site,
+    codeRepository: facts.repository,
+    programmingLanguage: ['JavaScript', 'Python'],
+    runtimePlatform: 'Node.js',
+    version: facts.version,
+    license: 'https://spdx.org/licenses/MIT.html',
+    author: { '@type': 'Person', '@id': 'https://aunysillyme.dev/#person', name: 'Auny Hossain', url: 'https://aunysillyme.dev/' },
+    ...(live ? { sameAs: [facts.repository, facts.npm] } : {}),
+  };
+}
+
 export function buildJsonLd(facts, { live = false } = {}) {
   return {
     '@context': 'https://schema.org', '@type': 'SoftwareApplication', '@id': `${site}#software`,
     name: facts.name, description: facts.description, applicationCategory: 'DeveloperApplication',
-    softwareRequirements: 'Node.js >=20 and Claude Code',
+    softwareRequirements: 'Node.js >=20 and Claude Code', softwareVersion: facts.version,
     license: 'https://spdx.org/licenses/MIT.html', isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, url: site,
-    author: { '@type': 'Person', '@id': 'https://www.aunysillyme.com/#person', name: 'Auny', url: 'https://www.aunysillyme.com/' },
-    publisher: { '@type': 'Organization', '@id': 'https://www.aunysillyme.com/#organization', name: 'AunySillyMe', url: 'https://www.aunysillyme.com/' },
+    author: buildPersonJsonLd({ live }),
+    publisher: { '@type': 'Organization', '@id': 'https://www.aunysillyme.com/#organization', name: 'AunySillyMe', legalName: 'Auny LLC', url: 'https://www.aunysillyme.com/' },
     ...(live ? { sameAs: [facts.repository, facts.npm] } : {}),
   };
 }
@@ -173,7 +219,7 @@ export function validateKeywords(facts, html) {
   requireFact(h1.length === 1, 'H1 must occur exactly once');
   const first = visibleText(body.match(/<section class="hero"[^>]*>([^]*?)<\/section>/)?.[1] || body).split(/\s+/).slice(0, 100).join(' ');
   for (const phrase of [facts.name, 'browser use', 'Claude Code', 'tokens', 'subagent', 'fresh context']) requireFact(first.includes(phrase), `First 100 words missing ${phrase}`);
-  requireFact(visibleText(h1[0][1].replace(/<br\s*\/?>/gi, ' ').replace(/<\/span>/gi, '</span> ')) === 'Cut browser use cost by about 25%. A fresh runner, bulk reads, three guards.', 'H1 must contain both approved headline lines');
+  requireFact(visibleText(h1[0][1].replace(/<br\s*\/?>/gi, ' ').replace(/<\/span>/gi, '</span> ')) === 'Cut browser use cost 3% to 25% (about 14% across two runs). A fresh runner, bulk reads, three guards.', 'H1 must contain both approved headline lines');
   const title = visibleText(html.match(/<title>([^]*?)<\/title>/i)?.[1] || '');
   requireFact(title.length > 0 && title.length <= 60, 'Title must contain at most 60 characters');
   requireFact(title.includes(facts.name), 'Title must contain the package name');
@@ -225,7 +271,7 @@ export function validateMock(facts, html) {
     requireFact(JSON.stringify(commands) === JSON.stringify(tool.commands.map(compact)), `Tool commands differ for ${tool.id}`);
   }
   const blocks = [...html.matchAll(/<script type="application\/ld\+json">([^]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
-  requireFact(JSON.stringify(blocks) === JSON.stringify([buildJsonLd(facts, { live: false }), buildFaqJsonLd(facts)]), 'JSON-LD blocks differ from generated facts');
+  requireFact(JSON.stringify(blocks) === JSON.stringify([buildJsonLd(facts, { live: false }), buildSourceCodeJsonLd(facts, { live: false }), buildFaqJsonLd(facts)]), 'JSON-LD blocks differ from generated facts');
 }
 
 export function loadSourceFacts(root) {

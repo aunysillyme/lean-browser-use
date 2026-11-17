@@ -122,7 +122,7 @@ function modePolicy(dir, live) {
     assert.ok(sections.length);
     for (const section of sections) assert.match(section, /\[[^\]]+\]\(https:\/\//);
     assert.ok(llms.indexOf(origin + '/docs/overview/') < llms.indexOf('https://github.com/'));
-    assert.ok(read(dir, 'llms-full.txt').includes('Cut browser use cost by about 25%.'));
+    assert.ok(read(dir, 'llms-full.txt').includes('Cut browser use cost 3% to 25% (about 14% across two runs).'));
     assert.ok(read(dir, 'llms-full.txt').includes('How'));
   } else {
     assert.match(read(dir, 'robots.txt'), /^Disallow: \/$/m);
@@ -285,9 +285,9 @@ test('RED hero has approved headline and visible keywords, with the prohibited h
     const hero = value.match(/<section\b[^>]*class="[^"]*hero[^]*?<\/section>/)?.[0] || '';
     for (const phrase of ['browser use', 'Claude Code', 'tokens', 'subagent', 'fresh context']) assert.ok(text(hero).includes(phrase), phrase);
     for (const heading of value.matchAll(/<h[1-6]\b[^>]*>([^]*?)<\/h[1-6]>/g)) assert.doesNotMatch(text(heading[1]), /your agent keeps working/i);
-    assert.match(text(hero), /Cut browser use cost by about 25%\. A fresh runner, bulk reads, three guards\./);
+    assert.match(text(hero), /Cut browser use cost 3% to 25% \(about 14% across two runs\)\. A fresh runner, bulk reads, three guards\./);
   };
-  assert.throws(() => check(html.replace('Cut browser use cost by about 25%.', 'Your agent keeps working')));
+  assert.throws(() => check(html.replace('Cut browser use cost 3% to 25% (about 14% across two runs).', 'Your agent keeps working')));
   check(html);
 });
 
@@ -381,7 +381,7 @@ test('metadata, unique anchors, breadcrumbs, proof dates and same origin assets 
     assert.equal(new Set(ids).size, ids.length, route);
     assert.match(html, /aria-current="(?:page|location)"/);
     const blocks = [...html.matchAll(/<script type="application\/ld\+json">([^]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
-    assert.deepEqual(blocks.map(block => block['@type']), route === '/' ? ['SoftwareApplication', 'FAQPage'] : ['BreadcrumbList']);
+    assert.deepEqual(blocks.map(block => block['@type']), route === '/' ? ['SoftwareApplication', 'SoftwareSourceCode', 'FAQPage'] : ['BreadcrumbList']);
     if (route !== '/') {
       const visible = text(html.match(/<nav\b[^>]*aria-label="Breadcrumb"[^>]*>([^]*?)<\/nav>/i)?.[1] || '');
       assert.equal(blocks[0].itemListElement.length, 2);

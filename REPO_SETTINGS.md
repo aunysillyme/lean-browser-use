@@ -4,7 +4,7 @@ The listed security and Actions settings were read back on 2026-11-10. Other set
 
 ## Metadata
 
-Description: Cut browser use cost by about 25% in Claude Code: fresh runner subagent, bulk reads, three guards and a token meter. One npx command
+Description: Cut Claude Code browser use cost 3% to 25% (about 14% in 2 runs): fresh runner subagent, bulk reads, 3 guards and a token meter. One npx command.
 
 Homepage: https://github.com/aunysillyme/lean-browser-use#readme
 
