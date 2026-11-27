@@ -1,0 +1,27 @@
+name: Notify aunysillyme.dev
+
+'on':
+  release:
+    types: [published]
+  push:
+    tags: ['v*', '*-v*']
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the dev site build
+        env:
+          DEV_SITE_DEPLOY_HOOK: ${{ secrets.DEV_SITE_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$DEV_SITE_DEPLOY_HOOK" ]; then
+            echo "::notice::DEV_SITE_DEPLOY_HOOK is empty. Skipping the dev site build."
+            exit 0
+          fi
+          if ! curl --silent --output /dev/null --fail --retry 3 --max-time 30 --request POST "$DEV_SITE_DEPLOY_HOOK"; then
+            echo "::error::The dev site deployment hook request failed."
+            exit 1
+          fi
